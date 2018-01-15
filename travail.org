@@ -1,3 +1,6 @@
+#+TITLE: Report for : Un intergiciel d’une base de données NewSQL qui considère la localité de l’application cliente
+#+AUTHOR: Marie Delavergne
+
 * Report of work
 
 ** 1st week
@@ -14,6 +17,8 @@
 - Created folder and repo github for my work.
   + Added gitignore
   + Added tools
+- WARNING : I can't run Vagrant without disabling secure boot
+
 
 **** Readings
 
@@ -24,10 +29,69 @@
 - [[http://vitess.io/][Vitess site]]
 - [[https://beyondtheclouds.github.io/blog/openstack/cockroachdb/2017/12/22/a-poc-of-openstack-keystone-over-cockroachdb.html][BTC blog article about Keystone over CockroachDB]]
 
+***** Spanner
+
+- 2013
+- DB
+  + scalable
+  + multi-version
+  + globally-distributed
+  + synchronously-replicated
+  + google-made
+- Reshard automatically data when the amount of data or the number of servers change
+- Migrate automatically data across machines and DC
+- Scale up to millions of machines, hundreds of DC and trillions of datarows
+- Focus: managing cross-DC replicated data
+- Evolved from a versioned key-value store to a temporal multi-version db
+  + semi-relational db
+  + data store with a commit timestamp
+  + configurable garbage collector for old versions
+- Replication configurations can be dynamically controlled at a fine grain
+- More Spanner features that enable Spanner to support consistent backups, MapReduce executions and atomic schema updates
+  + externally consistent reads and write
+  + globally-conssistent reads across DB at a given timestamp
+- Timestamps reflect serialization order
+- Organized as a set of zones (unit of administrative deployment)
+  + one zonemaster :: assigns data to spanservers
+  + (100->n*1000) spanservers
+  + tablet :: data structure (similar to Bigtable tablet abstraction)
+  + per-zone location proxies :: used by clients to locate the spanservers assigned to serve their data
+- Spanserver
+  + serve data to clients
+  + responsible for between 100 and 1000 instances of tablet
+  + implements a single Paxos state machine on top of each tablet
+  + logs every Paxos write twice (one in the tablet's log, once in the Paxos log)
+- Transaction manager
+  + If the transaction involves only one Paxos group, it can bypass the TM (lock table and Paxos provide transactionality)
+  + If it involves more than one Paxos group, the groups' leaders coordinate to perform a two-phase commit
+    - coordinator leader chosen and coordinator slaves
+- Directory (bucket) : set of contiguous keys that share a common prefix
+  + allows applications to control the locality of their data by choosing keys carefully
+  + directories can be moved on-the-fly for different reasons (movedir)
+- Megastore used by at least 300 Google applications
+- Two-phase commit too expensive for performance and availability
+- Every table must have an ordered set of one or more primary-key columns
+- TrueTime represents time as a TTinterval (interval with bounded time uncertainty)
+
+| Method      | Returns                              |
+| TT.now()    | TTinterval: [earliest, latest]       |
+| TT.after()  | true if t has definitely passed      |
+| TT.before() | true if t has definitely not arrived |
+
+- Two-phase commit can scale to up to 50 participants
+
 **** Meeting
 
 - 14:15 with msimonin
 
+***** Work
+- Keystone with specific scenarii
+  + tempest has more coverage (especially with the new decorator)
+
+
+** Other readings
+
+- [[https://en.wikipedia.org/wiki/Paxos_(computer_science)][Paxos]]
 
 ** How to
 

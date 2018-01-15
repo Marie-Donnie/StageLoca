@@ -14,3 +14,13 @@
 - Created folder and repo github for my work.
   + Added gitignore
   + Added tools
+
+
+** How to
+
+*** Org mode
+
+#+BEGIN_SRC
+Ctrl-c !
+#+END_SRC
+for date not added to agenda

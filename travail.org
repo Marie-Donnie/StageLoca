@@ -1,0 +1,16 @@
+* Report of work
+
+** 1st week
+*** Monday 15 January [2018-01-15 lun.]
+
+**** Installation
+
+- Solving administrative problems (account creations, etc.)
+- Working in office B226
+
+**** Preparations
+
+- Cleaned boookmarks to be able to find them more rapidly
+- Created folder and repo github for my work.
+  + Added gitignore
+  + Added tools

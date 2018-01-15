@@ -15,6 +15,19 @@
   + Added gitignore
   + Added tools
 
+**** Readings
+
+- [[https://static.googleusercontent.com/media/research.google.com/en//archive/spanner-osdi2012.pdf][Spanner: Google’s Globally-Distributed Database]]
+- [[https://www.usenix.org/system/files/conference/atc14/atc14-paper-ongaro.pdf][In Search of an Understandable Consensus Algorithm]]
+- [[https://github.com/cockroachdb/cockroach/blob/master/docs/design.md][CockroachDB doc]]
+- [[https://www.youtube.com/watch?v=6OFeuNy39Qg][The hows and whys of a distributed SQL database]] by Alex Robinson
+- [[http://vitess.io/][Vitess site]]
+- [[https://beyondtheclouds.github.io/blog/openstack/cockroachdb/2017/12/22/a-poc-of-openstack-keystone-over-cockroachdb.html][BTC blog article about Keystone over CockroachDB]]
+
+**** Meeting
+
+- 14:15 with msimonin
+
 
 ** How to
 

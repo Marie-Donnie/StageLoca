@@ -79,6 +79,9 @@
 | TT.before() | true if t has definitely not arrived |
 
 - Two-phase commit can scale to up to 50 participants
+- During experimentations on availability, we can see that only kill 'hard' a leader has a real impact on the reads completed
+- Related works
+  + VoltDB uses NewSQL
 
 **** Meeting
 

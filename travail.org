@@ -338,15 +338,15 @@ Worker Balance
     - allows the service of clients even when configuration changes
     - leader log entry for joint consensus C_{old,new} and replicates it
     - servers only uses the latest configuration in its log, whether the entry is committed or not
-    - if a leader crash (using the C_{old,new} rules), the new leader may be chosen under C_old or C_{old,new} (C_new cannot make unilateral decisions during this period)
+    - if a leader crash (using the C_{old,new} rules), the new leader may be chosen under C_{old} or C_{old,new} (C_{new} cannot make unilateral decisions during this period)
   + once C_{old,new} has been committed, neither old nor new can make decisions without receiving approval from the other
     - only servers with the C_{old,new} entry can be leader
     - this leader create a log entry for Cnew and replicates it
   + when the new configuration has been commited, servers not in the new configuration can be shut down
-  + there are no time when C_old or C_new can make unilateral decisions
+  + there are no time when C_{old} or C_{new} can make unilateral decisions
   + when new servers are added, they are non-voting members (not counted for majority)
     - when they have the correct replicated log, the reconfiguration can begin
-  + if the leader is not part of the new configuration, it will become follower has soon as he committed C_new, and will not count for votes
+  + if the leader is not part of the new configuration, it will become follower has soon as he committed C_{new}, and will not count for votes
   + to prevent removed servers from disrupting with votes, the followers disregards the RequestVote RPC
 
 #+CAPTION: A -not-so- condensed summary of the Raft consensus algorithm

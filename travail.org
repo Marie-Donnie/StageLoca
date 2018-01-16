@@ -1,17 +1,16 @@
 #+TITLE: Report for : Un intergiciel d’une base de données NewSQL qui considère la localité de l’application cliente
 #+AUTHOR: Marie Delavergne
 
-* Report of work
 
-** 1st week
-*** Monday 15 January [2018-01-15 lun.]
+* 1st week
+** Monday 15 January [2018-01-15 lun.]
 
-**** Installation
+*** Installation
 
 - Solving administrative problems (account creations, etc.)
 - Working in office B226
 
-**** Preparations
+*** Preparations
 
 - Cleaned boookmarks to be able to find them more rapidly
 - Created folder and repo github for my work.
@@ -20,7 +19,7 @@
 - WARNING : I can't run Vagrant without disabling secure boot
 
 
-**** Readings
+*** Readings
 
 - [[https://static.googleusercontent.com/media/research.google.com/en//archive/spanner-osdi2012.pdf][Spanner: Google’s Globally-Distributed Database]]
 - [[https://www.usenix.org/system/files/conference/atc14/atc14-paper-ongaro.pdf][In Search of an Understandable Consensus Algorithm]]
@@ -29,7 +28,7 @@
 - [[http://vitess.io/][Vitess site]]
 - [[https://beyondtheclouds.github.io/blog/openstack/cockroachdb/2017/12/22/a-poc-of-openstack-keystone-over-cockroachdb.html][BTC blog article about Keystone over CockroachDB]]
 
-***** Spanner
+**** Spanner
 
 - 2013
 - DB
@@ -83,24 +82,179 @@
 - Related works
   + VoltDB uses NewSQL
 
-**** Meeting
+*** Meeting
 
 - 14:15 with msimonin
 
-***** Work
+**** Work
 - Keystone with specific scenarii
   + tempest has more coverage (especially with the new decorator)
 
 
-** Other readings
+** Thursday 16 January [2018-01-16 mar.]
+
+*** Openstack Cockroach Dev
+
+- Resumed vagrant launched yesterday evening
+- Used ~vagrant ssh~ to jump to the deployed machine
+
+**** Running tempest
+- Jumped to tempest folder
+- Used ~testr init~ and then ~testr run --parallel tempest.scenario~ to run tests
+  + Received some errors like these :
+#+BEGIN_EXAMPLE
+Traceback (most recent call last):
+  File "/opt/stack/neutron/neutron/tests/tempest/scenario/test_dvr.py", line 66, in test_vm_reachable_through_compute
+    self._check_snat_port_connectivity()
+  File "/opt/stack/neutron/neutron/tests/tempest/scenario/test_dvr.py", line 32, in _check_snat_port_connectivity
+    self._check_connectivity()
+  File "/opt/stack/neutron/neutron/tests/tempest/scenario/test_dvr.py", line 29, in _check_connectivity
+    self.keypair['private_key'])
+  File "/opt/stack/neutron/neutron/tests/tempest/scenario/base.py", line 232, in check_connectivity
+    ssh_client.test_connection_auth()
+  File "tempest/lib/common/ssh.py", line 207, in test_connection_auth
+    connection = self._get_ssh_connection()
+  File "tempest/lib/common/ssh.py", line 121, in _get_ssh_connection
+    password=self.password)
+tempest.lib.exceptions.SSHTimeout: Connection to the 172.24.4.12 via SSH timed out.
+User: cirros, Password: None
+#+END_EXAMPLE
+#+BEGIN_EXAMPLE
+Traceback (most recent call last):
+  File "/opt/stack/neutron/neutron/tests/tempest/scenario/test_migration.py", line 200, in test_from_dvr_ha_to_dvr
+    after_dvr=True, after_ha=False)
+  File "/opt/stack/neutron/neutron/tests/tempest/scenario/test_migration.py", line 114, in _test_migration
+    router['id'], before_dvr, before_ha)
+  File "/opt/stack/neutron/neutron/tests/tempest/scenario/test_migration.py", line 80, in _wait_until_router_ports_ready
+    router_id, const.DEVICE_OWNER_DVR_INTERFACE)
+  File "/opt/stack/neutron/neutron/tests/tempest/scenario/test_migration.py", line 64, in _wait_until_port_ready
+    timeout=300, sleep=5)
+  File "/opt/stack/neutron/neutron/common/utils.py", line 697, in wait_until_true
+    raise WaitTimeout("Timed out after %d seconds" % timeout)
+neutron.common.utils.WaitTimeout: Timed out after 300 seconds
+#+END_EXAMPLE
+- Might be because only keystone is supposed to work
+- Stopped the run because it was running every tests for every components
+- Rerun using ~tempest run --regex tempest.api.identity~
+#+BEGIN_EXAMPLE
+======
+Totals
+======
+Ran: 143 tests in 134.0000 sec.
+ - Passed: 128
+ - Skipped: 10
+ - Expected Fail: 0
+ - Unexpected Success: 0
+ - Failed: 5
+Sum of execute time for each test: 251.9807 sec.
+
+==============
+Worker Balance
+==============
+ - Worker 0 (31 tests) => 0:01:54.281398
+ - Worker 1 (28 tests) => 0:01:08.869696
+ - Worker 2 (14 tests) => 0:01:39.594563
+ - Worker 3 (24 tests) => 0:02:00.720647
+ - Worker 4 (32 tests) => 0:01:53.721540
+ - Worker 5 (14 tests) => 0:00:50.875559
+#+END_EXAMPLE
+- Have to see the logs, which is now in a binary file (journalctl)
+- ~sudo journalctl --unit devstack@keytsone.service --since -5m~ to see the logs
+- I can navigate using /ERR and n to go to the next
+#+BEGIN_EXAMPLE
+stack@contrib-jessie:~/tempest$ sudo journalctl --unit devstack@keytsone.service --since -5m
+-- Logs begin at Tue 2018-01-16 10:15:51 GMT, end at Tue 2018-01-16 10:32:08 GMT. --
+stack@contrib-jessie:~/tempest$
+#+END_EXAMPLE
+
+- Modified file in keystone folder ~keystone/identity/backends/sql.py~ :
+  + Search for '@', copied ~ @oslo_db_api.wrap_db_retry(retry_on_deadlock=True)~
+  + Added to the method that failed 'authenticate' (l. 58)
+  + After that, I restart the service using ~sudo systemctl restart devstack@keystone~
+  + And check if it is correctly loaded with ~sudo systemctl status devstack@keystone~
+
+#+BEGIN_EXAMPLE
+======
+Totals
+======
+Ran: 142 tests in 197.0000 sec.
+ - Passed: 132
+ - Skipped: 10
+ - Expected Fail: 0
+ - Unexpected Success: 0
+ - Failed: 0
+Sum of execute time for each test: 435.4079 sec.
+
+==============
+Worker Balance
+==============
+ - Worker 0 (10 tests) => 0:01:49.532543
+ - Worker 1 (17 tests) => 0:02:32.577647
+ - Worker 2 (22 tests) => 0:02:36.304883
+ - Worker 3 (37 tests) => 0:03:10.918512
+ - Worker 4 (23 tests) => 0:02:42.695828
+ - Worker 5 (33 tests) => 0:02:41.024460
+
+#+END_EXAMPLE
+
+- When doing my PR, I discovered there was a branch called 'deadlock-retry' so I've checked it:
+  + turns out there was different changes on it, and the decorator (wrapper) was used on ~_record_failed_auth~ and ~update_user~
+  + but when I reran the tests on this branch I got
+#+BEGIN_EXAMPLE
+======
+Totals
+======
+Ran: 132 tests in 180.0000 sec.
+- Passed: 120
+- Skipped: 10
+- Expected Fail: 0
+- Unexpected Success: 0
+- Failed: 2
+Sum of execute time for each test: 378.7295 sec.
+
+==============
+Worker Balance
+==============
+- Worker 0 (9 tests) => 0:01:30.253865
+- Worker 1 (32 tests) => 0:02:36.105035
+- Worker 2 (20 tests) => 0:02:24.938662
+- Worker 3 (26 tests) => 0:02:29.701283
+- Worker 4 (18 tests) => 0:02:09.142470
+- Worker 5 (27 tests) => 0:02:47.248556
+#+END_EXAMPLE
+
+- After asking my tutor, turns out that the branch was an old one so I just made my PR to cockroachdb/pike
+
+
+
+* Other readings
 
 - [[https://en.wikipedia.org/wiki/Paxos_(computer_science)][Paxos]]
 
-** How to
+* How to
 
-*** Org mode
+** Org mode
 
 #+BEGIN_SRC
 Ctrl-c !
 #+END_SRC
 for date not added to agenda
+#+BEGIN_SRC
+Alt-Shift-Left
+#+END_SRC
+to demote current subtree by one level
+
+** Using Rally & Tempest
+
+*** Tempest
+
+~tempest run --regex tempest.api.identity~ to run only keystone tests
+
+** Using devstack
+
+Since it's not using screen anymore, everything is in systemctl.
+
+To restart a service:
+~sudo systemctl restart devstack@SERVICE_NAME~
+To know the status of a service:
+~sudo systemctl status devstack@SERVICE_NAME~

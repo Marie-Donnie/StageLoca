@@ -241,12 +241,76 @@ Worker Balance
   + It is used to solve a variety of fault tolerance problems in distributed systems
 
 #+CAPTION: RSM architecture from the Raft article
-#+NAME: RSM_architecture
-[[images/RSM_architecture.png]]
+#+NAME: fig:raft_RSM_architecture
+[[images/Raft_RSM_architecture.png]]
+
+- Each server stores a log containing a series of commands executed in order by he state machine associated
+  + The commands are in the same order on each log -> same sequence executed on all state machines -> same state computed and same sequence of output (because of determinism)
+- The replicated log is kept consistent by the consensus algorithm
+- Properties of the algorithm
+  + safety under all non-Byzantine conditions including network delays, partitions, packet loss, duplication and re-ordering
+  + availability if a majority of servers are operational and communicate with each other and clients. (n/2 +1)
+  + consistency of the logs independent of timing
+  + speed: for most cases, a given command is completed when a majority of the cluster has responded to a single round of remote procedure calls
+
 
 ***** Strengths and weaknesses of Paxos
+
+- Largely used, at least as a starting point
+- Different level of Paxos:
+  + single-decree Paxos:: able to reach agreement on a single decision (like a single replicated log entry)
+  + multi-Paxos:: multiple instances of the former protocol to facilitate a series of decisions (such as an entire log)
+- Ensures safety and liveness
+- Supports changes in cluster membership
+- Two major drawbacks
+  + awfully  difficult to understand
+  + no good foundation to make practical implementations
+- As a consequence, implementations are usually extremely different from the Paxos theory, especially in terms of architecture
+  + time consuming and error-prone
+  + worse: since the implementations are too different, the correctness of Paxos can't be verified
+
 ***** General approach to understandability
+
+- Raft had to:
+  + provide a complete and practical foundation for system building
+  + be safe under all conditions
+  + be available under typical operating conditions
+  + be efficient for common operations
+  + be UNDERSTANDABLE
+    - by a large audience
+    - to make possible the development of extensions
+- To make it understandable:
+  + each time a choice had to be made, it was always for understandability
+  + two techniques were used, as seen previously (decomposition and state space reduction)
+
 ***** Raft consensus algorithm
+
+1. Election of a leader
+   - if a leader fails or is disconnected, a new leader is elected
+   - at any time each server is either:
+     + leader:: only one
+     + follower:: passive, they respond to requests from leaders and candidates
+     + candidate:: used to elect a new leader
+2. Give responsibility for managing the replicated log to this leader
+3. Leader accepts log entries from clients
+4. Leader replicates them to other servers
+5. Leader tells the servers when they can apply new log entries to their state machines
+
+- Time is divided into /terms/ of arbitrary length
+  + Numbered with consecutive integers; each server stores a current term (increasing monotonically)
+  + each term begins with an election where one or more candidates attempt to become leader
+  + if an election ends with a split vote, the term ends and a new one begins
+  + Serves as a logical clock
+    - if 2 servers communicate and don't have the same term value, they take the largest one
+    - if a candidate or leader discovers this way that his term has ended, he becomes a follower
+    - if the server receives a request with an older term, it rejects the request
+
+#+CAPTION: A -not-so- condensed summary of the Raft consensus algorithm
+#+NAME: fig:raft_cons_algo
+[[images/Raft_cons_algo]]
+
+
+
 ***** Raft evaluation
 ***** Related work
 
@@ -299,4 +363,12 @@ sudo systemctl restart devstack@SERVICE_NAME
 To know the status of a service:
 #+BEGIN_SRC
 sudo systemctl status devstack@SERVICE_NAME
+#+END_SRC
+
+
+** Other
+
+Cut pages in pdf (from [[https://askubuntu.com/questions/221962/how-can-i-extract-a-page-range-a-part-of-a-pdf][Ask Ubuntu]]):
+#+BEGIN_SRC
+pdftk full-pdf.pdf cat 12-15 output outfile_p12-15.pdf
 #+END_SRC

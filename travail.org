@@ -229,9 +229,9 @@ Worker Balance
   + decomposition: leader election, log replication, safety
   + state space reduction: reduce the degree of nondeterminism and ways servers can be inconsistent with each other
 - New features
-  + Strong leader:: stronger form of leadership
-  + Leader election:: randomized timers
-  + Membership changes:: two different configurations overlap when changing the set of servers in a cluster
+  + Strong leader :: stronger form of leadership
+  + Leader election :: randomized timers
+  + Membership changes :: two different configurations overlap when changing the set of servers in a cluster
 - Safety properties formally specified and proven
 
 ***** Replicated state machine problem
@@ -288,13 +288,21 @@ Worker Balance
 1. Election of a leader
    - if a leader fails or is disconnected, a new leader is elected
    - at any time each server is either:
-     + leader:: only one
-     + follower:: passive, they respond to requests from leaders and candidates
-     + candidate:: used to elect a new leader
+     + leader :: only one
+       - sends periodic heartbeat to followers as soon as he is elected to prevent election
+     + follower :: passive, they respond to requests from leaders and candidates
+     + candidate :: used to elect a new leader
+   - if a follower receives no communication for a period of time (election timeout), it begins the election to choose a new leader
+     + the follower increments its current term, becomes a candidate, votes for itself and sends RequestVote RPC to every servers in the cluster
+       - a candidate wins the election if it receives votes from a majority of servers for the same term
+       - followers vote for one candidate on a first-come first-served basis
+       - if a candidate gets a signal from a leader and the term received is at least as large as the candidate current term, the candidate returns to follower
+       - to prevent different rounds of elections (if many followers become candidates at the same time), election timeouts are chosen randomly from a fixed interval
 2. Give responsibility for managing the replicated log to this leader
 3. Leader accepts log entries from clients
 4. Leader replicates them to other servers
 5. Leader tells the servers when they can apply new log entries to their state machines
+
 
 - Time is divided into /terms/ of arbitrary length
   + Numbered with consecutive integers; each server stores a current term (increasing monotonically)
@@ -305,14 +313,76 @@ Worker Balance
     - if a candidate or leader discovers this way that his term has ended, he becomes a follower
     - if the server receives a request with an older term, it rejects the request
 
+- When receiving a new entry, the leader appends the command to its log as a neww entry
+  + it sends the order to append the entries to the other servers to replicate the entry
+- An entry of a log stores a command, a term number when the entry was received by the leader and an integer indentifying its position in the log
+- The leader chooses when a entry is commited, i.e. when an entry has replicated to a majority of servers. This commit also commits all preceding entries in the leader's log (including entries from former leaders).
+- Log matching properties ([[fig:raft_properties]]):
+  + if 2 entries in different logs have the same index and term, they store the same command
+  + if 2 entries in different logs have the same index and term, then the logs are identical in all preceding entries
+- The leader maintain a nextIndex for each follower so he knows which entry it will send
+- Election restriction:
+  + prevents candidate from winning an election unless its log contains all committed entries
+  + a follower denies a candidate vote if its own log is more up-to-date
+    - if the logs have last entries with different terms, the log with the later term is more u-t-d
+    - if the logs have the same terms as last entries, whichever log is longer is more u-t-d
+- Raft handles followers failure by retrying indefinitely the RPCs.
+  + RPCs are idempotent; a request that includes log entries already present is ignored
+- Timing is crucial only for leader election
+  + timing requirement: broadcastTime << electionTimeout << MTBF (average time between failures for a single server)
+    - electionTimeout is the only thing chosen : usually, between 10 and 500ms
+- Configuration changes comes with two phases
+  + joint consensus :: combines both configurations
+    - log entries are replicated to all servers in both configurations
+    - any server from either configuration can be a leader
+    - agreement requires separate majorities from *both* the old and new configurations
+    - allows the service of clients even when configuration changes
+    - leader log entry for joint consensus Cold,new and replicates it
+    - servers only uses the latest configuration in its log, whether the entry is committed or not
+    - if a leader crash (using the Cold,new rules), the new leader may be chosen under Cold or Cold,new (Cnew cannot make unilateral decisions during this period)
+  + once Cold,new has been committed, neither old nor new can make decisions without receiving approval from the other
+    - only servers with the Cold,new entry can be leader
+    - this leader create a log entry for Cnew and replicates it
+  + when the new configuration has been commited, servers not in the new configuration can be shut down
+  + there are no time when Cold or Cnew can make unilateral decisions
+  + when new servers are added, they are non-voting members (not counted for majority)
+    - when they have the correct replicated log, the reconfiguration can begin
+  + if the leader is not part of the new configuration, it will become follower has soon as he committed Cnew, and will not count for votes
+  + to prevent removed servers from disrupting with votes, the followers disregards the RequestVote RPC
+
 #+CAPTION: A -not-so- condensed summary of the Raft consensus algorithm
-#+NAME: fig:raft_cons_algo
+#+NAME: fig:raft_conso_algo
 [[images/Raft_conso_algo.pdf]]
 
 
+#+CAPTION: Raft ensured properties
+#+NAME: fig:raft_properties
+[[images/Raft_properties.png]]
+
+
+- Clients and log compaction can be found in the [[https://ramcloud.stanford.edu/raft.pdf][extended version of the paper]].
 
 ***** Raft evaluation
+
+- Raft implementation contains ~2000 lines of C++ code
+- available on [[http://github.com/
+logcabin/logcabin][Github]]
+- easy to understand
+- correctness uses [[fig:raft_conso_algo]] and proven in [[https://ramcloud.stanford.edu/~ongaro/thesis.pdf][proof of the State Machine Safety property]]
+- performance similar to other consensus algorithms
+- recommands using a conservative election timeout such as 150-300ms
+
 ***** Related work
+
+- Lamport description of Paxos
+- Elaborations of Paxos
+- Systems that implement consensus algorithms (Chubby, Zookeeper and Spanner)
+- Performance optimizations that can be applied to Paxos
+- Viewstamped Replication from Oki and Liskov
+
+***** Conclusion
+
+- Better foundation for system building
 
 
 * Readings

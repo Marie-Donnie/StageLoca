@@ -21,13 +21,6 @@
 
 *** Readings
 
-- [[https://static.googleusercontent.com/media/research.google.com/en//archive/spanner-osdi2012.pdf][Spanner: Google’s Globally-Distributed Database]]
-- [[https://www.usenix.org/system/files/conference/atc14/atc14-paper-ongaro.pdf][In Search of an Understandable Consensus Algorithm]]
-- [[https://github.com/cockroachdb/cockroach/blob/master/docs/design.md][CockroachDB doc]]
-- [[https://www.youtube.com/watch?v=6OFeuNy39Qg][The hows and whys of a distributed SQL database]] by Alex Robinson
-- [[http://vitess.io/][Vitess site]]
-- [[https://beyondtheclouds.github.io/blog/openstack/cockroachdb/2017/12/22/a-poc-of-openstack-keystone-over-cockroachdb.html][BTC blog article about Keystone over CockroachDB]]
-
 **** Spanner
 
 - 2013
@@ -100,7 +93,7 @@
 
 **** Running tempest
 - Jumped to tempest folder
-- Used ~testr init~ and then ~testr run --parallel tempest.scenario~ to run tests
+- Used ~testr init~ and then ~testr run --parallel tempest.scenario~ to run tests from [[https://www.openstack.org/assets/presentation-media/TempestScenarioTests-20140512.pdf][Tempest Scenarios Tests]]
   + Received some errors like these :
 #+BEGIN_EXAMPLE
 Traceback (most recent call last):
@@ -225,10 +218,50 @@ Worker Balance
 
 - After asking my tutor, turns out that the branch was an old one so I just made my PR to cockroachdb/pike
 
+*** Readings
+
+**** Raft
+
+- Goal is to have a result equivalent to Paxos, but more understandable and easier to learn
+- Consensus algorithms "allow a collection of machines to work as a coherent group that can survive the failures of some of its members"
+- Most implementations of consensus are based on or influenced by Paxos
+- Raft uses techniques to improve understandability
+  + decomposition: leader election, log replication, safety
+  + state space reduction: reduce the degree of nondeterminism and ways servers can be inconsistent with each other
+- New features
+  + Strong leader:: stronger form of leadership
+  + Leader election:: randomized timers
+  + Membership changes:: two different configurations overlap when changing the set of servers in a cluster
+- Safety properties formally specified and proven
+
+***** Replicated state machine problem
+
+- Consensus algorithms are used in the context of RSM
+  + Replicated State Machines:: state machines in a collection of servers compute identical copies of the same state and continue operating even if some of the servers are down
+  + It is used to solve a variety of fault tolerance problems in distributed systems
+
+#+CAPTION: RSM architecture from the Raft article
+#+NAME: RSM_architecture
+[[images/RSM_architecture.png]]
+
+***** Strengths and weaknesses of Paxos
+***** General approach to understandability
+***** Raft consensus algorithm
+***** Raft evaluation
+***** Related work
 
 
-* Other readings
+* Readings
 
+** Preliminary
+- [[https://static.googleusercontent.com/media/research.google.com/en//archive/spanner-osdi2012.pdf][Spanner: Google’s Globally-Distributed Database]]
+- [[https://www.usenix.org/system/files/conference/atc14/atc14-paper-ongaro.pdf][In Search of an Understandable Consensus Algorithm]]
+- [[https://github.com/cockroachdb/cockroach/blob/master/docs/design.md][CockroachDB doc]]
+- [[https://www.youtube.com/watch?v=6OFeuNy39Qg][The hows and whys of a distributed SQL database]] by Alex Robinson
+- [[http://vitess.io/][Vitess site]]
+- [[https://beyondtheclouds.github.io/blog/openstack/cockroachdb/2017/12/22/a-poc-of-openstack-keystone-over-cockroachdb.html][BTC blog article about Keystone over CockroachDB]]
+
+** Others
 - [[https://en.wikipedia.org/wiki/Paxos_(computer_science)][Paxos]]
 
 * How to

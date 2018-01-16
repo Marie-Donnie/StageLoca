@@ -307,7 +307,7 @@ Worker Balance
 
 #+CAPTION: A -not-so- condensed summary of the Raft consensus algorithm
 #+NAME: fig:raft_cons_algo
-[[images/Raft_cons_algo]]
+[[images/Raft_cons_algo.pdf]]
 
 
 

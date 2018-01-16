@@ -253,7 +253,6 @@ Worker Balance
   + consistency of the logs independent of timing
   + speed: for most cases, a given command is completed when a majority of the cluster has responded to a single round of remote procedure calls
 
-
 ***** Strengths and weaknesses of Paxos
 
 - Largely used, at least as a starting point
@@ -337,17 +336,17 @@ Worker Balance
     - any server from either configuration can be a leader
     - agreement requires separate majorities from *both* the old and new configurations
     - allows the service of clients even when configuration changes
-    - leader log entry for joint consensus Cold,new and replicates it
+    - leader log entry for joint consensus C_{old,new} and replicates it
     - servers only uses the latest configuration in its log, whether the entry is committed or not
-    - if a leader crash (using the Cold,new rules), the new leader may be chosen under Cold or Cold,new (Cnew cannot make unilateral decisions during this period)
-  + once Cold,new has been committed, neither old nor new can make decisions without receiving approval from the other
-    - only servers with the Cold,new entry can be leader
+    - if a leader crash (using the C_{old,new} rules), the new leader may be chosen under C_old or C_{old,new} (C_new cannot make unilateral decisions during this period)
+  + once C_{old,new} has been committed, neither old nor new can make decisions without receiving approval from the other
+    - only servers with the C_{old,new} entry can be leader
     - this leader create a log entry for Cnew and replicates it
   + when the new configuration has been commited, servers not in the new configuration can be shut down
-  + there are no time when Cold or Cnew can make unilateral decisions
+  + there are no time when C_old or C_new can make unilateral decisions
   + when new servers are added, they are non-voting members (not counted for majority)
     - when they have the correct replicated log, the reconfiguration can begin
-  + if the leader is not part of the new configuration, it will become follower has soon as he committed Cnew, and will not count for votes
+  + if the leader is not part of the new configuration, it will become follower has soon as he committed C_new, and will not count for votes
   + to prevent removed servers from disrupting with votes, the followers disregards the RequestVote RPC
 
 #+CAPTION: A -not-so- condensed summary of the Raft consensus algorithm

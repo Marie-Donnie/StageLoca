@@ -365,8 +365,7 @@ Worker Balance
 ***** Raft evaluation
 
 - Raft implementation contains ~2000 lines of C++ code
-- available on [[http://github.com/
-logcabin/logcabin][Github]]
+- available on [[http://github.com/logcabin/logcabin][Github]]
 - easy to understand
 - correctness uses [[fig:raft_conso_algo]] and proven in [[https://ramcloud.stanford.edu/~ongaro/thesis.pdf][proof of the State Machine Safety property]]
 - performance similar to other consensus algorithms

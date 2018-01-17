@@ -533,12 +533,84 @@ hmac_keys = SECRET_KEY
 #+END_EXAMPLE
 - they turned profiling on for Cinder, Glance, Nova, Neutron and Keystone.
 
+****** Test Case 1: Keystone DB / cache operations analysis
+
+- records all HTTP, RPC and DB calls in selected control plane operations
+  + includes Keystone operations and their duration (via OSprofiler)
+- focused of these control plane operations:
+  + Keystone token get (token issue)
+  + Keystone user list
+  + Keystone endpoint list
+  + Keystone service list
+  + Nova instance boot (server create)
+#+BEGIN_EXAMPLE
+openstack --profile SECRET_KEY token issue
+openstack --profile SECRET_KEY user list
+openstack --profile SECRET_KEY endpoint list
+openstack --profile SECRET_KEY service list
+openstack --profile SECRET_KEY server create --image <image_id> --flavor <flavor_id> <server_name>
+#+END_EXAMPLE
+- to initiate OS request tracing =profile <HMAC_KEY>= option needs to be added to the CLI command
+  + the key is one of the secret keys define in the .conf
+  + tracing of the creation of a VM
+#+BEGIN_EXAMPLE
+openstack --profile SECRET_KEY server create --image <image> --flavor <flavor> <server-name>
+#+END_EXAMPLE
+  + at the end of the output, there is a message ~osprofiler trace show...~ to know how to get the trace
+
+- parameters
+
+|-----------------------------+----------------------------------------------------|
+| Parameter name              | Value                                              |
+|-----------------------------+----------------------------------------------------|
+| OpenStack release           | Pike                                               |
+| Cache                       | on, off                                            |
+| Token type                  | UUID, fernet                                       |
+| Environment characteristics | single node, multi-node (clusterized DB/memcached) |
+|-----------------------------+----------------------------------------------------|
+
+- performance metrics
+|----------+----------------+-------------------+-------------------------------------------|
+| Priority | Value          | Measurement Units | Description                               |
+|----------+----------------+-------------------+-------------------------------------------|
+|        1 | Operation time | milliseconds      | Time spent on every HTTP/RPC/DB operation |
+|----------+----------------+-------------------+-------------------------------------------|
+
+- *beware* OSProfiler wrapper includes time spent on Python operations inside methods. For DB calls tracing OSprofiler uses =before/after_cursor_execute=
+
+
+****** Test Case 2: Keystone DB / cache operations analysis (HA version)
+
+- adds failover testing component
+  + first test run is the same as test case 1
+  + second needs to happen after turning off one of the distributed components used by Keystone (example: stop one of memcached instances)
+
+- parameters
+|-----------------------------+----------------------------------------------------|
+| Parameter name              | Value                                              |
+|-----------------------------+----------------------------------------------------|
+| OpenStack realease          | Pike                                               |
+| Cache                       | on, off                                            |
+| Token type                  | UUID, fernet                                       |
+| Environment characteristics | single node, multi-node (clusterized DB/memcached) |
+| Memcached cluster status    | 3 nodes, 2 nodes, 1 node                           |
+| Galera cluster status       | 3 nodes, 2 nodes, 1 node                           |
+|-----------------------------+----------------------------------------------------|
+
+- performance metrics
+|----------+----------------+-------------------+-------------------------------------------|
+| Priority | Value          | Measurement Units | Description                               |
+|----------+----------------+-------------------+-------------------------------------------|
+|        1 | Operation time | milliseconds      | Time spent on every HTTP/RPC/DB operation |
+|----------+----------------+-------------------+-------------------------------------------|
+
+
 
 
 
 *** Readings
 
-**** CockroachDB
+**** Distributed databases: [[https://www.youtube.com/watch?v=6OFeuNy39Qg][The hows and whys of a distributed SQL database]] by Alex Robinson
 - history
   - first databases were tightly coupled, required a lot of work to use
   - 70s SQL RDBMS queries really independent from the physical storage used for a single machine
@@ -632,7 +704,8 @@ Une expé qui serait cool à faire c'est : Faire varier la latence entre keyston
 ** Readings
 *** Watch videos
 **** TODO Raft
-**** TODO CockroachDB
+**** DONE CockroachDB
+     CLOSED: [2018-01-17 mer. 14:41]
 
 * Readings
 

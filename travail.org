@@ -561,7 +561,7 @@ openstack --profile SECRET_KEY server create --image <image> --flavor <flavor> <
 |-----------------------------+----------------------------------------------------|
 | Parameter name              | Value                                              |
 |-----------------------------+----------------------------------------------------|
-| OpenStack release           | Pike                                               |
+| OpenStack release           | Liberty, Mitaka                                    |
 | Cache                       | on, off                                            |
 | Token type                  | UUID, fernet                                       |
 | Environment characteristics | single node, multi-node (clusterized DB/memcached) |
@@ -704,12 +704,44 @@ openstack --profile SECRET_KEY server create --image <image> --flavor <flavor> <
 |----------+-------------+-------------------+----------------------------------------|
 
 
+**** Our tests
 
+- First proposition
+- Goal :: compare Keystone over Cockroach and Keystone over Galera
+- parameters
 
+|-----------------------------+-------------------------------|
+| Parameter name              | Value                         |
+|-----------------------------+-------------------------------|
+| OpenStack release           | Pike                          |
+| Database                    | MySQL (Galera), CockroachDB   |
+| Latency between services    | 1, 10, 100, 1000 ms           |
+| Environment characteristics | single node, multi-node       |
+| Number of threads           | 20, 40, 60, 80, 120, 160, 200 |
+| Replication                 | 1, 3                          |
+|-----------------------------+-------------------------------|
+
+- Feels like I have no idea what I'm doing, so I submit the parameters to Ronan
+  + He confirms that he's not sure if CockroachDB support threads
+    - I found no information regarding multithreading for CockroachDB, so it won't be relevant
+  + He also finds that the latencies are not relevant
+    - I use [[https://wondernetwork.com/pings/Tokyo][the array he gave me]] to put better value
+    - He adds that usually it takes at maximum 400ms to ping the entire world
+    - I am not sure whether I should add 500ms or it won't be relevant
+
+|-----------------------------+-------------------------------|
+| Parameter name              | Value                         |
+|-----------------------------+-------------------------------|
+| OpenStack release           | Pike                          |
+| Database                    | MySQL (Galera), CockroachDB   |
+| Latency between services    | LAN, 10, 25, 100, 250, 500 ms |
+| Environment characteristics | single node, multi-node       |
+| Replication                 | 1, 3                          |
+|-----------------------------+-------------------------------|
 
 *** Readings
 
-**** Distributed databases: [[https://www.youtube.com/watch?v=6OFeuNy39Qg][The hows and whys of a distributed SQL database]] by Alex Robinson
+**** The hows and whys of a distributed SQL database by Alex Robinson
 - history
   - first databases were tightly coupled, required a lot of work to use
   - 70s SQL RDBMS queries really independent from the physical storage used for a single machine
@@ -794,6 +826,12 @@ openstack --profile SECRET_KEY server create --image <image> --flavor <flavor> <
 	   - restart one ?
 
 
+*** DONE Attending #openstack-meeting
+    CLOSED: [2018-01-17 mer. 17:02]
+
+
+
+
 * Todos
 ** TODO Experience
 #+BEGIN_EXAMPLE
@@ -805,7 +843,7 @@ Une expé qui serait cool à faire c'est : Faire varier la latence entre keyston
 **** TODO Raft
 **** DONE CockroachDB
      CLOSED: [2018-01-17 mer. 14:41]
-
+[[The hows and whys of a distributed SQL database by Alex Robinson]]
 
 * Readings
 
@@ -816,9 +854,14 @@ Une expé qui serait cool à faire c'est : Faire varier la latence entre keyston
 - [[https://www.youtube.com/watch?v=6OFeuNy39Qg][The hows and whys of a distributed SQL database]] by Alex Robinson
 - [[http://vitess.io/][Vitess site]]
 - [[https://beyondtheclouds.github.io/blog/openstack/cockroachdb/2017/12/22/a-poc-of-openstack-keystone-over-cockroachdb.html][BTC blog article about Keystone over CockroachDB]]
+- [[https://static.googleusercontent.com/media/research.google.com/en//pubs/archive/46103.pdf][Spanner: Becoming a SQL System]]
+- [[https://www.organicdesign.co.nz/files/4/48/Scalaris.pdf][Scalaris: Reliable Transactional P2P Key/Value Store]]
+- [[https://www.mysql.com/products/cluster/scalability.html][MySQL NDB Cluster: Scalability]]
+- [[https://www.cockroachlabs.com/docs/stable/configure-replication-zones.html][Configuring Replication Zone on Cockroach]]
 
 ** Others
 - [[https://en.wikipedia.org/wiki/Paxos_(computer_science)][Paxos]]
+- [[http://cnp.neclab.eu/projects/lightvm/lightvm.pdf][My VM is Lighter (and Safer) than your container]] (section 5.1)
 
 
 * How to

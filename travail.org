@@ -382,6 +382,156 @@ Worker Balance
 
 - Better foundation for system building
 
+*** To go further
+
+- [[http://thesecretlivesofdata.com/raft/][Animated explanation about Raft]]
+  + Nothing really new but could be a good starting point if I have to explain Raft
+- [[https://www.youtube.com/watch?v=YbZ3zDzDnrw&index=9&list=WL][Raft lecture video]]
+
+
+** Wednesday 17 January [2018-01-17 mer.]
+
+*** Working on performance tests
+
+- 2 starting points:
+  + [[https://docs.openstack.org/performance-docs/latest/test_plans/keystone/plan.html][Keystone Performance testing]]
+  + [[https://docs.openstack.org/performance-docs/latest/test_plans/db/plan.html][SQL Database Test plan]]
+
+**** Keystone
+
+***** Test plan
+
+- uses Keystone (obviously), OSprofiler and Ceilometer
+  + I suspect we will use Enos so we won't have to use Ceilometer
+
+***** Test environment
+
+- 2 types of installations:
+ - single (all-in-one) installation
+   + both controller and computer
+ - multi-node installation
+   + 4 nodes:
+     - 1 compute node simulates typical OS typical activity
+     - 3 controller nodes simulate activity typical for OS control plane services
+       + includes 3 instances of MySQL managed by Galera cluster and memcached cluster for Keystone caching
+
+- Preparation
+  + OSprofiler library is installed on all environment nodes
+     - ensure every services needed supports OSprofiler
+  + needs Ceilometer for persistent profiling events storage
+  + OS services must be configured to allow cross-project request profiling
+    - managed on single-node by OSprofiler plugin
+    - on multi-node this need to be tracked separately
+  + the test cases compare the effectiveness of the use of Keystone database and cache operations
+    - requires Keystone reconfiguration depending on whether the cache mechanism is used (cf cache section of keystone.conf)
+
+#+BEGIN_EXAMPLE
+[cache]
+enabled = True|False
+backend = oslo_cache.memcache_pool
+memcache_servers = <memcached_host>:<memcached_port>[,<memcached_host>:<memcached_port>]
+expiration_time = 600
+#+END_EXAMPLE
+
+****** Single node installation
+
+- use DevStack targeted at developers and CI systems, their conf looked like this:
+#+BEGIN_EXAMPLE
+[[local|localrc]]
+ADMIN_PASSWORD=password
+DATABASE_PASSWORD=$ADMIN_PASSWORD
+RABBIT_PASSWORD=$ADMIN_PASSWORD
+SERVICE_PASSWORD=$ADMIN_PASSWORD
+
+LIBS_FROM_GIT=osprofiler,python-openstackclient
+
+NOVA_REPO=https://review.openstack.org/p/openstack/nova
+NOVA_BRANCH=refs/changes/03/254703/39
+
+KEYSTONE_REPO=https://review.openstack.org/p/openstack/keystone
+KEYSTONE_BRANCH=refs/changes/35/294535/2
+
+NEUTRON_REPO=https://review.openstack.org/p/openstack/neutron
+NEUTRON_BRANCH=refs/changes/51/273951/12
+
+disable_service n-net horizon
+enable_service q-svc q-dhcp q-meta q-agt q-l3 neutron
+
+enable_plugin ceilometer https://git.openstack.org/openstack/ceilometer.git
+enable_plugin osprofiler https://github.com/openstack/osprofiler.git
+#+END_EXAMPLE
+- add Fernet tokens usage (Symmetric key encryption) if default token format is still UUID
+#+BEGIN_EXAMPLE
+KEYSTONE_TOKEN_FORMAT=fernet
+#+END_EXAMPLE
+- have to have identical cache configuration for Keystone authtoken middleware
+  + if cache is external (memcached):
+#+BEGIN_EXAMPLE
+[keystone_authtoken]
+memcache_servers = <memcached_host>:<memcached_port>[,<memcached_host>:<memcached_port>]
+signing_dir = <signing_dir>
+cafile = <cafile.pem>
+auth_uri = <auth_uri>
+project_domain_id = <domain>
+project_name = <service>
+user_domain_id = <domain>
+password = <password>
+username = <project_user_name>
+auth_url = <auth_url>
+auth_plugin = <password>
+#+END_EXAMPLE
+
+****** Multi node installation
+
+- depends of the chosen OS deployment tool
+- OSprofiler, Nova, Neutron and Keystone might have to be patched (links in the plan if necessary)
+- enable Ceilometer in the ~event_definitions.yaml~
+#+BEGIN_EXAMPLE
+- event_type: profiler.*
+  traits:
+    project:
+      fields: payload.project
+    service:
+      fields: payload.service
+    name:
+      fields: payload.name
+    base_id:
+      fields: payload.base_id
+    trace_id:
+      fields: payload.trace_id
+    parent_id:
+      fields: payload.parent_id
+    timestamp:
+      fields: payload.timestamp
+    host:
+      fields: payload.info.host
+    path:
+      fields: payload.info.request.path
+    query:
+      fields: payload.info.request.query
+    method:
+      fields: payload.info.request.method
+    scheme:
+      fields: payload.info.request.scheme
+    db.statement:
+      fields: payload.info.db.statement
+    db.params:
+      fields: payload.info.db.params
+#+END_EXAMPLE
+- and for extended tracing informations in the ~ceilometer.conf~
+#+BEGIN_EXAMPLE
+[event]
+store_raw=info
+#+END_EXAMPLE
+- *beware* either turn off not needed events in the .yaml file or save enough room for the Ceilometer backend storage because every info level event will be stored
+- for every service, in their .conf file
+#+BEGIN_EXAMPLE
+[profiler]
+enabled = True
+trace_sqlalchemy = True
+hmac_keys = SECRET_KEY
+#+END_EXAMPLE
+- they turned profiling on for Cinder, Glance, Nova, Neutron and Keystone.
 
 * Readings
 

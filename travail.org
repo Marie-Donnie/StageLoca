@@ -533,6 +533,90 @@ hmac_keys = SECRET_KEY
 #+END_EXAMPLE
 - they turned profiling on for Cinder, Glance, Nova, Neutron and Keystone.
 
+
+
+
+*** Readings
+
+**** CockroachDB
+- history
+  - first databases were tightly coupled, required a lot of work to use
+  - 70s SQL RDBMS queries really independent from the physical storage used for a single machine
+  - 80-90s beginning of object-oriented databases tries but not really worked
+    + lacked a standard API like SQL
+  - early 2000s custom sharding
+    + db grew rapidly \to required sharding
+    + w/o cross-shard transactions, really hard to operate
+  - 2004s NoSQL gave up the relational model, no transactions, no indexes, manual joins
+  - 2010s NewSQL /distributed db
+    + easier to let developers deal with lack of performance than the lack of transactions
+    + attempt to combine the best of both worlds
+- how they are built
+  - mostly about spanner and cockroachDB
+  - data distribution
+    + in SQL
+      - all data on one server
+      - manually shard data across separate DB instances
+    + in NoSQL/NewSQL core assumption that you have to cut your data at some point
+      - how do you find a particular piece of data
+      - how do you divide the data
+    + hashing: easy to locate data, but problem: you can do range scans (don't maintain ordering of the data)
+      - used in cassandra by default, dynamoDB(amazon)
+      - not used in NewSQL
+    + order-preserving: put all your data layed out alphatical order and split up into chunks
+      - chunks from A to C, etc. (for example)
+      - easy to split, efficient scans of the data (range scan) even if data can be on separate nodes
+      - no longer have the deterministic function to find where a key is(require additional indexing to find the data)
+      - range index to indicate where a piece of data is, don't change too often
+      - have to decide when to split (if too big, slow to move data, if too small, the range-index gets to be huge)
+    + data-distribution
+      - placement: each range is replicated 3 or more times
+      - rebalancing when adding a new node for replication
+      - recovery: create new copies of the data to have enough replicants
+    + data replication
+      - keeping copies in sync
+	- cold backups: you don't expect them to be up-to-date
+	- primary-secondary replication:
+	  + one of the copy is the primary takes all of the writes (sometimes all the reads)
+	  + the primary send info to the secondary
+	  + asynchronous replication
+	    - secondary don't receive instantanously data \to failover would loose recent writes
+	  + sync..
+	    - extra network delays when you're waiting for the writings to get done
+	    - what to do when secondary fails?
+	  + failovers are really hard to get right
+      - keeping copies in sync in NoSQL db
+	+ eventually consistent
+	+ different methods to keep data consistent, but usually fail (CRDT eventually converge)
+      - keeping copies in sync in NewSQL db
+	+ uses distributed consensus protocol
+	  - Paxos (really hard)
+	  - Raft (available openly)
+	+ have an odd number of nodes
+	+ commit when a majority of nodes comes to a consensus
+	+ speaker explains Raft
+	  - during failover of a leader before commiting, the write is abandonned
+      - consensus in NewSQL db
+	+ run one consensus group *per* range of data
+    + transactions
+      - ACID transactions (Atomic, Consistent, Isolated, Durable)
+      - SQL databases
+	+ atomiticity bootstrapped off a lower-level atomic primitive: log writes
+	  - all mutations part of a transaction get tagged with a transaction
+	+ isolation
+	  - R/W locks \to require deadlock detection
+	  - MVCC timestamp on each row \to versioning of the row
+* Todos
+** TODO Experience
+#+BEGIN_EXAMPLE
+Une expé qui serait cool à faire c'est : Faire varier la latence entre keystone et les autres services, puis voir jusqu'à quelle latence le temps d'exécution du control plane est acceptable
+#+END_EXAMPLE
+
+** Readings
+*** Watch videos
+**** TODO Raft
+**** TODO CockroachDB
+
 * Readings
 
 ** Preliminary

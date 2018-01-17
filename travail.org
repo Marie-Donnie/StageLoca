@@ -728,16 +728,31 @@ openstack --profile SECRET_KEY server create --image <image> --flavor <flavor> <
     - I use [[https://wondernetwork.com/pings/Tokyo][the array he gave me]] to put better value
     - He adds that usually it takes at maximum 400ms to ping the entire world
     - I am not sure whether I should add 500ms or it won't be relevant
+    - Removed 500, changed the intervals a bit
+    - Added 5 replicates because it is usually recommended
 
-|-----------------------------+-------------------------------|
-| Parameter name              | Value                         |
-|-----------------------------+-------------------------------|
-| OpenStack release           | Pike                          |
-| Database                    | MySQL (Galera), CockroachDB   |
-| Latency between services    | LAN, 10, 25, 100, 250, 500 ms |
-| Environment characteristics | single node, multi-node       |
-| Replication                 | 1, 3                          |
-|-----------------------------+-------------------------------|
+|-----------------------------+-----------------------------|
+| Parameter name              | Value                       |
+|-----------------------------+-----------------------------|
+| OpenStack release           | Pike                        |
+| Database                    | MySQL (Galera), CockroachDB |
+| Latency between services    | LAN, 10, 50, 100, 300 ms    |
+| Environment characteristics | single node, multi-node     |
+| Replication                 | 1, 3, 5                     |
+|-----------------------------+-----------------------------|
+
+- Have to add number of nodes in the swarm
+
+|-----------------------------+-----------------------------|
+| Parameter name              | Value                       |
+|-----------------------------+-----------------------------|
+| OpenStack release           | Pike                        |
+| Database                    | MySQL (Galera), CockroachDB |
+| Latency between services    | LAN, 10, 50, 100, 300 ms    |
+| Environment characteristics | single node, multi-node     |
+| Cluster size                | 1, 5, 25, 100               |
+| Replication                 | 1, 3, 5                     |
+|-----------------------------+-----------------------------|
 
 *** Readings
 

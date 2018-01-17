@@ -606,6 +606,23 @@ hmac_keys = SECRET_KEY
 	+ isolation
 	  - R/W locks \to require deadlock detection
 	  - MVCC timestamp on each row \to versioning of the row
+	    + access to historical data
+	    + allow long read only transactions to not block new writes
+      - NoSQL db
+	+ many systems don't offer transaction at all
+      - NewSQL db
+	+ support traditional ACID semantics
+	+ atomicity bootstrapped off distributed consensus
+	+ isolation can be handled similarly to single node SQL db
+      - CockroachDB
+	+ use MVCC
+	+ consensus write with number of transaction
+	+ when the key for transaction is still present, it's not committed and so reads won't take this key into account
+	+ when write conflict happens (ex: same key two times on the same range)
+	   - aborting? requires priority to know which one to abort
+	   - restart one ?
+
+
 * Todos
 ** TODO Experience
 #+BEGIN_EXAMPLE

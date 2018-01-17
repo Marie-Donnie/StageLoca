@@ -399,12 +399,10 @@ Worker Balance
 
 **** Keystone
 
-***** Test plan
-
 - uses Keystone (obviously), OSprofiler and Ceilometer
   + I suspect we will use Enos so we won't have to use Ceilometer
 
-***** Test environment
+- Test environment
 
 - 2 types of installations:
  - single (all-in-one) installation
@@ -433,7 +431,7 @@ memcache_servers = <memcached_host>:<memcached_port>[,<memcached_host>:<memcache
 expiration_time = 600
 #+END_EXAMPLE
 
-****** Single node installation
+***** Single node installation
 
 - use DevStack targeted at developers and CI systems, their conf looked like this:
 #+BEGIN_EXAMPLE
@@ -481,7 +479,7 @@ auth_url = <auth_url>
 auth_plugin = <password>
 #+END_EXAMPLE
 
-****** Multi node installation
+***** Multi node installation
 
 - depends of the chosen OS deployment tool
 - OSprofiler, Nova, Neutron and Keystone might have to be patched (links in the plan if necessary)
@@ -533,7 +531,7 @@ hmac_keys = SECRET_KEY
 #+END_EXAMPLE
 - they turned profiling on for Cinder, Glance, Nova, Neutron and Keystone.
 
-****** Test Case 1: Keystone DB / cache operations analysis
+***** Test Case 1: Keystone DB / cache operations analysis
 
 - records all HTTP, RPC and DB calls in selected control plane operations
   + includes Keystone operations and their duration (via OSprofiler)
@@ -578,8 +576,7 @@ openstack --profile SECRET_KEY server create --image <image> --flavor <flavor> <
 
 - *beware* OSProfiler wrapper includes time spent on Python operations inside methods. For DB calls tracing OSprofiler uses =before/after_cursor_execute=
 
-
-****** Test Case 2: Keystone DB / cache operations analysis (HA version)
+***** Test Case 2: Keystone DB / cache operations analysis (HA version)
 
 - adds failover testing component
   + first test run is the same as test case 1
@@ -603,6 +600,108 @@ openstack --profile SECRET_KEY server create --image <image> --flavor <flavor> <
 |----------+----------------+-------------------+-------------------------------------------|
 |        1 | Operation time | milliseconds      | Time spent on every HTTP/RPC/DB operation |
 |----------+----------------+-------------------+-------------------------------------------|
+
+
+
+**** SQL Database Test Plan
+
+- what are the best pratices for scale and performance of SQL database deployments in OS while maintaining avaibility or all ACID properties?
+- only MySQL and variants
+- testing done in isolation from other OS components
+- Two parts on this plan:
+  1. use sysbench to drive simple queries
+  2. real db extracted from a deployed production OS and a set of corresponding queries
+     + the queries can be played on the same db with various configurations
+
+- Test environment
+  + Cluster of 3 hosts for db tests with replication
+  + Tests w/o replication use only 1 of these servers
+  + 1 additional client machine
+  + Hardware is full documented (processor model and frequency, memory size, storage type and capacity, networking interfaces, etc.)
+
+***** Preparation
+
+- On all 3 DB server hosts (details in the report)
+  + MySQL installation
+  + MariaDB installation
+  + Percona Cluster installation
+  + Parameters defined in ~/etc/mysql/my.cnf~
+  + Permissions defined for database user
+- Description of the environment:
+  + hardware, as stated above
+  + software
+    - which ubuntu
+    - =ssh_config=
+    - "recent" versions of MySQL, MariaDB, Percona, sysbench (keeping in mind that they use Ubuntu 14.04)
+  + sysbench description on 3 hosts
+    - examples of sysbench commands used for preparation and run
+
+***** Test case 1: sysbench
+
+- Parameters
+
+|-------------------+-------------------------------|
+| Parameter         | Value                         |
+|-------------------+-------------------------------|
+| Database          | MySQL, MariaDB, Percona       |
+| Number of threads | 20, 40, 60, 80, 120, 160, 200 |
+| Replication       | 1, 3                          |
+|-------------------+-------------------------------|
+
+- Database configurations
+  + MySQL/InnoDB with Galera
+  + MariaDB/XtraDB with Galera
+  + MariaDB/InnoDB with Galera
+  + Percona Cluster/XtraDB with Galera
+  + MySQL with NDB
+  + PostgreSQL
+
+- Performance metrics
+
+|----------+-------------+-------------------+----------------------------------------|
+| Priority | Value       | Measurement units | Description                            |
+|----------+-------------+-------------------+----------------------------------------|
+|        1 | throughput  | tps               | transactions/sec, measured by the tool |
+|        1 | query lat   | millisec          | query latency, measured by MySQL       |
+|        2 | CPU util    | percent           | Average CPU utilization on db server   |
+|        2 | Rx BW       | MB/sec            | Average Network receive bandwidth      |
+|        2 | Tx BW       | MB/sec            | Average Network transmit bandwidth     |
+|        2 | Read BW     | MB/sec            | Average storage read bandwidth         |
+|        2 | Write BW    | MB/sec            | Average storage write bandwidth        |
+|        2 | Storage lat | millisec          | Average storage latency                |
+|----------+-------------+-------------------+----------------------------------------|
+
+***** Test case 2: Database Testing Tool
+
+- goal : quantify query performance with an real OS DB and corresponding queries to develop a portable tool to test DB.
+- uses a backup from Mirantis' 200-node cluster and the corresponding queries, imported in different db
+- ultimate goal:
+  + which software is best for OpenStack
+  + how to best configure database parameters
+  + which OpenStack queries consume the most resources and are therefore the best candidates for optimization
+- parameters
+|-------------------+-------------------------------|
+| Parameter         | Value                         |
+|-------------------+-------------------------------|
+| Database          | MySQL, MariaDB, Percona       |
+| Number of threads | 20, 40, 60, 80, 120, 160, 200 |
+| Replication       | 1, 3                          |
+|-------------------+-------------------------------|
+
+- performance metrics
+|----------+-------------+-------------------+----------------------------------------|
+| Priority | Value       | Measurement Units | Description                            |
+|----------+-------------+-------------------+----------------------------------------|
+|        1 | throughput  | tps               | transactions/sec, measured by the tool |
+|        1 | query lat   | millisec          | query latency, measured by the tool    |
+|        2 | CPU util    | percent           | Average CPU utilization on db server   |
+|        2 | Memory util | MB                | Memory used on the server              |
+|        2 | Rx BW       | MB/sec            | Average Network receive bandwidth      |
+|        2 | Tx BW       | MB/sec            | Average Network transmit bandwidth     |
+|        2 | Read BW     | MB/sec            | Average storage read bandwidth         |
+|        2 | Write BW    | MB/sec            | Average storage write bandwidth        |
+|        2 | Storage lat | millisec          | Average storage latency                |
+|----------+-------------+-------------------+----------------------------------------|
 
 
 
@@ -707,6 +806,7 @@ Une expé qui serait cool à faire c'est : Faire varier la latence entre keyston
 **** DONE CockroachDB
      CLOSED: [2018-01-17 mer. 14:41]
 
+
 * Readings
 
 ** Preliminary
@@ -719,6 +819,7 @@ Une expé qui serait cool à faire c'est : Faire varier la latence entre keyston
 
 ** Others
 - [[https://en.wikipedia.org/wiki/Paxos_(computer_science)][Paxos]]
+
 
 * How to
 

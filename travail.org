@@ -848,17 +848,22 @@ openstack --profile SECRET_KEY server create --image <image> --flavor <flavor> <
 
 
 * Todos
-** TODO Experience
+** Readings
+*** Watch videos
+**** TODO Raft
+
+** Done
+
+**** DONE Experience
+   CLOSED: [2018-01-17 mer. 18:33]
 #+BEGIN_EXAMPLE
 Une expé qui serait cool à faire c'est : Faire varier la latence entre keystone et les autres services, puis voir jusqu'à quelle latence le temps d'exécution du control plane est acceptable
 #+END_EXAMPLE
 
-** Readings
-*** Watch videos
-**** TODO Raft
 **** DONE CockroachDB
      CLOSED: [2018-01-17 mer. 14:41]
 [[The hows and whys of a distributed SQL database by Alex Robinson]]
+
 
 * Readings
 

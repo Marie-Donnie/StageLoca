@@ -1,16 +1,16 @@
-#+TITLE: Report for : Un intergiciel d’une base de données NewSQL qui considère la localité de l’application cliente
+#+TITLE: Report for : Un intergiciel d’une base de données NewSQL qui considère la localité de l’application cliente -- 1st week --
 #+AUTHOR: Marie Delavergne
 
 
-* 1st week
-** Monday 15 January [2018-01-15 lun.]
 
-*** Installation
+* Monday 15 January [2018-01-15 lun.]
+
+** Installation
 
 - Solving administrative problems (account creations, etc.)
 - Working in office B226
 
-*** Preparations
+** Preparations
 
 - Cleaned boookmarks to be able to find them more rapidly
 - Created folder and repo github for my work.
@@ -19,9 +19,9 @@
 - WARNING : I can't run Vagrant without disabling secure boot
 
 
-*** Readings
+** Readings
 
-**** Spanner
+*** Spanner
 
 - 2013
 - DB
@@ -75,23 +75,23 @@
 - Related works
   + VoltDB uses NewSQL
 
-*** Meeting
+** Meeting
 
 - 14:15 with msimonin
 
-**** Work
+*** Work
 - Keystone with specific scenarii
   + tempest has more coverage (especially with the new decorator)
 
 
-** Thursday 16 January [2018-01-16 mar.]
+* Thursday 16 January [2018-01-16 mar.]
 
-*** Openstack Cockroach Dev
+** Openstack Cockroach Dev
 
 - Resumed vagrant launched yesterday evening
 - Used ~vagrant ssh~ to jump to the deployed machine
 
-**** Running tempest
+*** Running tempest
 - Jumped to tempest folder
 - Used ~testr init~ and then ~testr run --parallel tempest.scenario~ to run tests from [[https://www.openstack.org/assets/presentation-media/TempestScenarioTests-20140512.pdf][Tempest Scenarios Tests]]
   + Received some errors like these :
@@ -218,9 +218,9 @@ Worker Balance
 
 - After asking my tutor, turns out that the branch was an old one so I just made my PR to cockroachdb/pike
 
-*** Readings
+** Readings
 
-**** Raft
+*** Raft
 
 - Goal is to have a result equivalent to Paxos, but more understandable and easier to learn
 - Consensus algorithms "allow a collection of machines to work as a coherent group that can survive the failures of some of its members"
@@ -234,7 +234,7 @@ Worker Balance
   + Membership changes :: two different configurations overlap when changing the set of servers in a cluster
 - Safety properties formally specified and proven
 
-***** Replicated state machine problem
+**** Replicated state machine problem
 
 - Consensus algorithms are used in the context of RSM
   + Replicated State Machines:: state machines in a collection of servers compute identical copies of the same state and continue operating even if some of the servers are down
@@ -253,7 +253,7 @@ Worker Balance
   + consistency of the logs independent of timing
   + speed: for most cases, a given command is completed when a majority of the cluster has responded to a single round of remote procedure calls
 
-***** Strengths and weaknesses of Paxos
+**** Strengths and weaknesses of Paxos
 
 - Largely used, at least as a starting point
 - Different level of Paxos:
@@ -268,7 +268,7 @@ Worker Balance
   + time consuming and error-prone
   + worse: since the implementations are too different, the correctness of Paxos can't be verified
 
-***** General approach to understandability
+**** General approach to understandability
 
 - Raft had to:
   + provide a complete and practical foundation for system building
@@ -282,7 +282,7 @@ Worker Balance
   + each time a choice had to be made, it was always for understandability
   + two techniques were used, as seen previously (decomposition and state space reduction)
 
-***** Raft consensus algorithm
+**** Raft consensus algorithm
 
 1. Election of a leader
    - if a leader fails or is disconnected, a new leader is elected
@@ -361,7 +361,7 @@ Worker Balance
 
 - Clients and log compaction can be found in the [[https://ramcloud.stanford.edu/raft.pdf][extended version of the paper]].
 
-***** Raft evaluation
+**** Raft evaluation
 
 - Raft implementation contains ~2000 lines of C++ code
 - available on [[http://github.com/logcabin/logcabin][Github]]
@@ -370,7 +370,7 @@ Worker Balance
 - performance similar to other consensus algorithms
 - recommands using a conservative election timeout such as 150-300ms
 
-***** Related work
+**** Related work
 
 - Lamport description of Paxos
 - Elaborations of Paxos
@@ -378,26 +378,26 @@ Worker Balance
 - Performance optimizations that can be applied to Paxos
 - Viewstamped Replication from Oki and Liskov
 
-***** Conclusion
+**** Conclusion
 
 - Better foundation for system building
 
-*** To go further
+** To go further
 
 - [[http://thesecretlivesofdata.com/raft/][Animated explanation about Raft]]
   + Nothing really new but could be a good starting point if I have to explain Raft
 - [[https://www.youtube.com/watch?v=YbZ3zDzDnrw&index=9&list=WL][Raft lecture video]]
 
 
-** Wednesday 17 January [2018-01-17 mer.]
+* Wednesday 17 January [2018-01-17 mer.]
 
-*** Working on performance tests
+** Working on performance tests
 
 - 2 starting points:
   + [[https://docs.openstack.org/performance-docs/latest/test_plans/keystone/plan.html][Keystone Performance testing]]
   + [[https://docs.openstack.org/performance-docs/latest/test_plans/db/plan.html][SQL Database Test plan]]
 
-**** Keystone
+*** Keystone
 
 - uses Keystone (obviously), OSprofiler and Ceilometer
   + I suspect we will use Enos so we won't have to use Ceilometer
@@ -431,7 +431,7 @@ memcache_servers = <memcached_host>:<memcached_port>[,<memcached_host>:<memcache
 expiration_time = 600
 #+END_EXAMPLE
 
-***** Single node installation
+**** Single node installation
 
 - use DevStack targeted at developers and CI systems, their conf looked like this:
 #+BEGIN_EXAMPLE
@@ -479,7 +479,7 @@ auth_url = <auth_url>
 auth_plugin = <password>
 #+END_EXAMPLE
 
-***** Multi node installation
+**** Multi node installation
 
 - depends of the chosen OS deployment tool
 - OSprofiler, Nova, Neutron and Keystone might have to be patched (links in the plan if necessary)
@@ -531,7 +531,7 @@ hmac_keys = SECRET_KEY
 #+END_EXAMPLE
 - they turned profiling on for Cinder, Glance, Nova, Neutron and Keystone.
 
-***** Test Case 1: Keystone DB / cache operations analysis
+**** Test Case 1: Keystone DB / cache operations analysis
 
 - records all HTTP, RPC and DB calls in selected control plane operations
   + includes Keystone operations and their duration (via OSprofiler)
@@ -576,7 +576,7 @@ openstack --profile SECRET_KEY server create --image <image> --flavor <flavor> <
 
 - *beware* OSProfiler wrapper includes time spent on Python operations inside methods. For DB calls tracing OSprofiler uses =before/after_cursor_execute=
 
-***** Test Case 2: Keystone DB / cache operations analysis (HA version)
+**** Test Case 2: Keystone DB / cache operations analysis (HA version)
 
 - adds failover testing component
   + first test run is the same as test case 1
@@ -603,7 +603,7 @@ openstack --profile SECRET_KEY server create --image <image> --flavor <flavor> <
 
 
 
-**** SQL Database Test Plan
+*** SQL Database Test Plan
 
 - what are the best pratices for scale and performance of SQL database deployments in OS while maintaining avaibility or all ACID properties?
 - only MySQL and variants
@@ -619,7 +619,7 @@ openstack --profile SECRET_KEY server create --image <image> --flavor <flavor> <
   + 1 additional client machine
   + Hardware is full documented (processor model and frequency, memory size, storage type and capacity, networking interfaces, etc.)
 
-***** Preparation
+**** Preparation
 
 - On all 3 DB server hosts (details in the report)
   + MySQL installation
@@ -636,7 +636,7 @@ openstack --profile SECRET_KEY server create --image <image> --flavor <flavor> <
   + sysbench description on 3 hosts
     - examples of sysbench commands used for preparation and run
 
-***** Test case 1: sysbench
+**** Test case 1: sysbench
 
 - Parameters
 
@@ -671,7 +671,7 @@ openstack --profile SECRET_KEY server create --image <image> --flavor <flavor> <
 |        2 | Storage lat | millisec          | Average storage latency                |
 |----------+-------------+-------------------+----------------------------------------|
 
-***** Test case 2: Database Testing Tool
+**** Test case 2: Database Testing Tool
 
 - goal : quantify query performance with an real OS DB and corresponding queries to develop a portable tool to test DB.
 - uses a backup from Mirantis' 200-node cluster and the corresponding queries, imported in different db
@@ -704,7 +704,7 @@ openstack --profile SECRET_KEY server create --image <image> --flavor <flavor> <
 |----------+-------------+-------------------+----------------------------------------|
 
 
-**** Our tests
+*** Our tests
 
 - First proposition
 - Goal :: compare Keystone over Cockroach and Keystone over Galera
@@ -754,9 +754,9 @@ openstack --profile SECRET_KEY server create --image <image> --flavor <flavor> <
 | Replication                 | 1, 3, 5                     |
 |-----------------------------+-----------------------------|
 
-*** Readings
+** Readings
 
-**** The hows and whys of a distributed SQL database by Alex Robinson
+*** The hows and whys of a distributed SQL database by Alex Robinson
 - history
   - first databases were tightly coupled, required a lot of work to use
   - 70s SQL RDBMS queries really independent from the physical storage used for a single machine
@@ -841,15 +841,15 @@ openstack --profile SECRET_KEY server create --image <image> --flavor <flavor> <
 	   - restart one ?
 
 
-*** DONE Attending #openstack-meeting
-    CLOSED: [2018-01-17 mer. 17:02]
+** DONE Attending #openstack-meeting
+   CLOSED: [2018-01-17 mer. 17:02]
 
 
 
 
-** Thursday 18 January [2018-01-18 jeu.]
+* Thursday 18 January [2018-01-18 jeu.]
 
-*** Todos before going anywhere
+** Todos before going anywhere
 
 - After discussions with Ronan yesterday evening, we decided we have to think a little further on the experiments.
   + he gave me things to look up:
@@ -858,7 +858,7 @@ openstack --profile SECRET_KEY server create --image <image> --flavor <flavor> <
   + we have to test Keystone over CockroachDB and Keystone over Galera AND tests using sysbench
     - he gave me this [[https://github.com/akopytov/sysbench/issues/180][link]] which indicates that sysbench supports CockroachDB, which will considerably reduce the effort for the tests
 
-**** Advice on benchmarking databases
+*** Advice on benchmarking databases
 
 1. Pick multiple workloads that covers all behaviors in each database.
 2. Get experts from each vendor to tune the test and OS \to will be hard :D
@@ -877,7 +877,7 @@ openstack --profile SECRET_KEY server create --image <image> --flavor <flavor> <
 
 - Hopefully I will keeep all of that in mind, but some advice seems really hard to use in practice.
 
-**** ACID notes
+*** ACID notes
 
 - Quick reminder:
   - Atomicity :: a transaction is all or nothing
@@ -888,13 +888,15 @@ openstack --profile SECRET_KEY server create --image <image> --flavor <flavor> <
 - The ~serializable~ level of isolation is the strongest one. ~Serializable~ transactions run as if only one transaction were running at a time.
   + bad performance
 - The ~snapshot~ level guarantees that all reads made in a transaction will see a consistent snapshot of the database, i.e. the last committed values that existed when the current transaction started.
-  + better performance because no blocks
+  + better performance because no blocks but write skews happens
+
+- A write skew appears when two concurrent updates apply on the same range of values and commit without conflicting, but produce a non sens result.
 
 - Supposedly, CockroachDB ensures consistency using Raft algorithm so no client would have a stale read (i.e. he won't read an old value for the piece of data he wanted)
 
 
 
-*** Still working on performance tests
+** Still working on performance tests plan
 
 - Goal :: compare Keystone over Cockroach and Keystone over Galera
 
@@ -908,3 +910,251 @@ openstack --profile SECRET_KEY server create --image <image> --flavor <flavor> <
 | Cluster size                | 1, 5, 25, 100               |
 | Replication                 | 1, 3, 5                     |
 |-----------------------------+-----------------------------|
+
+** Sysbench
+
+- Trying to get it to work on the vagrant machine deployed using ~openstack-cockroachdb-dev~
+  - made a dir in stack's home directory called sysbench and then
+    #+BEGIN_SRC
+    curl -s https://packagecloud.io/install/repositories/akopytov/sysbench/script.deb.sh | sudo bash
+sudo apt -y install sysbench
+    #+END_SRC
+    as indicated on the [[https://github.com/akopytov/sysbench][sysbench github]]
+  - then tried just the dumb first test I've found (on the issue about sysbench support for cockroachDB)
+    #+BEGIN_SRC
+    sysbench --db-driver=pgsql --pgsql-host=cockroachdb --pgsql-port=26257 --pgsql-user=stack --table-size=1000000 oltp_read_write prepare
+    #+END_SRC
+    and got:
+    #+BEGIN_EXAMPLE
+    sysbench 1.0.12 (using bundled LuaJIT 2.1.0-beta2)
+
+    FATAL: Connection to database failed: could not translate host name "cockroachdb" to address: Name or service not known
+
+    FATAL: `sysbench.cmdline.call_command' function failed: /usr/share/sysbench/oltp_common.lua:83: connection creation failed
+    #+END_EXAMPLE
+
+- Probably tried just a bit too fast, going to read a bit more documentation.
+- Ronan told me that maybe it was a port problem. After checking with him, the command had a problem with pgsql-port
+  + we tried with 127.0.0.1:
+
+  #+BEGIN_EXAMPLE
+  stack@contrib-jessie:~/sysbench$ sysbench --db-driver=pgsql --pgsql-host=127.0.0.1 --pgsql-port=26257 --pgsql-user=stack --table-size=1000000 oltp_read_write prepare
+sysbench 1.0.12 (using bundled LuaJIT 2.1.0-beta2)
+
+Creating table 'sbtest1'...
+FATAL: PQexec() failed: 7 database "sbtest" does not exist
+FATAL: failed query was: CREATE TABLE sbtest1(
+  id SERIAL,
+  k INTEGER DEFAULT '0' NOT NULL,
+  c CHAR(120) DEFAULT '' NOT NULL,
+  pad CHAR(60) DEFAULT '' NOT NULL,
+  PRIMARY KEY (id)
+)
+FATAL: `sysbench.cmdline.call_command' function failed: /usr/share/sysbench/oltp_common.lua:197: SQL error, errno = 0, state = '3D000': database "sbtest" does not exist
+  #+END_EXAMPLE
+
+- Connected to CockroachDB with ~cockroach sql --insecure~
+- Created database sbtest ~CREATE DATABASE sbtest~
+- Relaunched the command
+
+#+BEGIN_EXAMPLE
+  stack@contrib-jessie:~/sysbench$ sysbench --db-driver=pgsql --pgsql-host=127.0.0.1 --pgsql-port=26257 --pgsql-user=root --table-size=1000000 oltp_read_write prepare
+sysbench 1.0.12 (using bundled LuaJIT 2.1.0-beta2)
+
+Creating table 'sbtest1'...
+Inserting 1000000 records into 'sbtest1'
+Creating a secondary index on 'sbtest1'...
+stack@contrib-jessie:~/sysbench$
+#+END_EXAMPLE
+
+- So, now it's working -thanks to Ronan-, I will check how I can get the results back.
+- I just reread the command, saw ~prepare~ and so I figured out I have now to ~run~ the tests. I'm using [[https://github.com/akopytov/sysbench][Sysbench github]] to check the commands, but ~sysbench --help~~ also work.
+
+  #+BEGIN_EXAMPLE
+  stack@contrib-jessie:~/sysbench$ sysbench --db-driver=pgsql --pgsql-host=127.0.0.1 --pgsql-port=26257 --pgsql-user=root --table-size=1000000 oltp_read_write run
+sysbench 1.0.12 (using bundled LuaJIT 2.1.0-beta2)
+
+Running the test with following options:
+Number of threads: 1
+Initializing random number generator from current time
+
+
+Initializing worker threads...
+
+Threads started!
+
+SQL statistics:
+    queries performed:
+        read:                            9086
+        write:                           697
+        other:                           3197
+        total:                           12980
+    transactions:                        649    (64.80 per sec.)
+    queries:                             12980  (1296.05 per sec.)
+    ignored errors:                      0      (0.00 per sec.)
+    reconnects:                          0      (0.00 per sec.)
+
+General statistics:
+    total time:                          10.0132s
+    total number of events:              649
+
+Latency (ms):
+         min:                                  9.77
+         avg:                                 15.42
+         max:                                112.64
+         95th percentile:                     21.89
+         sum:                              10007.61
+
+Threads fairness:
+    events (avg/stddev):           649.0000/0.00
+    execution time (avg/stddev):   10.0076/0.00
+
+
+  #+END_EXAMPLE
+
+- Ronan asks me to to the test for postgresql
+- First, I do a cleanup
+#+BEGIN_EXAMPLE
+stack@contrib-jessie:~/sysbench$ sysbench --db-driver=pgsql --pgsql-host=127.0.0.1 --pgsql-port=26257 --pgsql-user=root --table-size=1000000 oltp_read_write cleanup
+sysbench 1.0.12 (using bundled LuaJIT 2.1.0-beta2)
+
+Dropping table 'sbtest1'...
+
+#+END_EXAMPLE
+
+- Then I retry with port 5432, which is the default port for PG.
+  #+BEGIN_EXAMPLE
+  stack@contrib-jessie:~/sysbench$ sysbench --db-driver=pgsql --pgsql-host=127.0.0.1 --pgsql-port=5432 --pgsql-user=root --table-size=1000000 oltp_read_write prepare
+sysbench 1.0.12 (using bundled LuaJIT 2.1.0-beta2)
+
+FATAL: Connection to database failed: FATAL:  database "sbtest" does not exist
+
+FATAL: `sysbench.cmdline.call_command' function failed: /usr/share/sysbench/oltp_common.lua:83: connection creation failed
+
+  #+END_EXAMPLE
+
+- Of course, I didn't create ~sbtest~ on postgresql.
+  - to connect and create a db
+    #+BEGIN_SRC
+    sudo su postgres
+    psql
+    CREATE DATABASE sbtest;
+    #+END_SRC
+
+
+#+BEGIN_EXAMPLE
+stack@contrib-jessie:~/sysbench$ sysbench --db-driver=pgsql --pgsql-host=127.0.0.1 --pgsql-port=5432 --pgsql-user=root --table-size=1000000 oltp_read_write prepare
+sysbench 1.0.12 (using bundled LuaJIT 2.1.0-beta2)
+
+Creating table 'sbtest1'...
+Inserting 1000000 records into 'sbtest1'
+Creating a secondary index on 'sbtest1'...
+stack@contrib-jessie:~/sysbench$ sysbench --db-driver=pgsql --pgsql-host=127.0.0.1 --pgsql-port=5432 --pgsql-user=root --table-size=1000000 oltp_read_write run
+sysbench 1.0.12 (using bundled LuaJIT 2.1.0-beta2)
+
+Running the test with following options:
+Number of threads: 1
+Initializing random number generator from current time
+
+
+Initializing worker threads...
+
+Threads started!
+
+SQL statistics:
+    queries performed:
+        read:                            43330
+        write:                           12380
+        other:                           6190
+        total:                           61900
+    transactions:                        3095   (309.42 per sec.)
+    queries:                             61900  (6188.41 per sec.)
+    ignored errors:                      0      (0.00 per sec.)
+    reconnects:                          0      (0.00 per sec.)
+
+General statistics:
+    total time:                          10.0008s
+    total number of events:              3095
+
+Latency (ms):
+         min:                                  2.32
+         avg:                                  3.23
+         max:                                284.35
+         95th percentile:                      3.82
+         sum:                               9985.19
+
+Threads fairness:
+    events (avg/stddev):           3095.0000/0.00
+    execution time (avg/stddev):   9.9852/0.00
+#+END_EXAMPLE
+
+- As /expected/, the performance are a lot better on postgreSQL
+
+
+** Readings
+
+- Other than the article mentioned before
+
+
+*** CockroachDB documentation about its design
+
+- Uses versioned valued
+- For isolation it uses:
+  + SI :: Snapshot Isolation
+	  + pros: simple to implement highly performant
+	  + cons: correct for all but some conditions like write skew  (see ACID notes)
+  + SSI :: Serialiable Snapshot Isolation. Default level
+	  + pros: no anomalous conditions
+	  + cons: a bit more complex, less performant
+- No starvation even for long transactions
+- Uses candidate timestamps for the transaction (current clock time of the node coordonating the transaction)
+  + Candidate timestamps increase when coordinating transaction (*but only for SI*). It never decreases, however.
+- Hybrid Logical Clock
+  + on each cockroach node
+  + timestamps are composed of a physical component (~local time) and a logical one (to distinguish events) \to track causality
+  + used to pick a timestamp for a transaction
+- Transaction execution flow
+  + 2 phases:
+    - Had real difficulties to understand the first, but basically, it is preparing the commit
+      + Begins with the selection of the range the most involved in the transaction
+      + Records the transaction to a reserved area in that range with a state ~PENDING~
+      + Writes an intent value for each piece of data used in the transaction (there is a intent flag for when the transaction is committed
+      + Stores a transaction id with intent(ed) values
+	- enables decisions on the ordering of different transactions with the same timmestamp
+      + each nodes returns the timestamp used for the write to the client
+      + the client takes the highest timestamp for the commit timestamp
+    - Committing the transaction with the commit timestamp
+      + SI allows different transactions to be made concurrently as it is
+      + SSI restart the transaction if the candidate and the commit timestamps differ
+      + Once the transition is committed, the intents flags are removed
+- Not taking notes about details about less interesting topics for me
+- [[https://github.com/cockroachdb/cockroach/blob/master/pkg/config/zone.proto][Zones]] (might be useful later)
+- The rest feels a bit too much for now
+
+*** Vitess: MySQL Sharding
+
+- Stopped it because it does not seem relevant for now.
+
+*** Cockroachdb blog article about Scaling Raft
+
+- [[https://www.cockroachlabs.com/blog/scaling-raft/][link]]
+- each range has its own Raft consensus group
+  - as a result, each node may be participate in hundred of thousands of consensus groups
+  - addressed the problem by doing a MultiRaft
+    - seems it has been removed: [[https://github.com/cockroachdb/cockroach/blob/098a7292a69292be01558457464079f87657393b/docs/RFCS/20151213_dismantle_multiraft.md][Dismantle multiraft]]
+    - not really removed but the multi part of multiraft has been moved to methods on storage
+    - multiraft was too tightly coupled with storage and it created duplicated data
+    - since it has been only moved, I will still look how it is working
+- ranges are small to improve recovery time in case of failure
+  - as a consequence there are a LOT of ranges on one node
+  - this leads to a huge amount of traffic between nodes since one node participate in many consensus group
+  - if I understood correctly, they kind of synchronized the heartbeats
+    - each node is managed as a group (all the ranges he stores are managed as a group)
+    - this way, each 'pair' of nodes only exchange their heartbeat at the same time (once per tick), regardless of the number of ranges they have in common
+
+*** Serializable, Lockless, Distributed: Isolation in CockroachDB
+
+- [[https://www.cockroachlabs.com/blog/serializable-lockless-distributed-isolation-cockroachdb/][Serializable, Lockless, Distributed: Isolation in CockroachDB]]
+
+- goes more into details how conflicts are resolved
+- read it more quickly to avoid spending too much time on non -at least yet- necessary informations

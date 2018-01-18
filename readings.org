@@ -13,6 +13,12 @@
 - [[https://www.mysql.com/products/cluster/scalability.html][MySQL NDB Cluster: Scalability]]
 - [[https://www.cockroachlabs.com/docs/stable/configure-replication-zones.html][Configuring Replication Zone on Cockroach]]
 
+** And then some more
+- [[https://www.cockroachlabs.com/blog/scaling-raft/][Multiraft]]
+- [[https://www.cockroachlabs.com/blog/serializable-lockless-distributed-isolation-cockroachdb/][Serializable, Lockless, Distributed: Isolation in CockroachDB]]
+
 ** Others
 - [[https://en.wikipedia.org/wiki/Paxos_(computer_science)][Paxos]]
 - [[http://cnp.neclab.eu/projects/lightvm/lightvm.pdf][My VM is Lighter (and Safer) than your container]] (section 5.1)
+- [[https://www.cse.buffalo.edu//tech-reports/2014-04.pdf][Logical Physical Clocks
+and Consistent Snapshots in Globally Distributed Databases]]

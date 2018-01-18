@@ -847,10 +847,77 @@ openstack --profile SECRET_KEY server create --image <image> --flavor <flavor> <
 
 
 
+** Thursday 18 January [2018-01-18 jeu.]
+
+*** Todos before going anywhere
+
+- After discussions with Ronan yesterday evening, we decided we have to think a little further on the experiments.
+  + he gave me things to look up:
+    1. [[https://gist.github.com/aphyr/0ad3458a1478db97517e7ac2faf2da00][Advice on benchmarking databases]]
+    2. His notes about ACID
+  + we have to test Keystone over CockroachDB and Keystone over Galera AND tests using sysbench
+    - he gave me this [[https://github.com/akopytov/sysbench/issues/180][link]] which indicates that sysbench supports CockroachDB, which will considerably reduce the effort for the tests
+
+**** Advice on benchmarking databases
+
+1. Pick multiple workloads that covers all behaviors in each database.
+2. Get experts from each vendor to tune the test and OS \to will be hard :D
+3. Common-denominator tests are helpful but the queries will be different from one DB to another
+4. Report concurrency throughput, goodput (application level throughput) and latency distribution (which must be kept reasonable for online benchmarks)
+5. Benchmarks should take multiple days to run, operating on realistically sized data sets
+6. Use real hardware, hot and cold (see [[http://www.ibmbigdatahub.com/blog/your-big-data-hot-warm-or-cold]] )
+
+
+- There was a [[http://highscalability.com/blog/2015/10/5/your-load-generator-is-probably-lying-to-you-take-the-red-pi.html][link]] in the discussion, talking about load generators results, the highlights were:
+  - If you want to hide the truth from someone show them a chart of all normal traffic with one just one bad spike surging into 95 percentile territory.
+  - The number one indicator you should never get rid of is the maximum value. That’s not noise, it’s the signal, the rest is noise.
+  - 99% of users experience ~99.995%’ile response times, so why are you even looking at 95%'ile numbers?
+  - Monitoring tools routinely drop important samples in the result set, leading you to draw really bad conclusions about the quality of the performance of your system.
+- I will try to store that in a corner of my mind
+
+- Hopefully I will keeep all of that in mind, but some advice seems really hard to use in practice.
+
+**** ACID notes
+
+- Quick reminder:
+  - Atomicity :: a transaction is all or nothing
+  - Consistency :: transaction is a transition from a valid state of the database to another
+  - Isolation :: concurrent or sequential executions of the transactions result in the same system state
+  - Durability :: once a transaction is committed, it's stays so
+
+- The ~serializable~ level of isolation is the strongest one. ~Serializable~ transactions run as if only one transaction were running at a time.
+  + bad performance
+- The ~snapshot~ level guarantees that all reads made in a transaction will see a consistent snapshot of the database, i.e. the last committed values that existed when the current transaction started.
+  + better performance because no blocks
+
+- Supposedly, CockroachDB ensures consistency using Raft algorithm so no client would have a stale read (i.e. he won't read an old value for the piece of data he wanted)
+
+
+
+*** Still working on performance tests
+
+- Goal :: compare Keystone over Cockroach and Keystone over Galera
+
+|-----------------------------+-----------------------------|
+| Parameter name              | Value                       |
+|-----------------------------+-----------------------------|
+| OpenStack release           | Pike                        |
+| Database                    | MySQL (Galera), CockroachDB |
+| Latency between services    | LAN, 10, 50, 100, 300 ms    |
+| Environment characteristics | single node, multi-node     |
+| Cluster size                | 1, 5, 25, 100               |
+| Replication                 | 1, 3, 5                     |
+|-----------------------------+-----------------------------|
+
+
+
+
 * Todos
+
 ** Readings
+
 *** Watch videos
-**** TODO Raft
+
 
 ** Done
 
@@ -863,6 +930,9 @@ Une expé qui serait cool à faire c'est : Faire varier la latence entre keyston
 **** DONE CockroachDB
      CLOSED: [2018-01-17 mer. 14:41]
 [[The hows and whys of a distributed SQL database by Alex Robinson]]
+
+**** DONE Raft
+     CLOSED: [2018-01-18 jeu. 09:47]
 
 
 * Readings

@@ -1,0 +1,21 @@
+* Todos
+
+** Readings
+
+*** Watch videos
+
+
+** Done
+
+**** DONE Experience
+   CLOSED: [2018-01-17 mer. 18:33]
+#+BEGIN_EXAMPLE
+Une expé qui serait cool à faire c'est : Faire varier la latence entre keystone et les autres services, puis voir jusqu'à quelle latence le temps d'exécution du control plane est acceptable
+#+END_EXAMPLE
+
+**** DONE CockroachDB
+     CLOSED: [2018-01-17 mer. 14:41]
+[[The hows and whys of a distributed SQL database by Alex Robinson]]
+
+**** DONE Raft
+     CLOSED: [2018-01-18 jeu. 09:47]

@@ -1,0 +1,46 @@
+
+
+* How to
+
+** Org mode
+
+To add a date not added to agenda:
+#+BEGIN_SRC
+Ctrl-c !
+#+END_SRC
+To demote current subtree by one level:
+#+BEGIN_SRC
+Alt-Shift-Left
+#+END_SRC
+
+
+** Using Rally & Tempest
+
+*** Tempest
+
+To run only keystone tests:
+#+BEGIN_SRC
+tempest run --regex tempest.api.identity
+#+END_SRC
+
+
+** Using devstack
+
+Since it's not using screen anymore, everything is in systemctl.
+
+To restart a service:
+#+BEGIN_SRC
+sudo systemctl restart devstack@SERVICE_NAME
+#+END_SRC
+To know the status of a service:
+#+BEGIN_SRC
+sudo systemctl status devstack@SERVICE_NAME
+#+END_SRC
+
+
+** Other
+
+Cut pages in pdf (from [[https://askubuntu.com/questions/221962/how-can-i-extract-a-page-range-a-part-of-a-pdf][Ask Ubuntu]]):
+#+BEGIN_SRC
+pdftk full-pdf.pdf cat 12-15 output outfile_p12-15.pdf
+#+END_SRC

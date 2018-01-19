@@ -1158,3 +1158,22 @@ Threads fairness:
 
 - goes more into details how conflicts are resolved
 - read it more quickly to avoid spending too much time on non -at least yet- necessary informations
+
+
+* Friday 19 January [2018-01-19 ven.]
+
+** Beginning the day
+
+- I think I will have to seriously think about and make the plan for the experiments
+  + Looking around what the performance team has done
+    - not much more that I've already seen... for every other tests ran, only authenticate was measured
+    - maybe something on this: [[https://wiki.openstack.org/wiki/KeystonePerformance][Keystone Performance]] (and there are the [[https://github.com/TristanCacqueray/keystone-perfs][scripts used]] too)
+    - [[https://docs.openstack.org/developer/performance-docs/test_plans/control_plane/plan.html#test-case-3-keystone-authentication][here]] there is an exemple of rally scenario configuration to test keystone authentication for Nova
+
+
+  + Looked at [[https://www.openstack.org/assets/presentation-media/openstackperformance-v4.pdf][redhat slides]]
+    - s. 12:
+      + some consumers asks for several tokens? (horizon login, horizon image page, nova image-list)
+      + no automated garbage collector for token
+	- need to use =keystone-manage token_flush= (more on that at the bottom of [[https://docs.openstack.org/keystone/pike/admin/identity-troubleshoot.html][this]] page, but we might do something about that?)
+    - nothing much more, it's mainly a presentation about how to enhance OS performance and what is costly

@@ -911,6 +911,7 @@ openstack --profile SECRET_KEY server create --image <image> --flavor <flavor> <
 | Replication                 | 1, 3, 5                     |
 |-----------------------------+-----------------------------|
 
+
 ** Sysbench
 
 - Trying to get it to work on the vagrant machine deployed using ~openstack-cockroachdb-dev~
@@ -954,7 +955,7 @@ FATAL: `sysbench.cmdline.call_command' function failed: /usr/share/sysbench/oltp
   #+END_EXAMPLE
 
 - Connected to CockroachDB with ~cockroach sql --insecure~
-- Created database sbtest ~CREATE DATABASE sbtest~
+- Created database sbtest ~CREATE DATABASE sbtest;~
 - Relaunched the command
 
 #+BEGIN_EXAMPLE
@@ -1177,3 +1178,110 @@ Threads fairness:
       + no automated garbage collector for token
 	- need to use =keystone-manage token_flush= (more on that at the bottom of [[https://docs.openstack.org/keystone/pike/admin/identity-troubleshoot.html][this]] page, but we might do something about that?)
     - nothing much more, it's mainly a presentation about how to enhance OS performance and what is costly
+
+
+** Test plan
+
+- Goal :: compare Keystone over Cockroach and Keystone over Galera
+
+|--------------------------+-----------------------------|
+| Parameter name           | Value                       |
+|--------------------------+-----------------------------|
+| OpenStack release        | Pike                        |
+| Database                 | MySQL (Galera), CockroachDB |
+| Latency between services | LAN, 10, 50, 100, 300 ms    |
+| Cluster size             | 1, 5, 25, 100               |
+| Replication              | 1, 3, 5                     |
+| Number of clients        | 1 (?)                       |
+|--------------------------+-----------------------------|
+
+- Yesterday, we tried to make sysbench work
+  - Great, I forgot to suspend the vagrant machine, so I have to provision another one
+  - Shouldn't be too long to install sysbench again
+  - Waiting for Ronan to discuss about things to do and the devstack to do his work, so I read the paper about logical physical clocks
+  - Ronan tells me that I don't have to destroy the machine when I forgot to suspend, I can directly provision \to ~vagrant up --provision~ makes the ~unstack~ before ~stack~ so there is only a problem with etcd
+  - Provision ended, installed quickly sysbench (and created databases) to rerun tests in order to check if everything's ok
+
+
+#+BEGIN_EXAMPLE
+stack@contrib-jessie:~/sysbench$ sysbench --db-driver=pgsql --pgsql-host=127.0.0.1 --pgsql-port=5432 --pgsql-user=root --table-size=1000000 oltp_read_write run
+sysbench 1.0.12 (using bundled LuaJIT 2.1.0-beta2)
+
+Running the test with following options:
+Number of threads: 1
+Initializing random number generator from current time
+
+
+Initializing worker threads...
+
+Threads started!
+
+SQL statistics:
+    queries performed:
+        read:                            45808
+        write:                           13088
+        other:                           6544
+        total:                           65440
+    transactions:                        3272   (327.12 per sec.)
+    queries:                             65440  (6542.48 per sec.)
+    ignored errors:                      0      (0.00 per sec.)
+    reconnects:                          0      (0.00 per sec.)
+
+General statistics:
+    total time:                          10.0005s
+    total number of events:              3272
+
+Latency (ms):
+         min:                                  2.26
+         avg:                                  3.05
+         max:                                356.27
+         95th percentile:                      3.43
+         sum:                               9984.13
+
+Threads fairness:
+    events (avg/stddev):           3272.0000/0.00
+    execution time (avg/stddev):   9.9841/0.00
+#+END_EXAMPLE
+
+#+BEGIN_EXAMPLE
+stack@contrib-jessie:~/sysbench$ sysbench --db-driver=pgsql --pgsql-host=127.0.0.1 --pgsql-port=26257 --pgsql-user=root --table-size=1000000 oltp_read_write run
+sysbench 1.0.12 (using bundled LuaJIT 2.1.0-beta2)
+
+Running the test with following options:
+Number of threads: 1
+Initializing random number generator from current time
+
+
+Initializing worker threads...
+
+Threads started!
+
+SQL statistics:
+    queries performed:
+        read:                            8918
+        write:                           675
+        other:                           3147
+        total:                           12740
+    transactions:                        637    (63.67 per sec.)
+    queries:                             12740  (1273.37 per sec.)
+    ignored errors:                      0      (0.00 per sec.)
+    reconnects:                          0      (0.00 per sec.)
+
+General statistics:
+    total time:                          10.0031s
+    total number of events:              637
+
+Latency (ms):
+         min:                                 10.96
+         avg:                                 15.69
+         max:                                 50.98
+         95th percentile:                     22.69
+         sum:                               9994.04
+
+Threads fairness:
+    events (avg/stddev):           637.0000/0.00
+    execution time (avg/stddev):   9.9940/0.00
+
+#+END_EXAMPLE
+
+- This time I tried without cleanup, looks ok too

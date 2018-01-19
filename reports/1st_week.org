@@ -1285,3 +1285,28 @@ Threads fairness:
 #+END_EXAMPLE
 
 - This time I tried without cleanup, looks ok too
+
+- We've been discussing about how many clients we should/could have and how we should use Keystone
+  + Keystone is not a central directory of user mapped to the OS services they can access (identity), but also act as an address book of all the services deployed in an OS.
+  + If we use one keystone for several OS, each one deployed on one node, it would require the use of regions, and so clients wouldn't be able to use different OS
+  + If we use several keystone, i.e. one per OS, synchronized on the same database, only a service of ONE OS would be listed for all instances of OS, which somehow breaks the interest of having several OS.
+
+- Ronan said maybe Antoine did something in his internship about that. I've only found a [[https://github.com/cara-puce/oslo.db/commit/1a40ac94d039eeadb28167129b77d83f2df85462][filter for cockroach integrity error]]
+
+** Meeting with the people from Ericsson
+
+- They are doing a collaborative OS top down: they're gluing several OS together with an upper scheduler that would have to deal with failovers (when an instance is full)
+  + there are many failovers so they have to do a lot of code to handle them
+
+- Expected requirements for the goal:
+  + Level 1: the site your are connected to (the "original" site)
+  + Level 2: use of a remote site
+  + Level 3: sustainability/network split brain
+  + Level 4: collaboration/interaction between edge sites
+  + Level 5: high level administration features (swarm)
+
+- When they were talking about availability zones, a question was raised so I looked a bit [[https://www.mirantis.com/blog/the-first-and-final-word-on-openstack-availability-zones/][The first and final word on Openstack availability zones]] by Mirantis
+
+- They are also doing tests on tricircle
+
+- Read a bit more the Cockroach documentation

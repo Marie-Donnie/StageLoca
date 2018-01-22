@@ -1,0 +1,105 @@
+#+TITLE: Report for : Un intergiciel d’une base de données NewSQL qui considère la localité de l’application cliente -- 2nd week --
+#+AUTHOR: Marie Delavergne
+
+
+* Monday 22 January [2018-01-22 lun.]
+
+- Ronan gave me my assignment:
+  - we focus on Keystone for now
+    - try and deploy with MySQL on 1 node, then on 5 and then on 25
+      - there is a variable in kolla-ansible asking what node to use for the database
+	- I can fix it to a name defined in enos (controller = 1 node)
+    - then try with cockroachDB
+
+- Reminder
+
+|--------------------------+-----------------------------|
+| Parameter name           | Value                       |
+|--------------------------+-----------------------------|
+| OpenStack release        | Pike                        |
+| Database                 | MySQL (Galera), CockroachDB |
+| Latency between services | LAN, 10, 50, 100, 300 ms    |
+| Cluster size             | 1, 5, 25, 100               |
+| Replication              | 1, 3, 5                     |
+| Number of clients        | 1 (?)                       |
+|--------------------------+-----------------------------|
+
+
+- Useful links:
+
+  - [[https://enos.readthedocs.io/en/stable/][Enos doc]]
+  - [[https://github.com/BeyondTheClouds/enos][Enos repo]]
+  - [[https://docs.openstack.org/kolla-ansible/latest/][Kolla-Ansible doc]]
+  - [[https://github.com/openstack/kolla-ansible][Kolla-Ansible repo]]
+    - all services used are in [[https://github.com/openstack/kolla-ansible/tree/master/ansible/roles][roles]]
+    - the [[https://github.com/openstack/kolla-ansible/blob/master/ansible/inventory/multinode][inventory]] defines several variables to be used and overloaded if necessary
+      #+BEGIN_SRC
+      [mariadb:children]
+      control
+      #+END_SRC
+
+- First, I jump on a frontend on G5K
+- Then, I create a virtualenv to run enos
+  #+BEGIN_SRC
+  mkdir enos-deployment && cd enos-deployment
+  virtualenv venv
+  source venv/bin/activate
+  pip install -U pip
+  pip install enos
+  #+END_SRC
+- Then, to configure
+  #+BEGIN_SRC
+  enos new > reservation.yaml
+  emacs reservation.yaml
+  #+END_SRC
+- Realized I've should have done that on a node, so
+#+BEGIN_SRC
+oarsub -I -l 'walltime=2:00:00'
+#+END_SRC
+- And on the node
+#+BEGIN_SRC
+source venv/bin/activate
+nano reservation.yaml
+enos deploy
+#+END_SRC
+- Encountered an error - and so it begins -
+#+BEGIN_EXAMPLE
+INFO:root:Running playbook /home/madelavergne/enos-deployment/venv/lib/python2.7/site-packages/enos/ansible/utils.yml with vars:
+{'action': 'ping', 'tc_output_dir': '/home/madelavergne/enos-deployment/enos_2018-01-22T10:52:07.654187'}
+ [WARNING]: Found variable using reserved name: action
+
+
+PLAY [Utils] *******************************************************************************************
+
+TASK [Gathering Facts] *********************************************************************************
+fatal: [ip-control-node]: UNREACHABLE! => {"changed": false, "msg": "Failed to connect to the host via ssh: ssh: Could not resolve hostname ip-control-node: Name or service not known\r\n", "unreachable": true}
+fatal: [ip-compute-node2]: UNREACHABLE! => {"changed": false, "msg": "Failed to connect to the host via ssh: ssh: Could not resolve hostname ip-compute-node2: Name or service not known\r\n", "unreachable": true}
+fatal: [ip-network-node]: UNREACHABLE! => {"changed": false, "msg": "Failed to connect to the host via ssh: ssh: Could not resolve hostname ip-network-node: Name or service not known\r\n", "unreachable": true}
+fatal: [ip-compute-node1]: UNREACHABLE! => {"changed": false, "msg": "Failed to connect to the host via ssh: ssh: Could not resolve hostname ip-compute-node1: Name or service not known\r\n", "unreachable": true}
+	to retry, use: --limit @/home/madelavergne/enos-deployment/venv/lib/python2.7/site-packages/enos/ansible/utils.retry
+
+PLAY RECAP *********************************************************************************************
+ip-compute-node1           : ok=0    changed=0    unreachable=1    failed=0
+ip-compute-node2           : ok=0    changed=0    unreachable=1    failed=0
+ip-control-node            : ok=0    changed=0    unreachable=1    failed=0
+ip-network-node            : ok=0    changed=0    unreachable=1    failed=0
+
+{'code': 4, 'result': [{u'ip-network-node': {'unreachable': 1, 'skipped': 0, 'ok': 0, 'changed': 0, 'failures': 0}}, {u'ip-compute-node1': {'unreachable': 1, 'skipped': 0, 'ok': 0, 'changed': 0, 'failures': 0}}, {u'ip-compute-node2': {'unreachable': 1, 'skipped': 0, 'ok': 0, 'changed': 0, 'failures': 0}}, {u'ip-control-node': {'unreachable': 1, 'skipped': 0, 'ok': 0, 'changed': 0, 'failures': 0}}], 'playbook': '/home/madelavergne/enos-deployment/venv/lib/python2.7/site-packages/enos/ansible/utils.yml'}
+ERROR:root:Unreachable hosts: [u'ip-network-node', u'ip-compute-node1', u'ip-compute-node2', u'ip-control-node']
+INFO:root:Hosts unreachable: [u'ip-network-node', u'ip-compute-node1', u'ip-compute-node2', u'ip-control-node']
+INFO:root:Retrying... 1/100
+#+END_EXAMPLE
+- Let it retry but no better
+- Changed the configuration so it would look like more the one given as an example, still not better
+#+BEGIN_EXAMPLE
+provider:
+  type: g5k
+  name: 'Enos'
+  walltime: 02:00:00
+  env_name: jessie-x64-min
+  reservation: None
+  vlans: '{rennes: "{type=kavlan}/vlan=1"}'
+  role_distribution: strict
+  single_interface: false
+  user: root
+#+END_EXAMPLE

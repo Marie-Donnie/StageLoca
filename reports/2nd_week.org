@@ -12,7 +12,8 @@
     - then try with cockroachDB
 
 - Reminder
-
+#+name tab:test_plan
+:test_plan:
 |--------------------------+-----------------------------|
 | Parameter name           | Value                       |
 |--------------------------+-----------------------------|
@@ -28,6 +29,7 @@
 - Useful links:
 
   - [[https://enos.readthedocs.io/en/stable/][Enos doc]]
+    - to [[https://enos.readthedocs.io/en/stable/customization/index.html#changing-the-topology][change the topology]]
   - [[https://github.com/BeyondTheClouds/enos][Enos repo]]
   - [[https://docs.openstack.org/kolla-ansible/latest/][Kolla-Ansible doc]]
   - [[https://github.com/openstack/kolla-ansible][Kolla-Ansible repo]]
@@ -103,3 +105,150 @@ provider:
   single_interface: false
   user: root
 #+END_EXAMPLE
+
+- Been asking to Ronan, he told me to remove everything between G5K conf and inventory in the ~reservation.yaml~, so the right configuration looks like:
+#+BEGIN_EXAMPLE
+# ############################################### #
+# Grid'5000 reservation parameters                #
+# ############################################### #
+provider:
+ type: g5k
+ name: 'Enos'
+ walltime: '02:00:00'
+ env_name: debian9-x64-min
+ # mandatory : you need to have exacly one vlan
+ vlans:
+    rennes: "{type='kavlan'}/vlan=1"
+ # Be less strict on node distribution especially
+ # when nodes are missing in the reservation
+ # or not deployed
+ role_distribution: debug
+
+# Resources description
+resources:
+ paravance:
+   control: 1
+   compute: 1
+   database: 1
+
+# ############################################### #
+# Inventory to use                                #
+# ############################################### #
+
+# This will describe the topology of your services
+inventory: inventory-mariadb-out.ini
+
+# ############################################### #
+# docker registry parameters
+# ############################################### #
+
+# A registry will be deployed and used during the deployment
+registry:
+ type: internal
+ ceph: true
+ ceph_keyring: /home/discovery/.ceph/ceph.client.discovery.keyring
+ ceph_id: discovery
+ ceph_rbd: discovery_kolla_registry/datas
+ ceph_mon_host:
+   - ceph0.rennes.grid5000.fr
+   - ceph1.rennes.grid5000.fr
+   - ceph2.rennes.grid5000.fr
+
+# ############################################### #
+# Enos Customizations                             #
+# ############################################### #
+enable_monitoring: no
+
+
+# ############################################### #
+# Kolla parameters                                #
+# ############################################### #
+# Repository
+kolla_repo: "https://git.openstack.org/openstack/kolla-ansible"
+kolla_ref: "stable/pike"
+
+# Vars : globals.yml
+kolla:
+ openstack_release: "osprofiler-stable-pike"
+ kolla_base_distro: "centos"
+ kolla_install_type: "source"
+ docker_namespace: "beyondtheclouds"
+ enable_heat: "no"
+#+END_EXAMPLE
+
+- I can check in inventories used how the variables are defined
+  - in this example, there is a node for database BUT as we saw
+      #+BEGIN_SRC
+      [mariadb:children]
+      control
+      #+END_SRC
+  - this tells us that mariadb is used on the control node
+
+- Trying to make bench, but got
+#+BEGIN_EXAMPLE
+enos bench --workload=workload
+Traceback (most recent call last):
+ File "/home/madelavergne/enos-deployment/venv/bin/enos", line 11, in <module>
+   sys.exit(main())
+ File "/home/madelavergne/enos-deployment/venv/local/lib/python2.7/site-packages/enos/enos.py", line 774, in main
+   bench(**docopt(bench.__doc__, argv=argv))
+ File "/home/madelavergne/enos-deployment/venv/local/lib/python2.7/site-packages/enos/utils/enostask.py", line 77, in decorated
+   fn(*args, **kwargs)
+ File "/home/madelavergne/enos-deployment/venv/local/lib/python2.7/site-packages/enos/utils/enostask.py", line 100, in decorator
+   return fn(*args, **kwargs)
+ File "/home/madelavergne/enos-deployment/venv/local/lib/python2.7/site-packages/enos/enos.py", line 360, in bench
+   playbook_values = mk_enos_values(env)
+ File "/home/madelavergne/enos-deployment/venv/local/lib/python2.7/site-packages/enos/utils/extra.py", line 301, in mk_enos_values
+   get_kolla_required_values(env),
+ File "/home/madelavergne/enos-deployment/venv/local/lib/python2.7/site-packages/enos/utils/extra.py", line 240, in get_kolla_required_values
+   'network_interface':          env['eths'][NETWORK_IFACE],
+KeyError: 'eths'
+#+END_EXAMPLE
+
+- Realized the deployment didn't work really fine
+#+BEGIN_EXAMPLE
+INFO:execo:Setting ['paravance-66-eth1.rennes.grid5000.fr', 'paravance-56-eth1.rennes.grid5000.fr', 'paravance-64-eth1.rennes.grid5000.fr'] in vlan 4 of site rennes
+Traceback (most recent call last):
+ File "/home/madelavergne/enos-deployment/venv/bin/enos", line 11, in <module>
+   sys.exit(main())
+ File "/home/madelavergne/enos-deployment/venv/local/lib/python2.7/site-packages/enos/enos.py", line 766, in main
+   deploy(**docopt(deploy.__doc__, argv=argv))
+ File "/home/madelavergne/enos-deployment/venv/local/lib/python2.7/site-packages/enos/utils/enostask.py", line 77, in decorated
+   fn(*args, **kwargs)
+ File "/home/madelavergne/enos-deployment/venv/local/lib/python2.7/site-packages/enos/enos.py", line 658, in deploy
+   up(**kwargs)
+ File "/home/madelavergne/enos-deployment/venv/local/lib/python2.7/site-packages/enos/utils/enostask.py", line 77, in decorated
+   fn(*args, **kwargs)
+ File "/home/madelavergne/enos-deployment/venv/local/lib/python2.7/site-packages/enos/enos.py", line 108, in up
+   provider.init(config, kwargs['--force-deploy'])
+ File "/home/madelavergne/enos-deployment/venv/local/lib/python2.7/site-packages/enos/provider/g5k.py", line 50, in init
+   vlans)
+ File "/home/madelavergne/enos-deployment/venv/local/lib/python2.7/site-packages/enos/provider/g5k.py", line 308, in _mount_cluster_nics
+   vlan)
+ File "/home/madelavergne/enos-deployment/venv/local/lib/python2.7/site-packages/execo_g5k/api_utils.py", line 714, in set_nodes_vlan
+   return _get_g5k_api().post('/sites/%s/vlans/%s' % (site, str(vlan_id)), json.dumps({"nodes": network_addresses}))
+ File "/home/madelavergne/enos-deployment/venv/local/lib/python2.7/site-packages/execo_g5k/api_utils.py", line 203, in post
+   raise APIException(uri, 'POST', response, content)
+execo_g5k.api_utils.APIException: <APIException uri=u'https://api.grid5000.fr/3.0/sites/rennes/vlans/4' method=POST response={'status': '401', 'content-length': '463', 'server': 'Apache/2.4.25 (Debian)', 'date': 'Mon, 22 Jan 2018 10:49:05 GMT', 'content-type': 'text/html; charset=iso-8859-1', 'www-authenticate': 'Basic realm="Grid\'5000 API"'} content='<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">\n<html><head>\n<title>401 Unauthorized</title>\n</head><body>\n<h1>Unauthorized</h1>\n<p>This server could not verify that you\nare authorized to access the document\nrequested.  Either you supplied the wrong\ncredentials (e.g., bad password), or your\nbrowser doesn\'t understand how to supply\nthe credentials required.</p>\n<hr>\n<address>Apache/2.4.25 (Debian) Server at api.grid5000.fr Port 443</address>\n</body></html>\n'>
+#+END_EXAMPLE
+
+
+- Using the doc for [[https://enos.readthedocs.io/en/2.3.0/provider/grid5000.html#deployment][2.3]] (thanks to Ronan), I can see that I require to add a file and change the setup on the frontend.
+
+- Seems to run smoothly, something must be wrong somewhere.
+
+- Of course, since I only took 2:00:00, I need to do it all over again after eating.
+
+- Working on the files to enable working on 5 and 25 nodes at the same time
+  - Copied inventory.sample, changed
+      #+BEGIN_SRC
+      [mariadb:children]
+      database
+      #+END_SRC
+  - By doing so, I will use the number of nodes declared in the reservation.yaml file, which I also change to 5 and then 25.
+
+- Launched bench (using ~nova-boot-list-cc.yml~)
+  - on rally, you can run a [[https://github.com/openstack/rally/blob/master/tasks/openstack/scenario/keystone.yaml][task]]
+    - usage: ~rally task validate task.yaml --task-args-file task_arguments.yaml~
+  - but there are also the [[https://github.com/openstack/rally/tree/master/samples/tasks/scenarios/keystone][sample tasks]]
+  - didn't work for nova scenario but I tested for one keystone scenario and it seemed it has ran smoothly, so I entirely changed the run.yml to run every scenarios

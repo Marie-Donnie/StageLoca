@@ -1,0 +1,66 @@
+# ############################################### #
+# Grid'5000 reservation parameters                #
+# ############################################### #
+provider:
+ type: g5k
+ name: 'Enos'
+ walltime: '06:00:00'
+ env_name: debian9-x64-min
+ # mandatory : you need to have exacly one vlan
+ vlans:
+    rennes: "{type='kavlan'}/vlan=1"
+ # Be less strict on node distribution especially
+ # when nodes are missing in the reservation
+ # or not deployed
+ role_distribution: debug
+
+# Resources description
+resources:
+ paravance:
+   control: 1
+   compute: 1
+   database: 5
+
+# ############################################### #
+# Inventory to use                                #
+# ############################################### #
+
+# This will describe the topology of your services
+inventory: inventory-mariadb-out.ini
+
+# ############################################### #
+# docker registry parameters
+# ############################################### #
+
+# A registry will be deployed and used during the deployment
+registry:
+ type: internal
+ ceph: true
+ ceph_keyring: /home/discovery/.ceph/ceph.client.discovery.keyring
+ ceph_id: discovery
+ ceph_rbd: discovery_kolla_registry/datas
+ ceph_mon_host:
+   - ceph0.rennes.grid5000.fr
+   - ceph1.rennes.grid5000.fr
+   - ceph2.rennes.grid5000.fr
+
+# ############################################### #
+# Enos Customizations                             #
+# ############################################### #
+enable_monitoring: no
+
+
+# ############################################### #
+# Kolla parameters                                #
+# ############################################### #
+# Repository
+kolla_repo: "https://git.openstack.org/openstack/kolla-ansible"
+kolla_ref: "stable/pike"
+
+# Vars : globals.yml
+kolla:
+ openstack_release: "osprofiler-stable-pike"
+ kolla_base_distro: "centos"
+ kolla_install_type: "source"
+ docker_namespace: "beyondtheclouds"
+ enable_heat: "no"

@@ -1,0 +1,55 @@
+---
+# this is a sample of workload
+# prerequisite:
+# - we rely on the rally template mechanism
+#
+rally:
+    enabled: true
+    args:
+      concurrency:
+        - 1
+      times:
+        - 2
+    scenarios:
+      - name: create add and list user roles
+        file: create-add-and-list-user-roles.yaml
+      - name: add and remove user role
+        file: add-and-remove-user-role.yaml
+      - name: authenticate user and validate token
+        file: authenticate-user-and-validate-token.yaml
+      - name: create and delete ec2credential
+        file: create-and-delete-ec2credential.yaml
+      - name: create and delete role
+        file: create-and-delete-role.yaml
+      - name: create and delete service
+        file: create-and-delete-service.yaml
+      - name: create and delete user
+        file: create-and-delete-user.yaml
+      - name: create and get role
+        file: create-and-get-role.yaml
+      - name: create and list ec2credentials
+        file: create-and-list-ec2credentials.yaml
+      - name: create and list roles
+        file: create-and-list-roles.yaml
+      - name: create and list services
+        file: create-and-list-services.yaml
+      - name: create and list tenants
+        file: create-and-list-tenants.yaml
+      - name: create and list users
+        file: create-and-list-users.yaml
+      - name: create and update user
+        file: create-and-update-user.yaml
+      - name: create tenant with users
+        file: create-tenant-with-users.yaml
+      - name: create tenant
+        file: create-tenant.yaml
+      - name: create update and delete tenant
+        file: create-update-and-delete-tenant.yaml
+      - name: create user set enabled and delete
+        file: create-user-set-enabled-and-delete.yaml
+      - name: create user update password
+        file: create-user-update-password.yaml
+      - name: create user
+        file: create-user.yaml
+      - name: get entities
+        file: get-entities.yaml

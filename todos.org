@@ -1,5 +1,19 @@
 * Todos
 
+** Testing
+*** Keystone
+**** With MariaDB
+***** TODO Make it work
+***** TODO For 1 node
+***** TODO For 5 nodes
+***** TODO For 25 nodes
+**** With CockroachDB
+***** TODO Make it work
+***** TODO For 1 node
+***** TODO For 5 nodes
+***** TODO For 25 nodes
+
+
 ** Readings
 
 *** Watch videos

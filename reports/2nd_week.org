@@ -251,4 +251,74 @@ execo_g5k.api_utils.APIException: <APIException uri=u'https://api.grid5000.fr/3.
   - on rally, you can run a [[https://github.com/openstack/rally/blob/master/tasks/openstack/scenario/keystone.yaml][task]]
     - usage: ~rally task validate task.yaml --task-args-file task_arguments.yaml~
   - but there are also the [[https://github.com/openstack/rally/tree/master/samples/tasks/scenarios/keystone][sample tasks]]
-  - didn't work for nova scenario but I tested for one keystone scenario and it seemed it has ran smoothly, so I entirely changed the run.yml to run every scenarios
+  - didn't work for nova scenario but I tested for one keystone scenario and it seemed it has ran smoothly, so I entirely changed the ~run.yml~ to run every scenarios
+  - launched the full ~run.yml~
+  - backup the reports from ~enos backup~
+  - changed the files as stated above
+  - relaunched deployment
+    - got a problem with my deployment, it used the oargridjob already used, which hadn't enough nodes
+    - don't work with ~oardel~ MUST use ~oargriddel <job_number>~ or ~enos destroy --hard~
+    - finally got it working with ~oargriddel~
+      #+BEGIN_EXAMPLE
+      TASK [mariadb : Creating mariadb volume]
+      changed: [paravance-6-kavlan-4.rennes.grid5000.fr]
+      changed: [paravance-58-kavlan-4.rennes.grid5000.fr]
+      changed: [paravance-61-kavlan-4.rennes.grid5000.fr]
+      changed: [paravance-66-kavlan-4.rennes.grid5000.fr]
+      changed: [paravance-64-kavlan-4.rennes.grid5000.fr]
+      #+END_EXAMPLE
+    - \o/... wait
+      #+BEGIN_EXAMPLE
+      FAILED - RETRYING: Waiting for MariaDB service to be ready through VIP (1 retries left).
+      FAILED - RETRYING: Waiting for MariaDB service to be ready through VIP (1 retries left).
+      FAILED - RETRYING: Waiting for MariaDB service to be ready through VIP (1 retries left).
+      FAILED - RETRYING: Waiting for MariaDB service to be ready through VIP (1 retries left).
+      FAILED - RETRYING: Waiting for MariaDB service to be ready through VIP (1 retries left).
+fatal: [paravance-61-kavlan-4.rennes.grid5000.fr]: FAILED! => {"attempts": 6, "changed": false, "cmd": ["docker", "exec", "mariadb", "mysql", "-h", "10.24.61.255", "-P", "3306", "-u", "haproxy", "-e", "show databases;"], "delta": "0:00:03.237623", "end": "2018-01-22 16:50:44.888256", "failed": true, "rc": 1, "start": "2018-01-22 16:50:41.650633", "stderr": "ERROR 2003 (HY000): Can't connect to MySQL server on '10.24.61.255' (113 \"No route to host\")", "stderr_lines": ["ERROR 2003 (HY000): Can't connect to MySQL server on '10.24.61.255' (113 \"No route to host\")"], "stdout": "", "stdout_lines": []}
+fatal: [paravance-58-kavlan-4.rennes.grid5000.fr]: FAILED! => {"attempts": 6, "changed": false, "cmd": ["docker", "exec", "mariadb", "mysql", "-h", "10.24.61.255", "-P", "3306", "-u", "haproxy", "-e", "show databases;"], "delta": "0:00:03.210377", "end": "2018-01-22 16:50:44.926697", "failed": true, "rc": 1, "start": "2018-01-22 16:50:41.716320", "stderr": "ERROR 2003 (HY000): Can't connect to MySQL server on '10.24.61.255' (113 \"No route to host\")", "stderr_lines": ["ERROR 2003 (HY000): Can't connect to MySQL server on '10.24.61.255' (113 \"No route to host\")"], "stdout": "", "stdout_lines": []}
+fatal: [paravance-64-kavlan-4.rennes.grid5000.fr]: FAILED! => {"attempts": 6, "changed": false, "cmd": ["docker", "exec", "mariadb", "mysql", "-h", "10.24.61.255", "-P", "3306", "-u", "haproxy", "-e", "show databases;"], "delta": "0:00:03.231754", "end": "2018-01-22 16:50:44.927383", "failed": true, "rc": 1, "start": "2018-01-22 16:50:41.695629", "stderr": "ERROR 2003 (HY000): Can't connect to MySQL server on '10.24.61.255' (113 \"No route to host\")", "stderr_lines": ["ERROR 2003 (HY000): Can't connect to MySQL server on '10.24.61.255' (113 \"No route to host\")"], "stdout": "", "stdout_lines": []}
+fatal: [paravance-66-kavlan-4.rennes.grid5000.fr]: FAILED! => {"attempts": 6, "changed": false, "cmd": ["docker", "exec", "mariadb", "mysql", "-h", "10.24.61.255", "-P", "3306", "-u", "haproxy", "-e", "show databases;"], "delta": "0:00:03.269421", "end": "2018-01-22 16:50:44.936793", "failed": true, "rc": 1, "start": "2018-01-22 16:50:41.667372", "stderr": "ERROR 2003 (HY000): Can't connect to MySQL server on '10.24.61.255' (113 \"No route to host\")", "stderr_lines": ["ERROR 2003 (HY000): Can't connect to MySQL server on '10.24.61.255' (113 \"No route to host\")"], "stdout": "", "stdout_lines": []}
+fatal: [paravance-6-kavlan-4.rennes.grid5000.fr]: FAILED! => {"attempts": 6, "changed": false, "cmd": ["docker", "exec", "mariadb", "mysql", "-h", "10.24.61.255", "-P", "3306", "-u", "haproxy", "-e", "show databases;"], "delta": "0:00:03.256196", "end": "2018-01-22 16:50:45.010870", "failed": true, "rc": 1, "start": "2018-01-22 16:50:41.754674", "stderr": "ERROR 2003 (HY000): Can't connect to MySQL server on '10.24.61.255' (113 \"No route to host\")", "stderr_lines": ["ERROR 2003 (HY000): Can't connect to MySQL server on '10.24.61.255' (113 \"No route to host\")"], "stdout": "", "stdout_lines": []}
+	to retry, use: --limit @/home/madelavergne/enos-deployment/enos_2018-01-22T16:29:36.577602/kolla/ansible/site.retry
+
+PLAY RECAP *********************************************************************************************
+paravance-51-kavlan-4.rennes.grid5000.fr : ok=9    changed=4    unreachable=0    failed=0
+paravance-58-kavlan-4.rennes.grid5000.fr : ok=47   changed=23   unreachable=0    failed=1
+paravance-6-kavlan-4.rennes.grid5000.fr : ok=38   changed=20   unreachable=0    failed=1
+paravance-61-kavlan-4.rennes.grid5000.fr : ok=38   changed=20   unreachable=0    failed=1
+paravance-64-kavlan-4.rennes.grid5000.fr : ok=38   changed=20   unreachable=0    failed=1
+paravance-66-kavlan-4.rennes.grid5000.fr : ok=38   changed=20   unreachable=0    failed=1
+paravance-68-kavlan-4.rennes.grid5000.fr : ok=3    changed=0    unreachable=0    failed=0
+Command failed ansible-playbook -i /home/madelavergne/enos-deployment/enos_2018-01-22T16:29:36.577602/multinode -e @/home/madelavergne/enos-deployment/enos_2018-01-22T16:29:36.577602/globals.yml -e @/home/madelavergne/enos-deployment/enos_2018-01-22T16:29:36.577602/passwords.yml -e CONFIG_DIR=/home/madelavergne/enos-deployment/enos_2018-01-22T16:29:36.577602  -e action=deploy /home/madelavergne/enos-deployment/enos_2018-01-22T16:29:36.577602/kolla/ansible/site.yml
+Traceback (most recent call last):
+  File "/home/madelavergne/enos-deployment/venv/bin/enos", line 11, in <module>
+    sys.exit(main())
+  File "/home/madelavergne/enos-deployment/venv/local/lib/python2.7/site-packages/enos/enos.py", line 766, in main
+    deploy(**docopt(deploy.__doc__, argv=argv))
+  File "/home/madelavergne/enos-deployment/venv/local/lib/python2.7/site-packages/enos/utils/enostask.py", line 77, in decorated
+    fn(*args, **kwargs)
+  File "/home/madelavergne/enos-deployment/venv/local/lib/python2.7/site-packages/enos/enos.py", line 665, in deploy
+    install_os(**kwargs)
+  File "/home/madelavergne/enos-deployment/venv/local/lib/python2.7/site-packages/enos/utils/enostask.py", line 77, in decorated
+    fn(*args, **kwargs)
+  File "/home/madelavergne/enos-deployment/venv/local/lib/python2.7/site-packages/enos/utils/enostask.py", line 100, in decorator
+    return fn(*args, **kwargs)
+  File "/home/madelavergne/enos-deployment/venv/local/lib/python2.7/site-packages/enos/enos.py", line 207, in install_os
+    check_call(kolla_cmd)
+  File "/usr/lib/python2.7/subprocess.py", line 186, in check_call
+    raise CalledProcessError(retcode, cmd)
+subprocess.CalledProcessError: Command '['/home/madelavergne/enos-deployment/enos_2018-01-22T16:29:36.577602/kolla/tools/kolla-ansible', 'deploy', '-i', '/home/madelavergne/enos-deployment/enos_2018-01-22T16:29:36.577602/multinode', '--passwords', '/home/madelavergne/enos-deployment/enos_2018-01-22T16:29:36.577602/passwords.yml', '--configdir', '/home/madelavergne/enos-deployment/enos_2018-01-22T16:29:36.577602']' returned non-zero exit status 1
+
+      #+END_EXAMPLE
+    - nooo *insert here a gif of darth vader*
+    - checked the gantt diagram for [[https://intranet.grid5000.fr/oar/Rennes/drawgantt-svg/][Rennes]], I still have those nodes
+    - relaunched ~enos deploy~
+    - same shit
+    - try to redeploy, just in case
+
+- While waiting for the tests to run, I'm trying to do minor changes to my enos
+  - Corrected a typo
+  - Create different reservation.yaml.sample for different providers (in my case, g5k)
+    - Wondering about the usefulness of this...
+    - usage: ~enos new grid5000 > reservation.yaml~
+    - would require to make a new sample and modify ~enos.py~ each time a provider is added

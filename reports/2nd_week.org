@@ -437,3 +437,57 @@ Error: Missing argument "broker".
 
 - Since the test was done with ~test_case_1.ipynb~, I feel like I have to check how one can use Jupyter, as Ronan told me that was Matthieu uses for ombt-orchestration
   - [[Https://jupyter-notebook-beginner-guide.readthedocs.io/en/latest/what_is_jupyter.html][Jupyter doc]]
+
+
+** Formalism on distributed databases
+
+- Adrien had a question about why we don't just forward the request as seen on
+
+#+CAPTION: Dynamic table union
+#+NAME: fig:forma_request
+[[images/Forma_request.png]]
+
+- A is the federation  of databases.
+- B, C and D are concrete databases who share, as an example, all Openstack tables
+- A receives a request requiring to use B, C and D
+- a lock would be used on each rows required
+
+- what we want is to be able to make requests on a federation (union) of databases that share the same schema
+
+- For that, we will need
+  - projection :: unary operation defining a subset of a relation
+       - noted \Pi_{a_1,...,a_n}(R)
+       - with:
+	 - a_1,...,a_n :: set of attribute names
+	 - R :: the relation from which the subset will be taken
+       - result:
+	 #+BEGIN_LaTeX
+\Pi_{a_1, ...,a_n}( R ) = \{  \ t[a_1,...,a_n] : \ t \in R \ \}
+and
+t[a_1,...,a_n] = \{ \ ( a', v ) \ | \ ( a', v ) \in t, \ a' \in a_1,...,a_n \ \}
+	 #+END_LaTeX
+       - example:
+	 - \Pi_{age,weight}(Person): age and weight are the attribute names, Person is the relation
+  - selection :: unary operation defining a subset of a relation too
+       - noted \sigma_{a \theta b}(R) or \sigma_{a \theta v}(R)
+       - with:
+	 - a and b :: attribute names
+	 - \theta :: binary operation in the set { \lt, \leq, =, \neq, \geq, \gt }
+	 - v :: constant value
+	 - R :: relation from which the subset will be taken
+       - result:
+     #+BEGIN_LaTeX
+\sigma_{a \theta b}( R ) = \{\ t : t \in R,\ t(a) \ \theta \ t(b) \ \}
+\sigma_{a \theta v}( R ) = \{\ t : t \in R,\ t(a) \ \theta \ v \ \}
+     #+END_LaTeX
+       - example:
+	 - \sigma_{age=34}(Person): age is the attribute name, 34 a constant value and Person the relation
+	 - \sigma_{age=weight}(Person): age and weight are attributes names and Person the relation
+       - in SQL, selection operations use ~WHERE~
+
+
+*** Sources
+
+- [[https://en.wikipedia.org/wiki/Relational_algebra][relational algebra]] on Wikipedia
+- Principles of Distributed Database Systems by M. Tamer Özsu, Patrick Valduriez
+- Principles of Database Systems by Jeffrey D. Ullman

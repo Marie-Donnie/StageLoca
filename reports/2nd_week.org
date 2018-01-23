@@ -454,18 +454,18 @@ Error: Missing argument "broker".
 
 - what we want is to be able to make requests on a federation (union) of databases that share the same schema
 
-- For that, we will need
+- For that, we will probably need
   + projection: unary operation defining a subset of a relation
-    - noted \Pi_{a_1,...,a_n}(R)
+    - noted \Pi_{a_{1},...,a_{n}}(R)
     - with:
-      + a_1,...,a_n: set of attribute names
+      + a_{1},...,a_{n}: set of attribute names
       + R: the relation from which the subset will be taken
     - result:
-      + \Pi_{a_1, ...,a_n}(R) = {t[a_1,...,a_{n}] : t \in R}
-      + with t[a_1,...,a_{n}] = { (a', v) | (a', v) \in t, a' \in a_1,...,a_n}
+      + \Pi_{a_{1}, ...,a_{n}}(R) = {t[a_{1}..,a_n}] : t \in R}
+      + with t[a_1,...,a_{n}] = { (a', v) | (a', v) \in t, a' \in a_{1}..,a_{n}
     - example:
       + \Pi_{age,weight}(Person): age and weight are the attribute names, Person is the relation
-    - in SQL, project operations use ~SELECT~
+    - in SQL: ~SELECT~
   + selection: unary operation defining a subset of a relation too
     - noted \sigma_{a \theta b}(R) or \sigma_{a \theta v}(R)
     - with:
@@ -479,7 +479,21 @@ Error: Missing argument "broker".
     - example:
       + \sigma_{age=34}(Person): age is the attribute name, 34 a constant value and Person the relation
       + \sigma_{age=weight}(Person): age and weight are attributes names and Person the relation
-    - in SQL, selection operations use ~WHERE~
+    - in SQL: ~WHERE~
+  + (set) union
+    - noted R_1 \cup R_2 = {x: x \in R_1 \vee x \in R_2}
+  + (set) difference
+    - noted R_1 \ R_2 = {x: x \in R_1 \wedge x \notin R_2}
+  + intersection
+    - noted R_1 \cap R_2 = {x: x \in R_1 \wedge x \in R_2}
+  + Cartesian product
+    - noted R_1 \times R_2 = {(x,y): x \in R_1 \wedge y \in R_2}
+    - in SQL: ~CROSS JOIN~
+  + natural join
+    - noted R \bowtie S = { r \cup s | r \in R \wedge s \in S \wedge P(r \cup s)}
+    - with P a predicate that is true for a function t.
+    - note: if R and S have no common attribute, it's the cartesian product
+    - in SQL: ~NATURAL JOIN~
 
 
 *** Sources

@@ -269,11 +269,11 @@ execo_g5k.api_utils.APIException: <APIException uri=u'https://api.grid5000.fr/3.
       #+END_EXAMPLE
     - \o/... wait
       #+BEGIN_EXAMPLE
-      FAILED - RETRYING: Waiting for MariaDB service to be ready through VIP (1 retries left).
-      FAILED - RETRYING: Waiting for MariaDB service to be ready through VIP (1 retries left).
-      FAILED - RETRYING: Waiting for MariaDB service to be ready through VIP (1 retries left).
-      FAILED - RETRYING: Waiting for MariaDB service to be ready through VIP (1 retries left).
-      FAILED - RETRYING: Waiting for MariaDB service to be ready through VIP (1 retries left).
+FAILED - RETRYING: Waiting for MariaDB service to be ready through VIP (1 retries left).
+FAILED - RETRYING: Waiting for MariaDB service to be ready through VIP (1 retries left).
+FAILED - RETRYING: Waiting for MariaDB service to be ready through VIP (1 retries left).
+FAILED - RETRYING: Waiting for MariaDB service to be ready through VIP (1 retries left).
+FAILED - RETRYING: Waiting for MariaDB service to be ready through VIP (1 retries left).
 fatal: [paravance-61-kavlan-4.rennes.grid5000.fr]: FAILED! => {"attempts": 6, "changed": false, "cmd": ["docker", "exec", "mariadb", "mysql", "-h", "10.24.61.255", "-P", "3306", "-u", "haproxy", "-e", "show databases;"], "delta": "0:00:03.237623", "end": "2018-01-22 16:50:44.888256", "failed": true, "rc": 1, "start": "2018-01-22 16:50:41.650633", "stderr": "ERROR 2003 (HY000): Can't connect to MySQL server on '10.24.61.255' (113 \"No route to host\")", "stderr_lines": ["ERROR 2003 (HY000): Can't connect to MySQL server on '10.24.61.255' (113 \"No route to host\")"], "stdout": "", "stdout_lines": []}
 fatal: [paravance-58-kavlan-4.rennes.grid5000.fr]: FAILED! => {"attempts": 6, "changed": false, "cmd": ["docker", "exec", "mariadb", "mysql", "-h", "10.24.61.255", "-P", "3306", "-u", "haproxy", "-e", "show databases;"], "delta": "0:00:03.210377", "end": "2018-01-22 16:50:44.926697", "failed": true, "rc": 1, "start": "2018-01-22 16:50:41.716320", "stderr": "ERROR 2003 (HY000): Can't connect to MySQL server on '10.24.61.255' (113 \"No route to host\")", "stderr_lines": ["ERROR 2003 (HY000): Can't connect to MySQL server on '10.24.61.255' (113 \"No route to host\")"], "stdout": "", "stdout_lines": []}
 fatal: [paravance-64-kavlan-4.rennes.grid5000.fr]: FAILED! => {"attempts": 6, "changed": false, "cmd": ["docker", "exec", "mariadb", "mysql", "-h", "10.24.61.255", "-P", "3306", "-u", "haproxy", "-e", "show databases;"], "delta": "0:00:03.231754", "end": "2018-01-22 16:50:44.927383", "failed": true, "rc": 1, "start": "2018-01-22 16:50:41.695629", "stderr": "ERROR 2003 (HY000): Can't connect to MySQL server on '10.24.61.255' (113 \"No route to host\")", "stderr_lines": ["ERROR 2003 (HY000): Can't connect to MySQL server on '10.24.61.255' (113 \"No route to host\")"], "stdout": "", "stdout_lines": []}
@@ -308,13 +308,15 @@ Traceback (most recent call last):
   File "/usr/lib/python2.7/subprocess.py", line 186, in check_call
     raise CalledProcessError(retcode, cmd)
 subprocess.CalledProcessError: Command '['/home/madelavergne/enos-deployment/enos_2018-01-22T16:29:36.577602/kolla/tools/kolla-ansible', 'deploy', '-i', '/home/madelavergne/enos-deployment/enos_2018-01-22T16:29:36.577602/multinode', '--passwords', '/home/madelavergne/enos-deployment/enos_2018-01-22T16:29:36.577602/passwords.yml', '--configdir', '/home/madelavergne/enos-deployment/enos_2018-01-22T16:29:36.577602']' returned non-zero exit status 1
-
       #+END_EXAMPLE
     - nooo *insert here a gif of darth vader*
     - checked the gantt diagram for [[https://intranet.grid5000.fr/oar/Rennes/drawgantt-svg/][Rennes]], I still have those nodes
     - relaunched ~enos deploy~
     - same shit
     - try to redeploy, just in case
+    - still stuck at =TASK [mariadb : Waiting for MariaDB service to be ready through VIP]=
+    - searched a bit for this error on the net. Seems there was a bug with ports 2 years back, but it's supposed to be fixed and I can't find much about this error if filtering only this year.
+
 
 - While waiting for the tests to run, I'm trying to do minor changes to my enos
   - Corrected a typo
@@ -322,3 +324,116 @@ subprocess.CalledProcessError: Command '['/home/madelavergne/enos-deployment/eno
     - Wondering about the usefulness of this...
     - usage: ~enos new grid5000 > reservation.yaml~
     - would require to make a new sample and modify ~enos.py~ each time a provider is added
+
+
+- Since 5 nodes for the db doesn't work at that time, I will try to make cockroach work with enos
+  - I revert my changes to ~reservation.yaml~
+
+- Ronan came to help me
+
+  - look for tuto galera/mariadb docker
+  - cf notes
+
+* Tuesday 23 January [2018-01-23 mar.]
+
+** Beginning work on enoslib
+
+- [[https://github.com/BeyondTheClouds/enoslib][EnOSlib]]
+- [[https://enoslib.readthedocs.io/en/latest/][EnOSlib doc]]
+
+- Enoslib allows to get resources from a testbed and deploy an experiment workflow on those resources
+  - does not only deploy OS
+- So I will have to:
+  1. get the resources
+  2. deploy MariaDB+Galera / CockroachDB
+     - will have to be containerized
+  3. deploy OS with devstack
+
+
+- First of all, I clone enoslib.
+- Doing the tutorial for grid5k \to ok
+- Trying to understand how [[https://github.com/msimonin/ombt-orchestrator][ombt orchestrator]] is working
+  - Following the readme, add to adapt it a bit, because there was no
+    #+BEGIN_SRC
+git clone https://github.com/msimonin/qpid-dispatch-xp
+cd qpid-dispatch-xp
+    #+END_SRC
+    - Could have used =git clone https://github.com/msimonin/ombt-orchestrator.git=
+  - Tried to see the usage
+    #+BEGIN_EXAMPLE
+    (venv) madelavergne@frennes:~/qpid-dispatch-xp$ ./cli.py
+No handlers could be found for logger "vagrant"
+Usage: cli.py [OPTIONS] COMMAND [ARGS]...
+
+Options:
+  --help  Show this message and exit.
+
+Commands:
+  backup       Backup the environment
+  campaign
+  deploy       Claim resources from a provider and configure...
+  destroy      Destroy all the running dockers (not...
+  g5k          Claim resources on Grid'5000 (from a...
+  inventory    Generate the Ansible inventory file.
+  prepare      Configure the resources.[after g5k,vagrant...
+  test_case_1  Runs the test case 1 : one single large...
+  vagrant      Claim resources on vagrant (local machine)
+    #+END_EXAMPLE
+
+  - I'm probably going to need g5k option, there are no confs folder anyway
+    #+BEGIN_EXAMPLE
+(venv) madelavergne@frennes:~/qpid-dispatch-xp$ ./cli.py g5k
+No handlers could be found for logger "vagrant"
+INFO:root:Generate results directory /home/madelavergne/qpid-dispatch-xp/enos_2018-01-23T10:32:49.966966
+INFO:root:Symlink /home/madelavergne/qpid-dispatch-xp/enos_2018-01-23T10:32:49.966966 to current
+INFO:root:- Task g5k started -
+Traceback (most recent call last):
+  File "./cli.py", line 223, in <module>
+    cli()
+  File "/home/madelavergne/qpid-dispatch-xp/venv/local/lib/python2.7/site-packages/click/core.py", line 722, in __call__
+    return self.main(*args, **kwargs)
+  File "/home/madelavergne/qpid-dispatch-xp/venv/local/lib/python2.7/site-packages/click/core.py", line 697, in main
+    rv = self.invoke(ctx)
+  File "/home/madelavergne/qpid-dispatch-xp/venv/local/lib/python2.7/site-packages/click/core.py", line 1066, in invoke
+    return _process_result(sub_ctx.command.invoke(sub_ctx))
+  File "/home/madelavergne/qpid-dispatch-xp/venv/local/lib/python2.7/site-packages/click/core.py", line 895, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+  File "/home/madelavergne/qpid-dispatch-xp/venv/local/lib/python2.7/site-packages/click/core.py", line 535, in invoke
+    return callback(*args, **kwargs)
+  File "./cli.py", line 53, in g5k
+    t.g5k(force)
+  File "/home/madelavergne/qpid-dispatch-xp/venv/local/lib/python2.7/site-packages/enoslib/task.py", line 50, in decorated
+    fn(*args, **kwargs)
+TypeError: g5k() got multiple values for keyword argument 'env'
+    #+END_EXAMPLE
+
+  - In the examples, he uses deploy with vagrant, so
+    #+BEGIN_EXAMPLE
+(venv) madelavergne@frennes:~/qpid-dispatch-xp$ ./cli.py deploy --provider=g5k
+No handlers could be found for logger "vagrant"
+Usage: cli.py deploy [OPTIONS] BROKER
+
+Error: Missing argument "broker".
+    #+END_EXAMPLE
+
+  - As in the examples, I add rabbitmq as the broker
+    #+BEGIN_EXAMPLE
+(venv) madelavergne@frennes:~/qpid-dispatch-xp$ ./cli.py deploy --provider=g5k rabbitmq
+    #+END_EXAMPLE
+
+  - it began its work, deploying on 4 parasilo nodes
+  - when it is done, I try to launch the same benchmark Matthieu used
+    #+BEGIN_SRC
+    ./cli.py test_case_1 --nbr_clients 10 --nbr_servers 2
+    #+END_SRC
+  - do the backup, it is just like enos
+    #+BEGIN_SRC
+    ./cli.py backup
+    #+END_SRC
+  - then destroy
+    #+BEGIN_SRC
+    ./cli.py destroy
+    #+END_SRC
+
+- Since the test was done with ~test_case_1.ipynb~, I feel like I have to check how one can use Jupyter, as Ronan told me that was Matthieu uses for ombt-orchestration
+  - [[Https://jupyter-notebook-beginner-guide.readthedocs.io/en/latest/what_is_jupyter.html][Jupyter doc]]

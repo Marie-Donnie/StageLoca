@@ -242,7 +242,7 @@ Worker Balance
 
 #+CAPTION: RSM architecture from the Raft article
 #+NAME: fig:raft_RSM_architecture
-[[images/Raft_RSM_architecture.png]]
+[[../images/Raft_RSM_architecture.png]]
 
 - Each server stores a log containing a series of commands executed in order by he state machine associated
   + The commands are in the same order on each log -> same sequence executed on all state machines -> same state computed and same sequence of output (because of determinism)
@@ -351,12 +351,12 @@ Worker Balance
 
 #+CAPTION: A -not-so- condensed summary of the Raft consensus algorithm
 #+NAME: fig:raft_conso_algo
-[[images/Raft_conso_algo.pdf]]
+[[../images/Raft_conso_algo.pdf]]
 
 
 #+CAPTION: Raft ensured properties
 #+NAME: fig:raft_properties
-[[images/Raft_properties.png]]
+[[../images/Raft_properties.png]]
 
 
 - Clients and log compaction can be found in the [[https://ramcloud.stanford.edu/raft.pdf][extended version of the paper]].

@@ -456,13 +456,13 @@ Error: Missing argument "broker".
 
 - For that, we will probably need
   + projection: unary operation defining a subset of a relation
-    - noted \Pi_{a_{1},...,a_{n}}(R)
+    - noted \Pi_{a_1,...,a_n}(R)
     - with:
       + a_{1},...,a_{n}: set of attribute names
       + R: the relation from which the subset will be taken
     - result:
-      + \Pi_{a_{1}, ...,a_{n}}(R) = {t[a_{1}..,a_n}] : t \in R}
-      + with t[a_1,...,a_{n}] = { (a', v) | (a', v) \in t, a' \in a_{1}..,a_{n}
+      + \Pi_{a_1, ...,a_n}(R) = {t[a_{1}..,a_n}] : t \in R}
+      + with t[a_{1},...,a_{n}] = { (a', v) | (a', v) \in t, a' \in a_{1},..,a_{n}
     - example:
       + \Pi_{age,weight}(Person): age and weight are the attribute names, Person is the relation
     - in SQL: ~SELECT~
@@ -481,19 +481,50 @@ Error: Missing argument "broker".
       + \sigma_{age=weight}(Person): age and weight are attributes names and Person the relation
     - in SQL: ~WHERE~
   + (set) union
-    - noted R_1 \cup R_2 = {x: x \in R_1 \vee x \in R_2}
+    - noted R_{1} \cup R_{2} = {x: x \in R_{1} \vee x \in R_{2}}
   + (set) difference
-    - noted R_1 \ R_2 = {x: x \in R_1 \wedge x \notin R_2}
+    - noted R_{1} \ R_{2} = {x: x \in R_{1} \wedge x \notin R_{2}}
   + intersection
-    - noted R_1 \cap R_2 = {x: x \in R_1 \wedge x \in R_2}
+    - noted R_{1} \cap R_{2} = {x: x \in R_{1} \wedge x \in R_{2}}
   + Cartesian product
-    - noted R_1 \times R_2 = {(x,y): x \in R_1 \wedge y \in R_2}
+    - noted R_{1} \times R_{2} = {(x,y): x \in R_{1} \wedge y \in R_{2}}
     - in SQL: ~CROSS JOIN~
   + natural join
     - noted R \bowtie S = { r \cup s | r \in R \wedge s \in S \wedge P(r \cup s)}
     - with P a predicate that is true for a function t.
     - note: if R and S have no common attribute, it's the cartesian product
     - in SQL: ~NATURAL JOIN~
+
+- Now we will have to use them on our operations, i.e. (from Ronan):
+  - a. Create Role/Project
+  - b. Create/Register a service end-point
+  - c. Create a VMI
+  - d. Create a Network for the VM
+  - e. Create a VM on the ''orginal'' site
+  - f. Create/use a remote-attached volume (cinder like capability)
+
+- To do so, I'm reading chapter 7 from /Principles of Distributed Database Systems/
+  + they present the transformations (equivalence) rules described by Ullman
+    1. commutativity of binary operators ( A R B \Leftrightarrow B R A)
+       - cartesian product
+       - join
+       - union
+    2. associativity of binary operators ( A R(B R C) \Leftrightarrow (A R B)R C
+       - cartesian product
+       - join
+    3. idempotence of unary operators ( R(R(A)) \Leftrightarrow R(A) )
+       - projection: \Pi_{A'}(\Pi_{A''}(R) \Leftrightarrow \Pi_{A'}(R)
+       - selection: \sigma_{p_1(A_1)}(\sigma_{p_2(A_2)}(R)) = \sigma_{p_1(A_1) \wedge p_2(A_2)}(R)
+    4. Commuting selection with projection
+       - \Pi_{A_1,...,A_n}(\sigma_{p(A_p)}(R)) \Leftrightarrow \Pi_{A_1,...,A_n}(\sigma_{p(A_p)}(\Pi_{A_1,...,A_n,A_p}(R)))
+    5. Commuting selection with binary operators
+    6. Commuting projection with binary operators
+  + the techniques for decomposing and restructuring queries apply to both centralized and distributed DBMS
+    - do not take into account the distribution of data
+    - this is the role of the localization layer
+    - when fragmenting a relation horizontally, the localization program needs the union of the fragments
+      + selection: when fragments are selected by contradicting predicates (i.e. none of the tuples from the tables can satisfy the predicate of other tables), a selection can be reduced using these predicates
+      + join: when fragments from different relations have an equivalent predicate, you use the union of joins from the corresponding fragments rather than the join of unions.
 
 
 *** Sources

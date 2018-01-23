@@ -455,31 +455,31 @@ Error: Missing argument "broker".
 - what we want is to be able to make requests on a federation (union) of databases that share the same schema
 
 - For that, we will need
-  + projection :: unary operation defining a subset of a relation
-       - noted \Pi_{a_1,...,a_n}(R)
-       - with:
-	 + a_1,...,a_n: set of attribute names
-	 + R: the relation from which the subset will be taken
-       - result:
-	 + \Pi_{a_1, ...,a_n}(R) = {t[a_1,...,a_{n}] : t \in R}
-	 + with t[a_1,...,a_{n}] = { (a', v) | (a', v) \in t, a' \in a_1,...,a_n}
-       - example:
-	 + \Pi_{age,weight}(Person): age and weight are the attribute names, Person is the relation
-  + selection :: unary operation defining a subset of a relation too
-       - noted \sigma_{a \theta b}(R) or \sigma_{a \theta v}(R)
-       - with:
-	 + a and b: attribute names
-	 + \theta: binary operation in the set { \lt, \leq, =, \neq, \geq, \gt }
-	 + v: constant value
-	 + R: relation from which the subset will be taken
-       - result:
-	 + \sigma_{a \theta b}(R) = { t : t \in R, t(a) \theta t(b)}
-	 + \sigma_{a \theta v}(R) = { t : t \in R, t(a) \theta v}
-     #+END_LaTeX
-       - example:
-	 + \sigma_{age=34}(Person): age is the attribute name, 34 a constant value and Person the relation
-	 + \sigma_{age=weight}(Person): age and weight are attributes names and Person the relation
-       - in SQL, selection operations use ~WHERE~
+  + projection: unary operation defining a subset of a relation
+    - noted \Pi_{a_1,...,a_n}(R)
+    - with:
+      + a_1,...,a_n: set of attribute names
+      + R: the relation from which the subset will be taken
+    - result:
+      + \Pi_{a_1, ...,a_n}(R) = {t[a_1,...,a_{n}] : t \in R}
+      + with t[a_1,...,a_{n}] = { (a', v) | (a', v) \in t, a' \in a_1,...,a_n}
+    - example:
+      + \Pi_{age,weight}(Person): age and weight are the attribute names, Person is the relation
+    - in SQL, project operations use ~SELECT~
+  + selection: unary operation defining a subset of a relation too
+    - noted \sigma_{a \theta b}(R) or \sigma_{a \theta v}(R)
+    - with:
+      + a and b: attribute names
+      + \theta: binary operation in the set { \lt, \leq, =, \neq, \geq, \gt }
+      + v: constant value
+      + R: relation from which the subset will be taken
+     - result:
+      + \sigma_{a \theta b}(R) = { t : t \in R, t(a) \theta t(b)}
+      + \sigma_{a \theta v}(R) = { t : t \in R, t(a) \theta v}
+    - example:
+      + \sigma_{age=34}(Person): age is the attribute name, 34 a constant value and Person the relation
+      + \sigma_{age=weight}(Person): age and weight are attributes names and Person the relation
+    - in SQL, selection operations use ~WHERE~
 
 
 *** Sources

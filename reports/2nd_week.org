@@ -597,18 +597,18 @@ EMP_{2} = σ_{TITLE \neq ”Programmer”}(EMP)
 |-----------------------------------------+------------+--------|
 | Operation                               | Complexity | Type   |
 |-----------------------------------------+------------+--------|
-| Select                                  | O(n)       |        |
-| Project (without duplicate elimination) |            | Unary  |
-|-----------------------------------------+------------|        |
-| Project (with duplicate elimination)    | O(n*log n) |        |
+| Select                                  | O(n)       | Unary  |
+| Project (without duplicate elimination) |            |        |
+|-----------------------------------------+------------+--------|
+| Project (with duplicate elimination)    | O(n*log n) | Unary  |
 | Group by                                |            |        |
 |-----------------------------------------+------------+--------|
-| Join                                    |            |        |
+| Join                                    |            | Binary |
 | Semi-join                               | O(n*log n) |        |
-| Division                                |            | Binary |
+| Division                                |            |        |
 | Set Operators                           |            |        |
-|-----------------------------------------+------------|        |
-| Cartesian Product                       | O(n^{2})      |        |
+|-----------------------------------------+------------+--------|
+| Cartesian Product                       | O(n^{2})      | Binary |
 |-----------------------------------------+------------+--------|
 
 - Two principles comes from this table:

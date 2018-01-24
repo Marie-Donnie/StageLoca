@@ -573,8 +573,8 @@ WHERE ASG.ENO = EMP.ENO
 AND TITLE = "Mech. Eng."
       #+END_SRC
     - the corresponding localized query is shown in figure (a), with
-      + ASG_{1} = ASG (leftjoin)ENO EMP_{1}
-      + ASG_{2} = ASG (leftjoin)ENO EMP_{2}
+      + ASG_{1} = ASG |X_{ENO} EMP_{1}
+      + ASG_{2} = ASG |X_{ENO} EMP_{2}
       + EMP_{1} = \sigma_{TITLE=”Programmer”}(EMP)
       + EMP_{2} = σ_{TITLE \neq ”Programmer”}(EMP)
     - (b) Since the selection for Title="Mech. Eng." conflicts with EMP_{1} (Title="Programmer"), we can remove EMP_{1}

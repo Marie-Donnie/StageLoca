@@ -556,6 +556,7 @@ Error: Missing argument "broker".
   + horizontal partitioning, also called sharding, consists in separating different rows into different tables, based on a value of an attribute
   + vertical partitioning separates the tables on their columns
   + hybrid partitioning uses both kind of fragmentations, producing a tree-sructured partitioning (horizontal then vertical or vice versa)
+  + derived horizontal partitioning defined on a member relation of a link according to a selection specified on its owner
 - when fragmenting a relation *vertically*, the localization program needs the join of the fragments
   + projection: when doing a projection on attributes, you can reduce the query to the fragments that actually have that column
     #+CAPTION: Reduction for Vertical Fragmentation
@@ -646,3 +647,20 @@ AND TITLE = "Mech. Eng."
   2. Semantic analysis of the query to seek and reject incorrect queries
   3. Simplification of the query (elimination of redundancy)
   4. Restructuration of the query into an algebraic query
+
+
+- Reading a bit of Chapter 3, 10, 11, 12.6, 13, 18.2.4
+
+
+** Meeting with Ronan
+
+- He precised a bit what was expected:
+  - Make OS like routers that knows their neighboors and forward the requests if necessary where it will be needed
+  - Will be needing a [[https://en.wikipedia.org/wiki/Federated_database_system][federated database system]] probably
+  - It will be up to the databases to know when to forward the request
+    - need to consider locality: your data will be on the OS you use, but you might need some data on another OS
+    - if the OS (database) you needed isn't available, just like a website, well it's not really important because you can't do anything with it anyway (e.g. you can't start a VM on it)
+      - what if your VM info was on another OS (if your OS deemed that you required to start the VM elsewhere)?
+    - the database on "your" OS will manage its own database and the replicates from others
+- I should ask Ronan if this is what he meant
+- Tomorrow I will be able to resume my work on the tests

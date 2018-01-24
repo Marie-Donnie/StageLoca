@@ -12,7 +12,8 @@
     - then try with cockroachDB
 
 - Reminder
-#+name tab:test_plan
+#+CAPTION: Test plan (WIP)
+#+NAME: tab:test_plan
 :test_plan:
 |--------------------------+-----------------------------|
 | Parameter name           | Value                       |
@@ -35,14 +36,14 @@
   - [[https://github.com/openstack/kolla-ansible][Kolla-Ansible repo]]
     - all services used are in [[https://github.com/openstack/kolla-ansible/tree/master/ansible/roles][roles]]
     - the [[https://github.com/openstack/kolla-ansible/blob/master/ansible/inventory/multinode][inventory]] defines several variables to be used and overloaded if necessary
-      #+BEGIN_SRC
+      #+BEGIN_SRC ansible
       [mariadb:children]
       control
       #+END_SRC
 
 - First, I jump on a frontend on G5K
 - Then, I create a virtualenv to run enos
-  #+BEGIN_SRC
+  #+BEGIN_SRC bash
   mkdir enos-deployment && cd enos-deployment
   virtualenv venv
   source venv/bin/activate
@@ -50,16 +51,16 @@
   pip install enos
   #+END_SRC
 - Then, to configure
-  #+BEGIN_SRC
+  #+BEGIN_SRC bash
   enos new > reservation.yaml
   emacs reservation.yaml
   #+END_SRC
 - Realized I've should have done that on a node, so
-#+BEGIN_SRC
+#+BEGIN_SRC bash
 oarsub -I -l 'walltime=2:00:00'
 #+END_SRC
 - And on the node
-#+BEGIN_SRC
+#+BEGIN_SRC bash
 source venv/bin/activate
 nano reservation.yaml
 enos deploy
@@ -565,19 +566,19 @@ Error: Missing argument "broker".
     #+NAME: fig:reducing_derived
     [[../images/PDDS_reduc_distributed_frag.png]]
     - the query was
-      #+BEGIN_SRC
+      #+BEGIN_SRC sql
 SELECT *
 FROM EMP, ASG
 WHERE ASG.ENO = EMP.ENO
 AND TITLE = "Mech. Eng."
       #+END_SRC
     - the corresponding localized query is shown in figure (a), with
-      #+BEGIN_QUOTE
+      #+BEGIN_EXAMPLE
 ASG_{1} = ASG (leftjoin)ENO EMP_{1}
 ASG_{2} = ASG (leftjoin)ENO EMP_{2}
 EMP_{1} = \sigma_{TITLE=”Programmer”}(EMP)
 EMP_{2} = σ_{TITLE \neq ”Programmer”}(EMP)
-      #+END_QUOTE
+      #+END_EXAMPLE
     - (b) Since the selection for Title="Mech. Eng." conflicts with EMP_{1} (Title="Programmer"), we can remove EMP_{1}
     - (c) Using (R_{1} \cup R_{2} ) |X| S = (R_{1} |X| S) \cup (R_{2} |X| S), the unions are pushed up
     - (d) On the left branch, there can be no join on Title="Programmer" and Title\neq"Programmer", so the branch is removed

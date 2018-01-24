@@ -573,12 +573,10 @@ WHERE ASG.ENO = EMP.ENO
 AND TITLE = "Mech. Eng."
       #+END_SRC
     - the corresponding localized query is shown in figure (a), with
-      #+BEGIN_LaTeX
-$ASG_{1} = ASG (leftjoin)ENO EMP_{1}
-ASG_{2} = ASG (leftjoin)ENO EMP_{2}
-EMP_{1} = \sigma_{TITLE=”Programmer”}(EMP)
-EMP_{2} = σ_{TITLE \neq ”Programmer”}(EMP)$
-      #+END_LaTeX
+      + ASG_{1} = ASG (leftjoin)ENO EMP_{1}
+      + ASG_{2} = ASG (leftjoin)ENO EMP_{2}
+      + EMP_{1} = \sigma_{TITLE=”Programmer”}(EMP)
+      + EMP_{2} = σ_{TITLE \neq ”Programmer”}(EMP)
     - (b) Since the selection for Title="Mech. Eng." conflicts with EMP_{1} (Title="Programmer"), we can remove EMP_{1}
     - (c) Using (R_{1} \cup R_{2} ) |X| S = (R_{1} |X| S) \cup (R_{2} |X| S), the unions are pushed up
     - (d) On the left branch, there can be no join on Title="Programmer" and Title\neq"Programmer", so the branch is removed

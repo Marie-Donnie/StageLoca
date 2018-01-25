@@ -664,3 +664,34 @@ AND TITLE = "Mech. Eng."
     - the database on "your" OS will manage its own database and the replicates from others
 - I should ask Ronan if this is what he meant
 - Tomorrow I will be able to resume my work on the tests
+
+
+* Thursday 25 January [2018-01-25 jeu.]
+
+- Resumed work on ombt/tests
+
+** Tests
+
+[[tab:test_plan]]
+
+- Getting the conf.yaml right
+  + To do so, I'm looking how a role is defined \to ~ansible/roles/ROLE/tasks/~
+    - it seems that there are always:
+      + ~backup.yml~
+	- how to get the logs when you do a backup
+      + ~deploy.yml~
+	- defines how the role/service is deployed (e.g. installation/configuration/restart)
+      + ~destroy.yml~
+	- removes the data and container (usually)
+      + ~main.yml~
+	- includes ={{enos_action}}.yml=
+  + I'm going to fork the project since I will change to many things
+  + I have to check how to use MariaDB/Galera with docker
+    - [[https://blog.pythian.com/building-a-mariadb-galera-cluster-with-docker/][one tutorial]]
+      - not sure if it's ok, I'm going to ask Ronan what I really need
+      - Ronan gave me the link to [[https://www.cockroachlabs.com/docs/stable/start-a-local-cluster-in-docker.html#os-linux][start a local cluster in docker]] and a lesson he did about Docker
+
+
+** Talk
+
+Fatima did a talk called "Constructive privacy for shared genetic data" (cf talks dir)

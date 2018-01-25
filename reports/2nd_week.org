@@ -689,9 +689,49 @@ AND TITLE = "Mech. Eng."
   + I have to check how to use MariaDB/Galera with docker
     - [[https://blog.pythian.com/building-a-mariadb-galera-cluster-with-docker/][one tutorial]]
       - not sure if it's ok, I'm going to ask Ronan what I really need
-      - Ronan gave me the link to [[https://www.cockroachlabs.com/docs/stable/start-a-local-cluster-in-docker.html#os-linux][start a local cluster in docker]] and a lesson he did about Docker
+      - Ronan gave me the link to [[https://www.cockroachlabs.com/docs/stable/start-a-local-cluster-in-docker.html#os-linux][start a local cluster in docker (CockroachDB)]] and a lesson he did about Docker
+
+- I do the tutorial to start a local cluster in docker for CockroachDB
+
+#+CAPTION: Generic Layering Scheme for Distributed Query Processing
+#+NAME: fig:layer_qp
+[[../images/Docker_tuto_local_cluster.png]]
+
+- I won't be needing the [[https://www.cockroachlabs.com/docs/stable/orchestrate-cockroachdb-with-docker-swarm.html][tutorial to orchestrate cockroachdb with docker swarm]] since we are not doing a production deployment
+  - so I just need to be able to reproduce the tutorial for each nodes (one cockroachdb/node)
+
+- While I'm thinking about it, I launch an update on Zeal to have the newest doc from Ansible
+
+- Trying to dissect every ~deploy.yml~ to understand how it works. Grafana uses docker so it will probably be easier
+  - Beginning to make my own role
+  - [[https://github.com/Marie-Donnie/ombt-orchestrator/commit/4907f1bea861e1fe0481604202dc526eca73b163][Twitched the conf file]]
+    - Created a new branch
+    - Changed remote url from https to ssh so I can push more quickly
+  - [[https://github.com/Marie-Donnie/ombt-orchestrator/tree/tests/ansible/roles/cockroachdb/tasks][Made a bit of deploy]]
+  - Going to launch a try to see where I screwed up
+    - Ok, two persons took the entire Rennes site... so I'm switching to Nancy on grisou
+      #+BEGIN_EXAMPLE
+TASK [rabbitmq : Wait for the bus to be started] *******************************************************
+ok: [grisou-33.nancy.grid5000.fr] => (item={'machine': u'grisou-33.nancy.grid5000.fr', 'management_port': 15672, 'port': 5672})
+
+PLAY [Qpid dispatch deployment] ************************************************************************
+
+TASK [qdr : include] ***********************************************************************************
+skipping: [grisou-33.nancy.grid5000.fr]
+
+PLAY RECAP *********************************************************************************************
+grisou-32.nancy.grid5000.fr : ok=41   changed=9    unreachable=0    failed=0
+grisou-33.nancy.grid5000.fr : ok=27   changed=7    unreachable=0    failed=0
+grisou-39.nancy.grid5000.fr : ok=24   changed=6    unreachable=0    failed=0
+grisou-49.nancy.grid5000.fr : ok=24   changed=6    unreachable=0    failed=0
+
+{'code': 0, 'result': [{u'grisou-32.nancy.grid5000.fr': {'unreachable': 0, 'skipped': 1, 'ok': 41, 'changed': 9, 'failures': 0}}, {u'grisou-33.nancy.grid5000.fr': {'unreachable': 0, 'skipped': 2, 'ok': 27, 'changed': 7, 'failures': 0}}, {u'grisou-49.nancy.grid5000.fr': {'unreachable': 0, 'skipped': 1, 'ok': 24, 'changed': 6, 'failures': 0}}, {u'grisou-39.nancy.grid5000.fr': {'unreachable': 0, 'skipped': 1, 'ok': 24, 'changed': 6, 'failures': 0}}], 'playbook': 'ansible/site.yml'}
+INFO:root:- Task prepare finished -
+      #+END_EXAMPLE
+    - Not much info on the error, I will ask Matthieu tomorrow
+      - Ok after re-reading it, maybe I'm just missing to add the role in site.yml, and there was no error at all because cockroach wasn't in the file
 
 
-** Talk
+** Fatisma's Talk
 
 Fatima did a talk called "Constructive privacy for shared genetic data" (cf talks dir)

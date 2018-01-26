@@ -964,7 +964,7 @@ root@:26257/> SELECT * FROM bank.accounts;
 pq: no inbound stream connection
     #+END_EXAMPLE
   + (p26-master)
-  #+BEGIN_EXAMPLE
+    #+BEGIN_EXAMPLE
 root@:26257/> SELECT * FROM bank.accounts;
 +----+---------+
 | id | balance |
@@ -976,4 +976,11 @@ root@:26257/> SELECT * FROM bank.accounts;
 (3 rows)
 
 Time: 951.275µs
-  #+END_EXAMPLE
+    #+END_EXAMPLE
+  + This means IT WORKS! \o/
+    - I have to check though, if it's normal to be able to read only on the master and write on all replicas
+    - After searching for a bit, I recalled that it was actually supposed to work in the tutorial
+    - So I still have to dig deeper
+
+  + Ronan told me to just try to deploy the dockers on two machines on g5k with a oarsub -I to avoid long waitings, and launch the command without =hostname= and =network_mode=
+    - Tried to do this quickly, but I'll have to install docker, so I'll either lauch ombt-orchestrator without all the roles or I will have to install docker on a reservation to have some time because right now I don't have enough time to make a reservation and do the work before nightly bookings.

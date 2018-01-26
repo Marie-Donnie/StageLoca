@@ -735,3 +735,130 @@ INFO:root:- Task prepare finished -
 ** Fatisma's Talk
 
 Fatima did a talk called "Constructive privacy for shared genetic data" (cf talks dir)
+
+
+* Friday 26 January [2018-01-26 ven.]
+
+- Resumed tests
+
+** Tests
+
+- I've pulled the changes I made yesterday and I try to launch ombt-orchestrator with cockroachdb again
+  #+BEGIN_SRC
+  (venv) madelavergne@frennes:~/ombt-orchestrator$ ./cli.py deploy --provider=g5k rabbitmq
+  #+END_SRC
+  #+BEGIN_EXAMPLE
+TASK [cockroachdb : Start cockroachdb] *****************************************************************
+fatal: [parasilo-11.rennes.grid5000.fr]: FAILED! => {"failed": true, "msg": "The task includes an option with an undefined variable. The error was: 'item' is undefined\n\nThe error appears to have been in '/home/madelavergne/ombt-orchestrator/ansible/roles/cockroachdb/tasks/deploy.yml': line 1, column 3, but may\nbe elsewhere in the file depending on the exact syntax problem.\n\nThe offending line appears to be:\n\n\n- name: Start cockroachdb\n  ^ here\n"}
+fatal: [parasilo-15.rennes.grid5000.fr]: FAILED! => {"failed": true, "msg": "The task includes an option with an undefined variable. The error was: 'item' is undefined\n\nThe error appears to have been in '/home/madelavergne/ombt-orchestrator/ansible/roles/cockroachdb/tasks/deploy.yml': line 1, column 3, but may\nbe elsewhere in the file depending on the exact syntax problem.\n\nThe offending line appears to be:\n\n\n- name: Start cockroachdb\n  ^ here\n"}
+fatal: [parasilo-17.rennes.grid5000.fr]: FAILED! => {"failed": true, "msg": "The task includes an option with an undefined variable. The error was: 'item' is undefined\n\nThe error appears to have been in '/home/madelavergne/ombt-orchestrator/ansible/roles/cockroachdb/tasks/deploy.yml': line 1, column 3, but may\nbe elsewhere in the file depending on the exact syntax problem.\n\nThe offending line appears to be:\n\n\n- name: Start cockroachdb\n  ^ here\n"}
+fatal: [parasilo-2.rennes.grid5000.fr]: FAILED! => {"failed": true, "msg": "The task includes an option with an undefined variable. The error was: 'item' is undefined\n\nThe error appears to have been in '/home/madelavergne/ombt-orchestrator/ansible/roles/cockroachdb/tasks/deploy.yml': line 1, column 3, but may\nbe elsewhere in the file depending on the exact syntax problem.\n\nThe offending line appears to be:\n\n\n- name: Start cockroachdb\n  ^ here\n"}
+	to retry, use: --limit @/home/madelavergne/ombt-orchestrator/ansible/site.retry
+
+PLAY RECAP *********************************************************************************************
+parasilo-11.rennes.grid5000.fr : ok=42   changed=24   unreachable=0    failed=1
+parasilo-15.rennes.grid5000.fr : ok=28   changed=18   unreachable=0    failed=1
+parasilo-17.rennes.grid5000.fr : ok=25   changed=17   unreachable=0    failed=1
+parasilo-2.rennes.grid5000.fr : ok=25   changed=17   unreachable=0    failed=1
+  #+END_EXAMPLE
+
+  + the error says that I didn't defined item
+    - I saw it used elsewhere but I didn't see that Matthieu was defining the item for each task by
+      #+BEGIN_SRC ansible
+        with_items: "{{ ombt_confs[inventoy_hostname] }}"
+      #+END_SRC
+    - Changed that so I could rerun the test
+      #+BEGIN_EXAMPLE
+TASK [cockroachdb : Start cockroachdb] *****************************************************************
+fatal: [parasilo-11.rennes.grid5000.fr]: FAILED! => {"failed": true, "msg": "'ombt_confs' is undefined"}
+fatal: [parasilo-15.rennes.grid5000.fr]: FAILED! => {"failed": true, "msg": "'ombt_confs' is undefined"}
+fatal: [parasilo-17.rennes.grid5000.fr]: FAILED! => {"failed": true, "msg": "'ombt_confs' is undefined"}
+fatal: [parasilo-2.rennes.grid5000.fr]: FAILED! => {"failed": true, "msg": "'ombt_confs' is undefined"}
+	to retry, use: --limit @/home/madelavergne/ombt-orchestrator/ansible/site.retry
+      #+END_EXAMPLE
+
+  + Changed the file again to use ~inventory_hostname~
+    #+BEGIN_EXAMPLE
+    PLAY [CockroachDB] *************************************************************************************
+
+TASK [cockroachdb : include] ***************************************************************************
+included: /home/madelavergne/ombt-orchestrator/ansible/roles/cockroachdb/tasks/deploy.yml for parasilo-11.rennes.grid5000.fr, parasilo-15.rennes.grid5000.fr, parasilo-17.rennes.grid5000.fr, parasilo-2.rennes.grid5000.fr
+
+TASK [cockroachdb : Start cockroachdb] *****************************************************************
+changed: [parasilo-2.rennes.grid5000.fr]
+changed: [parasilo-15.rennes.grid5000.fr]
+changed: [parasilo-11.rennes.grid5000.fr]
+changed: [parasilo-17.rennes.grid5000.fr]
+
+PLAY RECAP *********************************************************************************************
+parasilo-11.rennes.grid5000.fr : ok=43   changed=10   unreachable=0    failed=0
+parasilo-15.rennes.grid5000.fr : ok=29   changed=8    unreachable=0    failed=0
+parasilo-17.rennes.grid5000.fr : ok=26   changed=7    unreachable=0    failed=0
+parasilo-2.rennes.grid5000.fr : ok=26   changed=7    unreachable=0    failed=0
+
+{'code': 0, 'result': [{u'parasilo-17.rennes.grid5000.fr': {'unreachable': 0, 'skipped': 1, 'ok': 26, 'changed': 7, 'failures': 0}}, {u'parasilo-15.rennes.grid5000.fr': {'unreachable': 0, 'skipped': 2, 'ok': 29, 'changed': 8, 'failures': 0}}, {u'parasilo-2.rennes.grid5000.fr': {'unreachable': 0, 'skipped': 1, 'ok': 26, 'changed': 7, 'failures': 0}}, {u'parasilo-11.rennes.grid5000.fr': {'unreachable': 0, 'skipped': 1, 'ok': 43, 'changed': 10, 'failures': 0}}], 'playbook': 'ansible/site.yml'}
+INFO:root:- Task prepare finished -
+    #+END_EXAMPLE
+
+  + So, I passed this step, but now I have to test exactly what I've done with these cockroach containers
+
+    #+BEGIN_EXAMPLE
+    root@parasilo-17:~# docker ps
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS               NAMES
+d45265172b80        telegraf            "/entrypoint.sh tele…"   About an hour ago   Up 24 minutes                           telegraf
+root@parasilo-17:~# docker ps -a
+CONTAINER ID        IMAGE                          COMMAND                  CREATED             STATUS                      PORTS               NAMES
+3378303bacb9        cockroachdb/cockroach:v1.1.4   "/cockroach/cockroac…"   3 minutes ago       Created                                         roach1
+ea9bcebe9f22        cockroachdb/cockroach          "/cockroach/cockroac…"   24 minutes ago      Exited (1) 24 minutes ago                       cockroachdb
+d45265172b80        telegraf                       "/entrypoint.sh tele…"   About an hour ago   Up 25 minutes                                   telegraf
+root@parasilo-17:~# docker restart ea9bcebe9f22
+ea9bcebe9f22
+root@parasilo-17:~# docker ps
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS               NAMES
+d45265172b80        telegraf            "/entrypoint.sh tele…"   About an hour ago   Up 25 minutes                           telegraf
+root@parasilo-17:~# docker ps -a
+CONTAINER ID        IMAGE                          COMMAND                  CREATED             STATUS                     PORTS               NAMES
+3378303bacb9        cockroachdb/cockroach:v1.1.4   "/cockroach/cockroac…"   4 minutes ago       Created                                        roach1
+ea9bcebe9f22        cockroachdb/cockroach          "/cockroach/cockroac…"   25 minutes ago      Exited (1) 8 seconds ago                       cockroachdb
+d45265172b80        telegraf                       "/entrypoint.sh tele…"   About an hour ago   Up 26 minutes                                  telegraf
+root@parasilo-17:~# docker logs ea9bcebe9f22
+Error: unknown command "cockroachdb/cockroach:v1.1.4" for "cockroach"
+Run 'cockroach --help' for usage.
+Failed running "cockroachdb/cockroach:v1.1.4"
+Error: unknown command "cockroachdb/cockroach:v1.1.4" for "cockroach"
+Run 'cockroach --help' for usage.
+Failed running "cockroachdb/cockroach:v1.1.4"
+    #+END_EXAMPLE
+    - Changed the deploy to remove the version and to only have ~cockroach start~ in the command but
+      #+BEGIN_EXAMPLE
+Error: unknown command "cockroach" for "cockroach"
+Run 'cockroach --help' for usage.
+Failed running "cockroach"
+Error: unknown command "cockroach" for "cockroach"
+Run 'cockroach --help' for usage.
+Failed running "cockroach"
+      #+END_EXAMPLE
+    - I fail to see why ansible can't read the entire command with or without quotes, so I'm reading the book Ronan told me about
+    - Ok, after asking Matthieu, turns out I didn't need to put "cockroach" at the beginning of the command, so
+      #+BEGIN_SRC ansible
+      command: start --insecure
+      #+END_SRC
+    - This way, it went smoothly
+  + Now I'll try to do stuff on cockroachdb. It shouldn't work on the db on other nodes, but you never know unless you've tried :)
+    - After following the tutorial on one node with
+      #+BEGIN_SRC
+      docker exec -it cockroach ./cockroach sql --insecure
+      #+END_SRC
+    - On another node:
+      #+BEGIN_EXAMPLE
+root@:26257/> SELECT * FROM bank.accounts;
+pq: database "bank" does not exist
+      #+END_EXAMPLE
+    - Now, at least, I'm sure of it :D
+  + I think I need to give another name to a /master/ and then join him on the network on the other nodes
+    - Now I have to search how to do this
+      + I'll probably need to make two cases: the default and the master
+      + To do so, I have to change the ~conf.yaml~ to add a role cockroach-master
+    - After a bit of fighting, I managed to have no visible errors, but my master was skipped
+      + Of course, lost another hour because I wrote "cochroachdb-master" on conf.yaml...
+    - Now I'll test the db again

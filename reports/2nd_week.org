@@ -862,3 +862,118 @@ pq: database "bank" does not exist
     - After a bit of fighting, I managed to have no visible errors, but my master was skipped
       + Of course, lost another hour because I wrote "cochroachdb-master" on conf.yaml...
     - Now I'll test the db again
+      + on the master:
+      #+BEGIN_EXAMPLE
+      root@paravance-26:~# docker exec -it cockroachdb-master ./cockroach sql --insecure
+      #+END_EXAMPLE
+      + on a node:
+      #+BEGIN_EXAMPLE
+root@paravance-31:~# docker exec -it cockroachdb-paravance-31.rennes.grid5000.fr ./cockroach sql --insecure
+# Welcome to the cockroach SQL interface.
+# All statements must be terminated by a semicolon.
+# To exit: CTRL + D.
+#
+Error: unable to connect or connection lost.
+
+Please check the address and credentials such as certificates (if attempting to
+communicate with a secure cluster).
+
+read tcp 127.0.0.1:36522->127.0.0.1:26257: read: connection reset by peer
+Failed running "sql"
+
+      #+END_EXAMPLE
+      + Reran the deployment but nothing has changed, so I'll probably have to change the deploys.yml
+
+  + Ronan told me to put the ip of the master in the join, which kind of worked:
+    - I can connect to the "slave" databases
+      #+BEGIN_EXAMPLE
+root@paravance-29:~# docker exec -it cockroachdb-paravance-29.rennes.grid5000.fr ./cockroach sql --insecure
+# Welcome to the cockroach SQL interface.
+# All statements must be terminated by a semicolon.
+# To exit: CTRL + D.
+#
+# Server version: CockroachDB CCL v1.1.4 (linux amd64, built 2018/01/08 17:32:42, go1.8.3) (same version as client)
+# Cluster ID: cec2c481-e688-4a70-a8f7-a047149eedbb
+#
+# Enter \? for a brief introduction.
+#
+      #+END_EXAMPLE
+    - I can't do (on p29):
+      #+BEGIN_EXAMPLE
+root@:26257/> SELECT * FROM bank.accounts;
+pq: no inbound stream connection
+      #+END_EXAMPLE
+    - BUT the database has indeed been replicated (p29):
+      #+BEGIN_EXAMPLE
+root@:26257/> SHOW DATABASES;
++--------------------+
+|      Database      |
++--------------------+
+| bank               |
+| crdb_internal      |
+| information_schema |
+| pg_catalog         |
+| system             |
++--------------------+
+(5 rows)
+
+Time: 1.399093ms
+      #+END_EXAMPLE
+      #+BEGIN_EXAMPLE
+root@:26257/> SHOW COLUMNS FROM bank.accounts;
++---------+---------+-------+---------+-------------+
+|  Field  |  Type   | Null  | Default |   Indices   |
++---------+---------+-------+---------+-------------+
+| id      | INT     | false | NULL    | {"primary"} |
+| balance | DECIMAL | true  | NULL    | {}          |
++---------+---------+-------+---------+-------------+
+(2 rows)
+
+Time: 7.1018ms
+      #+END_EXAMPLE
+
+- Did a bit of testings to see how it works:
+  + (p26-master)
+    #+BEGIN_EXAMPLE
+root@:26257/> INSERT INTO bank.accounts VALUES (2, 3);
+INSERT 1
+
+Time: 23.004289ms
+
+root@:26257/> SELECT * FROM bank.accounts;
++----+---------+
+| id | balance |
++----+---------+
+|  1 | 1000.50 |
+|  2 |       3 |
++----+---------+
+(2 rows)
+
+Time: 808.705µs
+    #+END_EXAMPLE
+  + (p29)
+    #+BEGIN_EXAMPLE
+root@:26257/> SELECT * FROM bank.accounts;
+pq: no inbound stream connection
+root@:26257/> INSERT INTO bank.accounts VALUES (3, 42);
+INSERT 1
+
+Time: 23.88463ms
+
+root@:26257/> SELECT * FROM bank.accounts;
+pq: no inbound stream connection
+    #+END_EXAMPLE
+  + (p26-master)
+  #+BEGIN_EXAMPLE
+root@:26257/> SELECT * FROM bank.accounts;
++----+---------+
+| id | balance |
++----+---------+
+|  1 | 1000.50 |
+|  2 |       3 |
+|  3 |      42 |
++----+---------+
+(3 rows)
+
+Time: 951.275µs
+  #+END_EXAMPLE

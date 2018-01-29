@@ -1,0 +1,163 @@
+#+TITLE: Report for : Un intergiciel d’une base de données NewSQL qui considère la localité de l’application cliente -- 3rd week --
+#+AUTHOR: Marie Delavergne
+
+* Monday 29 January [2018-01-29 lun.]
+
+- Back to testing
+
+** Tests
+
+- Launching ombt-orchestrator with the fewest possible installations
+  + site.yml
+    #+BEGIN_EXAMPLE
+---
+- name: Common configuration
+  hosts: all
+  roles:
+    - common
+    - registry
+
+- name: Control-bus deployment
+  hosts: control-bus
+  roles:
+      - rabbitmq-control
+
+- name: RabbitMQ deployment
+  hosts:
+    - bus
+  roles:
+    - { role: rabbitmq,
+        when: broker == "rabbitmq" }
+    #+END_EXAMPLE
+  + conf.yaml
+    #+BEGIN_EXAMPLE
+  resources:
+    machines:
+    - roles:
+    - control-bus
+    - ombt-control
+    - control
+    - registry
+    cluster: paravance
+    nodes: 1
+    primary_network: n1
+    secondary_networks: []
+    - roles:
+    - bus
+    cluster: paravance
+    nodes: 1
+    primary_network: n1
+    secondary_networks: []
+    - roles:
+    - ombt-server
+    cluster: paravance
+    nodes: 1
+    primary_network: n1
+    secondary_networks: []
+    - roles:
+    - ombt-client
+    cluster: paravance
+    nodes: 1
+    primary_network: n1
+    secondary_networks: []
+    networks:
+    - id: n1
+    roles:
+    - control_network
+    - internal_network
+    type: prod
+    site: rennes
+    #+END_EXAMPLE
+
+    - I also removed hostname from the cockroach deploys
+
+- Then, to test the parameters I need
+  + to pull cockroach from dockerhub =docker pull cockroachdb/cockroach=
+  + on the first node:
+    #+BEGIN_SRC
+docker run -d \
+--name=roach1 \
+-p 26257:26257 -p 8080:8080  \
+-v "${PWD}/cockroach-data/roach1:/cockroach/cockroach-data"  \
+cockroachdb/cockroach start --insecure
+    #+END_SRC
+
+  + on the second node:
+    #+BEGIN_SRC
+docker run -d \
+--name=roach2 \
+-v "${PWD}/cockroach-data/roach2:/cockroach/cockroach-data" \
+cockroachdb/cockroach start --insecure --join=roach1
+    #+END_SRC
+  + then I try to connect to cockroach:
+    - on roach1, everything is ok, but on roach 2:
+      #+BEGIN_EXAMPLE
+root@paravance-37:~# docker exec -it roach2 ./cockroach sql --insecure
+# Welcome to the cockroach SQL interface.
+# All statements must be terminated by a semicolon.
+# To exit: CTRL + D.
+#
+Error: unable to connect or connection lost.
+
+Please check the address and credentials such as certificates (if attempting to
+communicate with a secure cluster).
+
+read tcp 127.0.0.1:37504->127.0.0.1:26257: read: connection reset by peer
+Failed running "sql"
+      #+END_EXAMPLE
+  + Of course, I forgot I have to join paravance-4:
+      #+BEGIN_SRC
+docker run -d \
+--name=roach2 \
+-v "${PWD}/cockroach-data/roach2:/cockroach/cockroach-data" \
+cockroachdb/cockroach start --insecure --join=paravance-4.rennes.grid5000.fr
+    #+END_SRC
+
+  + Doesn't work, so I add ~--logtostderr~ to check docker logs
+    #+BEGIN_EXAMPLE
+I180129 12:07:29.071646 68 cli/start.go:503  starting cockroach node
+I180129 12:07:29.072280 68 storage/engine/rocksdb.go:411  opening rocksdb instance at "/cockroach/cockroach-data/local"
+W180129 12:07:29.206969 68 gossip/gossip.go:1241  [n?] no incoming or outgoing connections
+I180129 12:07:29.207078 68 storage/engine/rocksdb.go:411  opening rocksdb instance at "/cockroach/cockroach-data"
+I180129 12:07:29.211284 37 gossip/client.go:129  [n?] started gossip client to paravance-4.rennes.grid5000.fr:26257
+I180129 12:07:29.286550 68 server/config.go:542  [n?] 1 storage engine initialized
+I180129 12:07:29.286570 68 server/config.go:544  [n?] RocksDB cache size: 128 MiB
+I180129 12:07:29.286584 68 server/config.go:544  [n?] store 0: RocksDB, max size 0 B, max open file limit 11384
+I180129 12:07:29.286849 68 server/server.go:839  [n?] no stores bootstrapped and --join flag specified, awaiting init command.
+I180129 12:07:29.287190 68 storage/stores.go:303  [n?] read 0 node addresses from persistent storage
+I180129 12:07:29.287265 68 storage/stores.go:322  [n?] wrote 1 node addresses to persistent storage
+I180129 12:07:29.287286 68 server/node.go:606  [n?] connecting to gossip network to verify cluster ID...
+I180129 12:07:29.287315 68 server/node.go:631  [n?] node connected via gossip and verified as part of cluster "5e1c6f2d-81d2-42a8-96f3-1344a6bf97c1"
+I180129 12:07:29.288278 47 vendor/google.golang.org/grpc/grpclog/grpclog.go:75  grpc: addrConn.resetTransport failed to create client transport: connection error: desc = "transport: Error while dialing dial tcp: lookup f936b54b585a on 172.16.111.118:53: no such host"; Reconnecting to {f936b54b585a:26257 <nil>}
+    #+END_EXAMPLE
+
+  + After having tried loads of combination for the connection on paravance-4 and 37, the only combination that enabled me to connect to the sql database on paravance-37 was:
+    #+BEGIN_SRC
+root@paravance-4:~# docker run -d --name=roach1 -p 26257:26257 --hostname=paravance-4.rennes.grid5000.fr -v "${PWD}/cockroach-data/roach1:/cockroach/cockroach-data" cockroachdb/cockroach start --insecure
+root@paravance-37:~# docker run -d --name=roach2 -v "${PWD}/cockroach-data/roach2:/cockroach/cockroach-data" cockroachdb/cockroach start --insecure --join=paravance-4.rennes.grid5000.fr:26257 --logtostderr
+    #+END_SRC
+
+  + But this way, I get the same error =pq: no inbound stream connection= when trying to make a SELECT * FROM <table> on a node that joined
+
+  + While trying to make it work using researchs on the log errors, I managed to find that I'll probably need to ~--advertise-host:<ip-server>~
+    - I collected the ip for the servers:
+      #+BEGIN_EXAMPLE
+paravance-37.rennes.grid5000.fr 172.16.96.37
+paravance-38.rennes.grid5000.fr 172.16.96.38
+paravance-39.rennes.grid5000.fr 172.16.96.39
+paravance-4.rennes.grid5000.fr 172.16.96.4
+      #+END_EXAMPLE
+    - Tried different combinations once again until I managed to have the one I really need:
+      + on paravance-4:
+	#+BEGIN_EXAMPLE
+docker run -d --name=roach1 -p 26257:26257 --hostname=paravance-4.rennes.grid5000.fr -v "${PWD}/cockroach-data/roach1:/cockroach/cockroach-data" cockroachdb/cockroach start --insecure --advertise-host=172.16.96.4
+	#+END_EXAMPLE
+      + on paravance-37/38/39 (with the corresponding number of course):
+	#+BEGIN_EXAMPLE
+dockerun -d --name=roach2 -p 26257:26257 -v "${PWD}/cockroach-data/roach2:/cockroach/cockroach-data" cockroachdb/cockroach start --insecure --join=paravance-4.rennes.grid5000.fr --advertise-host=172.16.96.37
+	#+END_EXAMPLE
+    - A couple of notes:
+      + I need at least three nodes for it to work
+      + I managed this way to make every ~select~ and ~insert~ I want on the three nodes
+      + The port is probably required so it can go through the docker
+      + I kept the hostname on the master, tried without it and it worked though, so I'll probably keep it because it is pretty handy for the template not having to know the ip of the master

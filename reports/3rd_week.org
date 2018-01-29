@@ -199,3 +199,85 @@ ok: [paravance-4.rennes.grid5000.fr] => {
   }
       #+END_EXAMPLE
     - After a bit more of tweaking, I managed to have the correct configurations and [[https://github.com/Marie-Donnie/ombt-orchestrator/commit/d57a980935874bff4e27935434e1185d5516f3d8][push it]]
+
+- I tried another deployment, just to be sure:
+  + on paravance-51 (master), with the last query done after the execution on paravance-52
+    #+BEGIN_EXAMPLE
+root@paravance-51:~# docker exec -it cockroachdb-master ./cockroach sql --insecure
+# Welcome to the cockroach SQL interface.
+# All statements must be terminated by a semicolon.
+# To exit: CTRL + D.
+#
+# Server version: CockroachDB CCL v1.1.4 (linux amd64, built 2018/01/08 17:32:42, go1.8.3) (same version as client)
+# Cluster ID: d81ff223-de74-4e10-acdf-0d6c958db51f
+#
+# Enter \? for a brief introduction.
+#
+root@:26257/> CREATE DATABASE bank;
+CREATE DATABASE
+
+Time: 140.48601ms
+
+root@:26257/> CREATE TABLE bank.accounts (id INT PRIMARY KEY, balance DECIMAL);
+CREATE TABLE
+
+Time: 132.12233ms
+
+root@:26257/> INSERT INTO bank.accounts VALUES (1, 1000.50);
+INSERT 1
+
+Time: 95.999481ms
+
+root@:26257/> SELECT * FROM bank.accounts;
++----+---------+
+| id | balance |
++----+---------+
+|  1 | 1000.50 |
++----+---------+
+(1 row)
+
+Time: 1.693579ms
+
+root@:26257/> SELECT * FROM bank.accounts;
++----+------------+
+| id |  balance   |
++----+------------+
+|  1 |    1000.50 |
+|  2 | 1000000.50 |
++----+------------+
+(2 rows)
+
+Time: 1.669241ms
+
+root@:26257/>
+    #+END_EXAMPLE
+  + and on paravance-52:
+    #+BEGIN_EXAMPLE
+root@paravance-52:~# docker exec -it cockroachdb-paravance-52 ./cockroach sql --insecure
+# Welcome to the cockroach SQL interface.
+# All statements must be terminated by a semicolon.
+# To exit: CTRL + D.
+#
+# Server version: CockroachDB CCL v1.1.4 (linux amd64, built 2018/01/08 17:32:42, go1.8.3) (same version as client)
+# Cluster ID: d81ff223-de74-4e10-acdf-0d6c958db51f
+#
+# Enter \? for a brief introduction.
+#
+root@:26257/> SELECT * FROM bank.accounts;
++----+---------+
+| id | balance |
++----+---------+
+|  1 | 1000.50 |
++----+---------+
+(1 row)
+
+Time: 75.905867ms
+
+root@:26257/> INSERT INTO bank.accounts VALUES (2, 1000000.50);
+INSERT 1
+
+Time: 32.039379ms
+    #+END_EXAMPLE
+
+- So it seems that it works :)
+- Now I have to make it work with Openstack :)))

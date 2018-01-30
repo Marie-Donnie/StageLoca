@@ -281,3 +281,88 @@ Time: 32.039379ms
 
 - So it seems that it works :)
 - Now I have to make it work with Openstack :)))
+
+
+* Tuesday 30 January [2018-01-30 mar.]
+
+- Searching how to use Mariadb/Galera
+  + I already noticed [[https://withblue.ink/2016/03/09/galera-cluster-mariadb-coreos-and-docker-part-1.html][this link]], which seems pretty neat
+    - I will just make the effort of writing this down so I can remember it: ~--wsrep-new-cluster~ * is used to bootstrap the Galera Cluster. DO NOT USE IT AGAIN ONCE THE CLUSTER HAS BEEN INITIALIZED*
+  + Reading the article while deploying
+    - [[https://hub.docker.com/_/mariadb/][Pulling mariadb]] ~docker pull mariadb~ on each node (39, 47, 50)
+    - 39, 47, 50: ~mkdir -p /opt/local/etc/mysql.conf.d~
+      #+BEGIN_EXAMPLE
+#
+# Galera Cluster: mandatory settings
+#
+
+[server]
+bind-address=0.0.0.0
+binlog_format=row
+default_storage_engine=InnoDB
+innodb_autoinc_lock_mode=2
+innodb_locks_unsafe_for_binlog=1
+query_cache_size=0
+query_cache_type=0
+
+[galera]
+wsrep_on=ON
+wsrep_provider="/usr/lib/galera/libgalera_smm.so"
+wsrep_cluster_address="gcomm://172.16.96.39,172.16.96.47,172.16.96.50"
+wsrep-sst-method=rsync
+
+#
+# Optional setting
+#
+
+# Tune this value for your system, roughly 2x cores; see https://mariadb.com/kb/en/mariadb/galera-clust$
+# wsrep_slave_threads=1
+
+# innodb_flush_log_at_trx_commit=0
+      #+END_EXAMPLE
+    - Make dirs:
+      + 39: ~mkdir -p /mnt/data~
+      + 47, 50: ~mkdir -p /mnt/data/mysql~
+    - Docker run:
+      + 39:
+	#+BEGIN_SRC
+docker run   --name mariadb-0   -d   -v /opt/local/etc/mysql.conf.d:/etc/mysql/conf.d   -v /mnt/data:/var/lib/mysql   -e MYSQL_INITDB_SKIP_TZINFO=yes   -e MYSQL_ROOT_PASSWORD=my-secret-pw   -p 3306:3306   -p 4567:4567/udp   -p 4567-4568:4567-4568   -p 4444:4444   mariadb   --wsrep-new-cluster   --wsrep_node_address=$(ip -4 addr ls eth0 | awk '/inet / {print $2}' | cut -d"/" -f1)
+	#+END_SRC
+      + 47, 50:
+	#+BEGIN_SRC
+docker run   --name mariadb-1   -d   -v /opt/local/etc/mysql.conf.d:/etc/mysql/conf.d   -v /mnt/data:/var/lib/mysql   -p 3306:3306   -p 4567:4567/udp   -p 4567-4568:4567-4568   -p 4444:4444   mariadb   --wsrep_node_address=$(ip -4 addr ls eth0 | awk '/inet / {print $2}' | cut -d"/" -f1)
+	#+END_SRC
+    - Checking db (39, 47, 50):
+      + ~export MYSQL_IP=$(ip -4 addr ls eth0 | awk '/inet / {print $2}' | cut -d"/" -f1)~
+      + ~docker run --rm -it mariadb mysql -h $MYSQL_IP -u root -p~ with the password defined when running first docker (my-secret-pw)
+    - One set of data:
+      + 39:
+	#+BEGIN_EXAMPLE
+MariaDB [(none)]> CREATE DATABASE bank;
+Query OK, 1 row affected (0.02 sec)
+
+MariaDB [(none)]> CREATE TABLE bank.accounts (id INT PRIMARY KEY, balance DECIMAL);
+Query OK, 0 rows affected (0.11 sec)
+
+MariaDB [(none)]> INSERT INTO bank.accounts VALUES (1, 1000.50);
+Query OK, 1 row affected, 1 warning (0.04 sec)
+
+MariaDB [(none)]> SELECT * FROM bank.accounts;
++----+---------+
+| id | balance |
++----+---------+
+|  1 | 1001    |
++----+---------+
+1 row in set (0.00 sec)
+	#+END_EXAMPLE
+      + 47, 50:
+	#+BEGIN_EXAMPLE
+MariaDB [(none)]> SELECT * FROM bank.accounts;
++----+---------+
+| id | balance |
++----+---------+
+|  1 | 1001    |
++----+---------+
+1 row in set (0.00 sec)
+	#+END_EXAMPLE
+  + It already works, now I have to make it work using ansible

@@ -397,3 +397,99 @@ u'chrony-server': [u'paravance-41.rennes.grid5000.fr']}
 - I resume my tries to make MariaDB work on a cluster with enos-lib
 
 - Trying to put the conf file directly in volume because I'm not sure if it is used (can't find it in /etc/mysql/conf.d)
+  - No more luck, it still act like there are no cluster on the nodes that didn't bootstrap it
+    #+BEGIN_EXAMPLE
+    2018-01-31  9:45:23 140658217932672 [Warning] WSREP: no nodes coming from prim view, prim not possible
+2018-01-31  9:45:23 140658217932672 [Note] WSREP: view(view_id(NON_PRIM,73464950,1) memb {
+	73464950,0
+} joined {
+} left {
+} partitioned {
+})
+2018-01-31  9:45:23 140658217932672 [Warning] WSREP: last inactive check more than PT1.5S ago (PT3.50207S), skipping check
+2018-01-31  9:45:53 140658217932672 [Note] WSREP: view((empty))
+2018-01-31  9:45:53 140658217932672 [ERROR] WSREP: failed to open gcomm backend connection: 110: failed to reach primary view: 110 (Connection timed out)
+	 at gcomm/src/pc.cpp:connect():158
+2018-01-31  9:45:53 140658217932672 [ERROR] WSREP: gcs/src/gcs_core.cpp:gcs_core_open():208: Failed to open backend connection: -110 (Connection timed out)
+2018-01-31  9:45:53 140658217932672 [ERROR] WSREP: gcs/src/gcs.cpp:gcs_open():1458: Failed to open channel 'my_wsrep_cluster' at 'gcomm://172.16.96.40,172.16.96.72,172.16.96.41,172.16.96.70': -110 (Connection timed out)
+2018-01-31  9:45:53 140658217932672 [ERROR] WSREP: gcs connect failed: Connection timed out
+2018-01-31  9:45:53 140658217932672 [ERROR] WSREP: wsrep::connect(gcomm://172.16.96.40,172.16.96.72,172.16.96.41,172.16.96.70) failed: 7
+2018-01-31  9:45:53 140658217932672 [ERROR] Aborting
+    #+END_EXAMPLE
+
+- I am beginning to think I forgot something I had to tweak so it could work, so I redeploy without any mariadb and retry the tutorial
+  + Everything works fine in less than 5 minutes... :-/
+
+- Trying again, with quotes in the yml file, this time
+  + Still no good, but I didn't expect much
+  + BUT by comparing the informations about launching a mariadb docker with or without ansible (with ~docker inspect <container-name>, I noticed some differences:
+    - For each "PortBindings", in ansible the hostIP is "0.0.0.0", and "" for the command version
+    - No "4567/tcp": {}, in the ansible version for the ExposedPorts
+    - Strangely, there are no =/etc/mysql/conf.d= in the volumes of the command version
+    - In the ansibles versions, the binds (volume) are in "rw" mode, and in the command version it's ""
+  + So I have different things to test, I've put them in order of likeliness of causing problems
+    #+BEGIN_QUOTE
+    Exposed ports are ports that a container or service is using either to provide a service, or listen on. By default, exposed ports in Docker Cloud are only privately accessible. This means only other services that are linked to the service which is exposing the ports can communicate over the exposed port.
+
+    Exposed ports cannot be accessed publicly over the internet.
+
+    Published ports are exposed ports that are accessible publicly over the internet. Published ports are published to the public-facing network interface in which the container is running on the node (host).
+
+    Published ports can be accessed publicly over the internet.
+    #+END_QUOTE
+
+- Tried with exposed ports, no luck
+- Tried with published ports with 4567 before the udp, no luck either
+  #+BEGIN_EXAMPLE
+              "ExposedPorts": {
+                "3306/tcp": {},
+                "4444/tcp": {},
+                "4567/udp": {},
+                "4568/tcp": {}
+            },
+  #+END_EXAMPLE
+- I'll try with the port exposed also
+  + got ="4567:4567/tcp": {},= I think I'm getting somewhere, trying to put only 4567 on exposed ports
+  + Ok the container didn't crashed!
+  + Checking the logs
+    #+BEGIN_EXAMPLE
+    2018-01-31 14:30:03 139866562279296 [Note] mysqld: ready for connections.
+Version: '10.2.12-MariaDB-10.2.12+maria~jessie'  socket: '/var/run/mysqld/mysqld.sock'  port: 3306  mariadb.org binary distribution
+2018-01-31 14:30:05 139866121680640 [Note] WSREP: 1.0 (c779db4b07c1): State transfer from 2.0 (ade329ad4016) complete.
+2018-01-31 14:30:05 139866121680640 [Note] WSREP: Member 1.0 (c779db4b07c1) synced with group.
+    #+END_EXAMPLE
+  + Getting really excited, checking mysql stuff
+  + OMGBBQ it works!
+    - on the bootstrapper:
+      #+BEGIN_EXAMPLE
+MariaDB [(none)]> CREATE DATABASE bank;
+Query OK, 1 row affected (0.02 sec)
+      #+END_EXAMPLE
+    - on a random other node:
+      #+BEGIN_EXAMPLE
+MariaDB [(none)]> CREATE TABLE bank.accounts (id INT PRIMARY KEY, balance DECIMAL);
+Query OK, 0 rows affected (0.12 sec)
+
+MariaDB [(none)]> INSERT INTO bank.accounts VALUES (1, 1000);
+Query OK, 1 row affected (0.03 sec)
+
+MariaDB [(none)]> SELECT * FROM bank.accounts;
++----+---------+
+| id | balance |
++----+---------+
+|  1 | 1000    |
++----+---------+
+1 row in set (0.00 sec)
+      #+END_EXAMPLE
+    - again on the boostrapper:
+      #+BEGIN_EXAMPLE
+MariaDB [(none)]> SELECT * FROM bank.accounts;
++----+---------+
+| id | balance |
++----+---------+
+|  1 | 1000    |
++----+---------+
+1 row in set (0.00 sec)
+      #+END_EXAMPLE
+
+- [[https://github.com/Marie-Donnie/ombt-orchestrator/commit/cb1edc06fbb6ab6d585dc79720be0b2a9ca64f02][Adding changes to files to the repo]]

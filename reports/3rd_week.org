@@ -493,3 +493,11 @@ MariaDB [(none)]> SELECT * FROM bank.accounts;
       #+END_EXAMPLE
 
 - [[https://github.com/Marie-Donnie/ombt-orchestrator/commit/cb1edc06fbb6ab6d585dc79720be0b2a9ca64f02][Adding changes to files to the repo]]
+
+- Trying to deploy from scratch, just to be sure
+  + And everything is fine of all nodes
+
+- Now I have some cleanup to make so I won't use ombt anymore
+  + Will have to make a new repo
+  + Doesn't deploy at the moment
+    - I will probably have to see what usually happens and check differences

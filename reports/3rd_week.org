@@ -291,6 +291,7 @@ Time: 32.039379ms
   + Reading the article while deploying
     - [[https://hub.docker.com/_/mariadb/][Pulling mariadb]] ~docker pull mariadb~ on each node (39, 47, 50)
     - 39, 47, 50: ~mkdir -p /opt/local/etc/mysql.conf.d~
+    - 39, 47, 50: edit ~/opt/local/etc/mysql.conf.d/mysql_server.cnf~
       #+BEGIN_EXAMPLE
 #
 # Galera Cluster: mandatory settings
@@ -366,3 +367,33 @@ MariaDB [(none)]> SELECT * FROM bank.accounts;
 1 row in set (0.00 sec)
 	#+END_EXAMPLE
   + It already works, now I have to make it work using ansible
+
+- I redeploy entirely since I don't want to destroy everything manually
+
+#+BEGIN_EXAMPLE
+ 'groups': {
+u'control': [u'paravance-41.rennes.grid5000.fr'],
+'all': [u'paravance-41.rennes.grid5000.fr', u'paravance-44.rennes.grid5000.fr', u'paravance-42.rennes.grid5000.fr', u'paravance-43.rennes.grid5000.fr'],
+u'ombt-client': [u'paravance-44.rennes.grid5000.fr'],
+u'bus': [u'paravance-42.rennes.grid5000.fr'],
+u'mariadb-master': [u'paravance-41.rennes.grid5000.fr'],
+'ungrouped': [],
+u'chrony': [u'paravance-42.rennes.grid5000.fr', u'paravance-43.rennes.grid5000.fr', u'paravance-44.rennes.grid5000.fr'],
+u'ombt-control': [u'paravance-41.rennes.grid5000.fr'],
+u'registry': [u'paravance-41.rennes.grid5000.fr'],
+u'ombt-server': [u'paravance-43.rennes.grid5000.fr'],
+u'control-bus': [u'paravance-41.rennes.grid5000.fr'],
+u'mariadb': [u'paravance-42.rennes.grid5000.fr', u'paravance-43.rennes.grid5000.fr', u'paravance-44.rennes.grid5000.fr'],
+u'chrony-server': [u'paravance-41.rennes.grid5000.fr']}
+#+END_EXAMPLE
+
+- I use groups[all] list, which I put into a list so I can iterate on it in the template
+- It's worth noting that you can't use a port range in the ansible ~docker_container~ module.
+  - It was easy here because there are only two ports, but I could have use ~with_sequence: start=<startport> end=<endport>~
+
+
+* Wednesday 31 January [2018-01-31 mer.]
+
+- I resume my tries to make MariaDB work on a cluster with enos-lib
+
+- Trying to put the conf file directly in volume because I'm not sure if it is used (can't find it in /etc/mysql/conf.d)

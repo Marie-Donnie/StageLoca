@@ -501,3 +501,40 @@ MariaDB [(none)]> SELECT * FROM bank.accounts;
   + Will have to make a new repo
   + Doesn't deploy at the moment
     - I will probably have to see what usually happens and check differences
+
+
+* Thursday 1 February [2018-02-01 jeu.]
+
+- Ronan asked me to make my version built upon enoslib rather than removing things from ombt-orchestrator, so I have to work on that
+
+- Beginning to search how ombt-orchestrator uses enoslib.
+  + It seems that it imports libraries.
+
+- Creating [[http://sci.esa.int/juice/][juice]]
+  + Updated gitignore
+  + Made requirements
+  + Copied main.py
+  + Began cli.py, copied most of the other
+  + Same with tasks.py
+  + Copied the roles I made and the ones changed yesterday
+  + Copied utils folder because it seemed mandatory
+  + Pushed to the repo
+  + Added readme
+- Launched juice on Nantes because there was no room left at Rennes or Nancy
+  + Used cockroachdb in the config file
+  + Seems to work
+    - Finished without errors
+    - ~docker ps~ shows the coachroach containers are up
+    - ~docker exec -it cockroachdb-master ./cockroach sql --insecure~ ok
+    - [[https://www.cockroachlabs.com/docs/stable/start-a-local-cluster-in-docker.html#step-4-test-the-cluster][cockroachdb test for the cluster]] ok!
+
+- Now I'm trying to enable the choice between cockroach or maria db at launch
+  + Been thinking about making some replacement in the dict but it was really crappy
+  + I asked Ronan about a proper way he told me I could change it in ~site.yml~:
+    - the inventory specifies the hosts where roles are deployed:
+      #+BEGIN_EXAMPLE
+[db-master]
+econome-12.nantes.grid5000.fr ansible_host=econome-12.nantes.grid5000.fr ansible_ssh_user=root ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' internal_network=eth0 control_network=eth0 enos_devices="['eth0']"
+      #+END_EXAMPLE
+    - so I can change in the ~site.yml~ file the desired hosts type for each role AND THEN
+    - add a ~when~ with an environment variable

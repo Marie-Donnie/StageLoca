@@ -732,7 +732,7 @@ INFO:root:- Task prepare finished -
       - Ok after re-reading it, maybe I'm just missing to add the role in site.yml, and there was no error at all because cockroach wasn't in the file
 
 
-** Fatisma's Talk
+** Fatima's Talk
 
 Fatima did a talk called "Constructive privacy for shared genetic data" (cf talks dir)
 

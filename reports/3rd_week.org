@@ -538,3 +538,129 @@ econome-12.nantes.grid5000.fr ansible_host=econome-12.nantes.grid5000.fr ansible
       #+END_EXAMPLE
     - so I can change in the ~site.yml~ file the desired hosts type for each role AND THEN
     - add a ~when~ with an environment variable
+
+
+* Friday 2 February [2018-02-02 ven.]
+
+- Going to try what I pushed yesterday right now
+
+- It worked with ~./cli.py deploy~, using MariaDB as default database
+  #+BEGIN_EXAMPLE
+PLAY [CockroachDB master deployment] *******************************************************************
+
+TASK [cockroachdb-master : include] ********************************************************************
+skipping: [parapluie-25.rennes.grid5000.fr]
+
+PLAY [CockroachDB deployment] **************************************************************************
+
+TASK [cockroachdb : include] ***************************************************************************
+skipping: [parapluie-8.rennes.grid5000.fr]
+skipping: [parapluie-31.rennes.grid5000.fr]
+skipping: [parapluie-38.rennes.grid5000.fr]
+
+PLAY [MariaDB master deployment] ***********************************************************************
+
+TASK [mariadb-master : include] ************************************************************************
+included: /home/madelavergne/juice/ansible/roles/mariadb-master/tasks/deploy.yml for parapluie-25.rennes.grid5000.fr
+
+TASK [mariadb-master : Create the directories] *********************************************************
+changed: [parapluie-25.rennes.grid5000.fr] => (item=/opt/local/etc/mysql.conf.d/)
+changed: [parapluie-25.rennes.grid5000.fr] => (item=/mnt/data)
+
+TASK [mariadb-master : Generate the configuration file] ************************************************
+changed: [parapluie-25.rennes.grid5000.fr] => (item=[u'parapluie-25.rennes.grid5000.fr', u'parapluie-8.rennes.grid5000.fr', u'parapluie-31.rennes.grid5000.fr', u'parapluie-38.rennes.grid5000.fr'])
+
+TASK [mariadb-master : Start the MariaDB-master container] *********************************************
+changed: [parapluie-25.rennes.grid5000.fr]
+
+PLAY [MariaDB deployment] ******************************************************************************
+
+TASK [mariadb : include] *******************************************************************************
+included: /home/madelavergne/juice/ansible/roles/mariadb/tasks/deploy.yml for parapluie-8.rennes.grid5000.fr, parapluie-31.rennes.grid5000.fr, parapluie-38.rennes.grid5000.fr
+
+TASK [mariadb : Create the directories] ****************************************************************
+changed: [parapluie-8.rennes.grid5000.fr] => (item=/opt/local/etc/mysql.conf.d/)
+changed: [parapluie-31.rennes.grid5000.fr] => (item=/opt/local/etc/mysql.conf.d/)
+changed: [parapluie-38.rennes.grid5000.fr] => (item=/opt/local/etc/mysql.conf.d/)
+changed: [parapluie-8.rennes.grid5000.fr] => (item=/mnt/data/mysql)
+changed: [parapluie-31.rennes.grid5000.fr] => (item=/mnt/data/mysql)
+changed: [parapluie-38.rennes.grid5000.fr] => (item=/mnt/data/mysql)
+
+TASK [mariadb : Generate the configuration file] *******************************************************
+changed: [parapluie-8.rennes.grid5000.fr] => (item=[u'parapluie-25.rennes.grid5000.fr', u'parapluie-8.rennes.grid5000.fr', u'parapluie-31.rennes.grid5000.fr', u'parapluie-38.rennes.grid5000.fr'])
+changed: [parapluie-31.rennes.grid5000.fr] => (item=[u'parapluie-25.rennes.grid5000.fr', u'parapluie-8.rennes.grid5000.fr', u'parapluie-31.rennes.grid5000.fr', u'parapluie-38.rennes.grid5000.fr'])
+changed: [parapluie-38.rennes.grid5000.fr] => (item=[u'parapluie-25.rennes.grid5000.fr', u'parapluie-8.rennes.grid5000.fr', u'parapluie-31.rennes.grid5000.fr', u'parapluie-38.rennes.grid5000.fr'])
+
+TASK [mariadb : Start the MariaDB container] ***********************************************************
+changed: [parapluie-8.rennes.grid5000.fr]
+changed: [parapluie-31.rennes.grid5000.fr]
+changed: [parapluie-38.rennes.grid5000.fr]
+  #+END_EXAMPLE
+- Then I used ~./cli.py deploy --db=cockroachdb~
+  #+BEGIN_EXAMPLE
+  PLAY [CockroachDB master deployment] *******************************************************************
+
+TASK [cockroachdb-master : include] ********************************************************************
+included: /home/madelavergne/juice/ansible/roles/cockroachdb-master/tasks/deploy.yml for parapluie-25.rennes.grid5000.fr
+
+TASK [cockroachdb-master : Start cockroachdb master] ***************************************************
+changed: [parapluie-25.rennes.grid5000.fr]
+
+PLAY [CockroachDB deployment] **************************************************************************
+
+TASK [cockroachdb : include] ***************************************************************************
+included: /home/madelavergne/juice/ansible/roles/cockroachdb/tasks/deploy.yml for parapluie-8.rennes.grid5000.fr, parapluie-31.rennes.grid5000.fr, parapluie-38.rennes.grid5000.fr
+
+TASK [cockroachdb : Start cockroachdb] *****************************************************************
+fatal: [parapluie-8.rennes.grid5000.fr]: FAILED! => {"failed": true, "msg": "The task includes an option with an undefined variable. The error was: 'dict object' has no attribute 'cockroachdb-master'\n\nThe error appears to have been in '/home/madelavergne/juice/ansible/roles/cockroachdb/tasks/deploy.yml': line 2, column 3, but may\nbe elsewhere in the file depending on the exact syntax problem.\n\nThe offending line appears to be:\n\n---\n- name: Start cockroachdb\n  ^ here\n"}
+fatal: [parapluie-31.rennes.grid5000.fr]: FAILED! => {"failed": true, "msg": "The task includes an option with an undefined variable. The error was: 'dict object' has no attribute 'cockroachdb-master'\n\nThe error appears to have been in '/home/madelavergne/juice/ansible/roles/cockroachdb/tasks/deploy.yml': line 2, column 3, but may\nbe elsewhere in the file depending on the exact syntax problem.\n\nThe offending line appears to be:\n\n---\n- name: Start cockroachdb\n  ^ here\n"}
+fatal: [parapluie-38.rennes.grid5000.fr]: FAILED! => {"failed": true, "msg": "The task includes an option with an undefined variable. The error was: 'dict object' has no attribute 'cockroachdb-master'\n\nThe error appears to have been in '/home/madelavergne/juice/ansible/roles/cockroachdb/tasks/deploy.yml': line 2, column 3, but may\nbe elsewhere in the file depending on the exact syntax problem.\n\nThe offending line appears to be:\n\n---\n- name: Start cockroachdb\n  ^ here\n"}
+  #+END_EXAMPLE
+  + Cockroach-master worked fined but there was an error while deploying cockroach "slaves"
+  + Of course there was, the deploy file for cockroach was trying to join 'cockroachdb-master'
+    #+BEGIN_SRC
+    "{{ hostvars[groups['cockroachdb-master'][0]]['ansible_' + control_network]['ipv4']['address'] }}"
+    #+END_SRC
+  + Changed it to db-master
+    #+BEGIN_SRC
+    PLAY [CockroachDB master deployment] *******************************************************************
+
+TASK [cockroachdb-master : include] ********************************************************************
+included: /home/madelavergne/juice/ansible/roles/cockroachdb-master/tasks/deploy.yml for parapluie-25.rennes.grid5000.fr
+
+TASK [cockroachdb-master : Start cockroachdb master] ***************************************************
+changed: [parapluie-25.rennes.grid5000.fr]
+
+PLAY [CockroachDB deployment] **************************************************************************
+
+TASK [cockroachdb : include] ***************************************************************************
+included: /home/madelavergne/juice/ansible/roles/cockroachdb/tasks/deploy.yml for parapluie-8.rennes.grid5000.fr, parapluie-31.rennes.grid5000.fr, parapluie-38.rennes.grid5000.fr
+
+TASK [cockroachdb : Start cockroachdb] *****************************************************************
+changed: [parapluie-8.rennes.grid5000.fr]
+changed: [parapluie-38.rennes.grid5000.fr]
+changed: [parapluie-31.rennes.grid5000.fr]
+
+PLAY [MariaDB master deployment] ***********************************************************************
+
+TASK [mariadb-master : include] ************************************************************************
+skipping: [parapluie-25.rennes.grid5000.fr]
+
+PLAY [MariaDB deployment] ******************************************************************************
+
+TASK [mariadb : include] *******************************************************************************
+skipping: [parapluie-8.rennes.grid5000.fr]
+skipping: [parapluie-31.rennes.grid5000.fr]
+skipping: [parapluie-38.rennes.grid5000.fr]
+    #+END_SRC
+
+- Checking the databases:
+  + cockroachdb:
+    - ~docker ps~ ok
+    - ~docker exec -it cockroachdb-master ./cockroach sql --insecure~ ok
+    - [[https://www.cockroachlabs.com/docs/stable/start-a-local-cluster-in-docker.html#step-4-test-the-cluster][cockroachdb test for the cluster]] ok
+  + mariadb
+    - tried to check whether it was ok to use ~./cli.py deploy --db=mariadb~ ok
+    - ~docker ps~ ok
+    - ~docker run --rm -it mariadb mysql -h 172.16.99.9 -u root -p~ ok
+    - [[https://www.cockroachlabs.com/docs/stable/start-a-local-cluster-in-docker.html#step-4-test-the-cluster][cockroachdb test for the cluster]] ok

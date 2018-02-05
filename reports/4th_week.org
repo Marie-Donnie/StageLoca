@@ -1,0 +1,73 @@
+#+TITLE: Report for : Un intergiciel d’une base de données NewSQL qui considère la localité de l’application cliente -- 4th week --
+#+AUTHOR: Marie Delavergne
+
+* Monday 5 February [2018-02-05 lun.]
+
+- Been thinking about adding vars in =extra_vars= during the ~prepare~ task but I don't think it would be a good way
+- The other solution I thought about was to add vars in the beginning of the sysbench ~deploy~, depending on the 'db' var
+
+- For now, I will concentrate on making everything work and then I will see about making it the proper way
+
+- Added the run to the deployment
+#+BEGIN_EXAMPLE
+root@parapluie-25:~# docker logs sysbench
+sysbench 1.0.7 (using bundled LuaJIT 2.1.0-beta2)
+
+Running the test with following options:
+Number of threads: 1
+Initializing random number generator from current time
+
+
+Initializing worker threads...
+
+Threads started!
+
+SQL statistics:
+    queries performed:
+        read:                            2646
+        write:                           360
+        other:                           774
+        total:                           3780
+    transactions:                        189    (18.83 per sec.)
+    queries:                             3780   (376.60 per sec.)
+    ignored errors:                      0      (0.00 per sec.)
+    reconnects:                          0      (0.00 per sec.)
+
+General statistics:
+    total time:                          10.0351s
+    total number of events:              189
+
+Latency (ms):
+         min:                                 32.82
+         avg:                                 53.08
+         max:                                391.95
+         95th percentile:                     95.81
+         sum:                              10032.55
+
+Threads fairness:
+    events (avg/stddev):           189.0000/0.00
+    execution time (avg/stddev):   10.0326/0.00
+#+END_EXAMPLE
+
+- Now, doing the same with CockroachDB
+  + Using [[https://www.cockroachlabs.com/docs/stable/use-the-built-in-sql-client.html][Cockroach doc]]
+    #+BEGIN_EXAMPLE
+root@parapluie-1:~# docker exec -d cockroachdb-master cockroach sql --insecure --execute="CREATE DATABASE sbtest;"
+Error response from daemon: OCI runtime exec failed: exec failed: container_linux.go:296: starting container process caused "exec: \"cockroach\": executable file not found in $PATH": unknown
+    #+END_EXAMPLE
+
+** Meeting with Matthieu
+
+For cockroach:
+- Know where the request has been
+
+For everything:
+- Get disk I/O
+
+
+** Refactoring with Ronan
+
+- Corrected command [[https://github.com/Marie-Donnie/juice/commit/41526a257ef686958c9ff9429644d7a81c6b8a1c][to create database]]
+  + Ok but breaks the other nodes since they don't have a cockroach-master docker
+- Did a bit of refactoring to avoid duplicated code [[https://github.com/Marie-Donnie/juice/commit/edaebe2e5b6032a0e54c2eb62b64476f3d91112f][here]]
+  + Trying to deploy that version now

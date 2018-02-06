@@ -71,3 +71,31 @@ For everything:
   + Ok but breaks the other nodes since they don't have a cockroach-master docker
 - Did a bit of refactoring to avoid duplicated code [[https://github.com/Marie-Donnie/juice/commit/edaebe2e5b6032a0e54c2eb62b64476f3d91112f][here]]
   + Trying to deploy that version now
+
+
+* Tuesday 6 February [2018-02-06 mar.]
+
+** Meeting with Ronan and Adrien
+
+- About the tests we are going to do
+
+- Reminder:
+  #+BEGIN_QUOTE
+- several regions
+  + common authentication
+  + number of regions: 1, 5, 10, 25, (100?)
+  + latency between regions (RTT): LAN, 10, 50, 100, 300
+    - 1 common keystone
+      + one region has the keystone
+      + the others refers to this keystone
+      + one database
+    - 1 keystone per region with a common state
+      + Galera vs CockroachDB
+    - 1 keystone per region using K2K federation
+  #+END_QUOTE
+
+- Adrien is ok with this, so we can resume our work
+
+** Tests
+
+- When deploying yesterday afternoon, I forgot to add the host ip for sysbench deployment

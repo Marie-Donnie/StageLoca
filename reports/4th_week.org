@@ -156,6 +156,65 @@ Threads fairness:
   + For MariaDB, it will probably be [[https://collectd.org/documentation/manpages/collectd.conf.5.shtml#plugin_mysql][collectd]]
   + For CockroachDB, we have several leads:
     - [[https://www.cockroachlabs.com/docs/stable/monitor-cockroachdb-with-prometheus.html][Monitor CockroachDB with Prometheus]]
+      + config file setups prometheus so he will scrape the time series metrics of a single, insecure local node every 10 seconds : [[https://github.com/cockroachdb/cockroach/blob/master/monitoring/prometheus.yml][default config file]]
+	- I can check for several nodes using =targets=
+	- I can also change the interval using =scrape_interval=
     - [[https://www.cockroachlabs.com/docs/stable/show-sessions.html][MySQL API]] (=SHOW <OPTION>=)
       + Session seems promising because it gives the node it is connected to, the queries and the timestamp
+	- Can be used with =SHOW SESSIONS= (cluster) or =SHOW LOCAL SESSIONS= (local)
+      + =SHOW QUERIES= is even more interesting because
+	- it gives informations about:
+	  + where the query is executed
+	  + the query, ofc
+	  + how long it has been running
+	  + informations about the client that issued the query (address, application name and user)
+        - so I can use this database to track both where it comes from and where it is executed
+	- I can also track if the query is distributed using [[https://github.com/cockroachdb/cockroach/blob/master/docs/RFCS/20160421_distributed_sql.md][DistSQL]]
     - Find if there is a rest API [[https://github.com/cockroachdb/cockroach/pull/4844][like that]]
+    - Use collectd also
+
+** Make a better juice
+
+- I am going to use docopt, which I already used for [[https://github.com/Marie-Donnie/rally-vagrant][Rally Vagrant]]
+  + It takes a bit longer than I anticipated/remembered so I am putting this aside for now (=no_push= folder)
+  + I will try it again when everything will be ok
+
+- Testing the "creates" option for command so the creation of the database sbtest won't be done twice when deploying with CockroachDB
+  + used
+    #+BEGIN_SRC
+args:
+    creates: /database_created
+    #+END_SRC
+    - works the first launch
+    - didn't worked at second launch
+      #+BEGIN_EXAMPLE
+      fatal: [grisou-16.nancy.grid5000.fr]: FAILED! => {"changed": true, "cmd": ["docker", "exec", "cockroachdb-grisou-16", "./cockroach", "sql", "--insecure", "--execute=CREATE DATABASE sbtest;"], "delta": "0:00:05.424156", "end": "2018-02-06 16:13:31.697221", "failed": true, "rc": 1, "start": "2018-02-06 16:13:26.273065", "stderr": "Error: pq: database \"sbtest\" already exists\nFailed running \"sql\"", "stderr_lines": ["Error: pq: database \"sbtest\" already exists", "Failed running \"sql\""], "stdout": "", "stdout_lines": []}
+      #+END_EXAMPLE
+  + tried
+    #+BEGIN_SRC
+      run_once: True
+    #+END_SRC
+    - same problem
+  + works when creating the file manually... will have to debug this + I will probably need to do the same for the test anyway because the sysbench doesn't like restarts:
+    #+BEGIN_EXAMPLE
+    root@grisou-34:~# docker logs sysbench
+sysbench 1.0.7 (using bundled LuaJIT 2.1.0-beta2)
+
+Running the test with following options:
+Number of threads: 1
+Initializing random number generator from current time
+
+
+Initializing worker threads...
+
+Threads started!
+
+FATAL: PQexecPrepared() failed: 7 restart transaction: HandledRetryableTxnError: TransactionRetryError: retry txn (RETRY_POSSIBLE_REPLAY): "sql txn" id=6b1397fd key=/Table/51/1/503120 rw=false pri=0.02027573 iso=SERIALIZABLE stat=PENDING epo=0 ts=1517933446.189282943,1 orig=1517933446.187652172,0 max=1517933446.187652172,0 wto=false rop=false seq=16
+FATAL: `thread_run' function failed: /usr/share/sysbench/oltp_common.lua:481: SQL error, errno = 0, state = '40001': restart transaction: HandledRetryableTxnError: TransactionRetryError: retry txn (RETRY_POSSIBLE_REPLAY): "sql txn" id=6b1397fd key=/Table/51/1/503120 rw=false pri=0.02027573 iso=SERIALIZABLE stat=PENDING epo=0 ts=1517933446.189282943,1 orig=1517933446.187652172,0 max=1517933446.187652172,0 wto=false rop=false seq=16
+    #+END_EXAMPLE
+
+- Looking to use json format for reports
+  + Still haven't figured it out when reading from:
+    - [[https://github.com/akopytov/sysbench/blob/master/src/lua/internal/sysbench.lua#L91][The implemented function]]
+    - I don't understand how this is called and whether the default is called at all since this format isn't the kind of output I get
+    - I still probably have to use [[https://mariadb.com/kb/en/library/sysbench-benchmark-setup/][MariaDB sysbench benchmark setup]] but they use their own lua scripts it seems

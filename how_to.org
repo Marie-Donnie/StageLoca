@@ -1,4 +1,4 @@
-
+Also see my [[https://github.com/Marie-Donnie/HowTo][How To repo]]
 
 * How to
 
@@ -12,6 +12,14 @@ To demote current subtree by one level:
 #+BEGIN_SRC
 Alt-Shift-Left
 #+END_SRC
+To add a deadline:
+#+BEGIN_SRC
+Ctrl-c Ctrl-d
+#+END_SRC
+To add a schedule:
+#+BEGIN_EXAMPLE
+Ctrl-c Ctrl-s
+#+END_EXAMPLE
 
 
 ** Using Rally & Tempest

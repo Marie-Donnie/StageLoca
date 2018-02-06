@@ -1,26 +1,27 @@
 * Todos
 
 ** Testing
-*** Keystone
+*** Sysbench
 **** With MariaDB
-***** TODO Make it work
+***** DONE Make it work
+      CLOSED: [2018-02-06 mar. 13:48]
 ***** TODO For 1 node
 ***** TODO For 5 nodes
 ***** TODO For 25 nodes
 **** With CockroachDB
-***** TODO Make it work
+***** DONE Make it work
+      CLOSED: [2018-02-06 mar. 13:49]
 ***** TODO For 1 node
 ***** TODO For 5 nodes
 ***** TODO For 25 nodes
 
 
 ** Readings
-
-*** Watch videos
+*** TODO Watch videos
+- [[-https://www.openstack.org/videos/sydney-2017/demystifying-identity-federation][Demystifying Identity Federation]]
 
 
 ** Done
-
 **** DONE Experience
    CLOSED: [2018-01-17 mer. 18:33]
 #+BEGIN_EXAMPLE

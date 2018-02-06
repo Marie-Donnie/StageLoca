@@ -99,3 +99,63 @@ For everything:
 ** Tests
 
 - When deploying yesterday afternoon, I forgot to add the host ip for sysbench deployment
+  - ok
+    #+BEGIN_EXAMPLE
+root@grisou-40:~# docker logs sysbench
+sysbench 1.0.7 (using bundled LuaJIT 2.1.0-beta2)
+
+Running the test with following options:
+Number of threads: 1
+Initializing random number generator from current time
+
+
+Initializing worker threads...
+
+Threads started!
+
+SQL statistics:
+    queries performed:
+        read:                            1204
+        write:                           86
+        other:                           430
+        total:                           1720
+    transactions:                        86     (8.56 per sec.)
+    queries:                             1720   (171.15 per sec.)
+    ignored errors:                      0      (0.00 per sec.)
+    reconnects:                          0      (0.00 per sec.)
+
+General statistics:
+    total time:                          10.0473s
+    total number of events:              86
+
+Latency (ms):
+         min:                                 97.29
+         avg:                                116.82
+         max:                                148.84
+         95th percentile:                    142.39
+         sum:                              10046.54
+
+Threads fairness:
+    events (avg/stddev):           86.0000/0.00
+    execution time (avg/stddev):   10.0465/0.00
+    #+END_EXAMPLE
+
+** Planning
+
+- We prepared a planning for the work to do:
+*** summit deadline
+    DEADLINE: <2018-02-08 jeu.>
+*** be able to backup the results
+    DEADLINE: <2018-02-09 ven.>
+*** end of tests
+    DEADLINE: <2018-03-30 ven.>
+*** summit
+    SCHEDULED: <2018-05-21 lun.>
+
+- To do so, I have to look at how we are going to collect informations about CockroachDB and MariaDB
+  + For MariaDB, it will probably be [[https://collectd.org/documentation/manpages/collectd.conf.5.shtml#plugin_mysql][collectd]]
+  + For CockroachDB, we have several leads:
+    - [[https://www.cockroachlabs.com/docs/stable/monitor-cockroachdb-with-prometheus.html][Monitor CockroachDB with Prometheus]]
+    - [[https://www.cockroachlabs.com/docs/stable/show-sessions.html][MySQL API]] (=SHOW <OPTION>=)
+      + Session seems promising because it gives the node it is connected to, the queries and the timestamp
+    - Find if there is a rest API [[https://github.com/cockroachdb/cockroach/pull/4844][like that]]

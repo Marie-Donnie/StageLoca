@@ -224,11 +224,38 @@ FATAL: `thread_run' function failed: /usr/share/sysbench/oltp_common.lua:481: SQ
 * Wednesday 7 February [2018-02-07 mer.]
 
 - MySQL plugin for [[https://collectd.org/documentation/manpages/collectd.conf.5.shtml#plugin_mysql][collectd]] collects information about MySQL network traffic, executed statements, requests, query cache and threads using (from [[http://ftp.nchu.edu.tw/MySQL/doc/refman/5.0/en/server-status-variables.html#statvar_Bytes_received][source]]):
-  - =bytes (received/sent)=: the number of bytes received from/sent to all clients
-  - =com_<statement>=: number of time each statement (insert/delete, etc.) has been executed. For select, it uses =qcache_hits=
-  - =handler_<statement>=: number of time <statement> happened (e.g. read next, prepare, rollback)
-  - =qcache_<query/count>=: data relative to the query cache (e.g. inserts, hits, total blocks)
-  - =thread_<state>=: number of threads in that state (cached, connected, created, running)
+  + =bytes (received/sent)=: the number of bytes received from/sent to all clients
+  + =com_<statement>=: number of time each statement (insert/delete, etc.) has been executed. For select, it uses =qcache_hits=
+  + =handler_<statement>=: number of time <statement> happened (e.g. read next, prepare, rollback)
+  + =qcache_<query/count>=: data relative to the query cache (e.g. inserts, hits, total blocks)
+  + =thread_<state>=: number of threads in that state (cached, connected, created, running)
 
+** About juice
 
-** Thinking about the proposal for the summit
+- Using =posgtresql_db= module for Ansible instead of the command module to insert a database on CockroachDB
+  + first time: works like a charm
+    #+BEGIN_EXAMPLE
+    root@:26257/> SHOW DATABASES;
++--------------------+
+|      Database      |
++--------------------+
+| crdb_internal      |
+| information_schema |
+| pg_catalog         |
+| sbtest             |
+| system             |
++--------------------+
+(5 rows)
+
+Time: 1.965848ms
+    #+END_EXAMPLE
+  + second time:
+    #+BEGIN_EXAMPLE
+    TASK [sysbench : Create CockroachDB sbtest database for sysbench] **************************************
+fatal: [grisou-16.nancy.grid5000.fr]: FAILED! => {"changed": false, "failed": true, "msg": "Database query failed: unknown function: pg_encoding_to_char()\n"}
+    #+END_EXAMPLE
+  + tried =encoding: 'UTF-8'= but it didn't help, some I removed it.
+  + in any case, best thing to do is probably use =destroy= when redeploying
+    - Ronan does not agree because when I will put OpenStack on top of the deployment, it will be much too long
+    - So we're going to change the play so it won't produce an error after the first deployment
+    - We also did "a bit" of changes to finally use docopt: [[https://github.com/Marie-Donnie/juice/commit/0625cc40b8edd0569d578ccac271a4fa534418f4][commit]]

@@ -259,3 +259,21 @@ fatal: [grisou-16.nancy.grid5000.fr]: FAILED! => {"changed": false, "failed": tr
     - Ronan does not agree because when I will put OpenStack on top of the deployment, it will be much too long
     - So we're going to change the play so it won't produce an error after the first deployment
     - We also did "a bit" of changes to finally use docopt: [[https://github.com/Marie-Donnie/juice/commit/0625cc40b8edd0569d578ccac271a4fa534418f4][commit]]
+
+
+** Thinking about the proposal for the summit
+
+
+
+The Fog/Edge Massively Distributed Clouds (FEMDC) working group is trying to monitor how OpenStack will behave in the context of compute resources close to users.
+
+To see how the Keystone service will handle authentication on a varying number of regions and throughout the variation of latency between those regions, we evaluated the performances over different configurations:
+- One centralized Keystone on a single region, handling the others requests
+- A replicated Keystone throughout the cluster with a common state, comparing MariaDB Galera Cluster and CockroachDB
+- A federated Keystone
+This presentation exhibits the methodology, the results and the identification of the possible improvements towards a massively distributed OpenStack.
+
+*** sources
+
+- [[https://docs.openstack.org/security-guide/identity/federated-keystone.html][federated keystone]]
+- [[https://mariadb.com/kb/en/library/what-is-mariadb-galera-cluster/][mariadb galera cluster]]

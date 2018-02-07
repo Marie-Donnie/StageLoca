@@ -264,14 +264,15 @@ fatal: [grisou-16.nancy.grid5000.fr]: FAILED! => {"changed": false, "failed": tr
 ** Thinking about the proposal for the summit
 
 
-
-The Fog/Edge Massively Distributed Clouds (FEMDC) working group is trying to monitor how OpenStack will behave in the context of compute resources close to users.
+The Fog/Edge Massively Distributed Clouds (FEMDC) working group is trying to monitor how OpenStack will behave in the context of compute resources close to users. We compare the databases performances on a cluster of MariaDB, a fork of MySQL and CockroachDB, a "cloud-native" NewSQL database.
 
 To see how the Keystone service will handle authentication on a varying number of regions and throughout the variation of latency between those regions, we evaluated the performances over different configurations:
 - One centralized Keystone on a single region, handling the others requests
 - A replicated Keystone throughout the cluster with a common state, comparing MariaDB Galera Cluster and CockroachDB
 - A federated Keystone
 This presentation exhibits the methodology, the results and the identification of the possible improvements towards a massively distributed OpenStack.
+
+Every required tool is available to reproduce the experiments on Grid'5000.
 
 *** sources
 

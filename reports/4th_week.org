@@ -152,8 +152,10 @@ Threads fairness:
 *** summit
     SCHEDULED: <2018-05-21 lun.>
 
+*** Making it work
+
 - To do so, I have to look at how we are going to collect informations about CockroachDB and MariaDB
-  + For MariaDB, it will probably be [[https://collectd.org/documentation/manpages/collectd.conf.5.shtml#plugin_mysql][collectd]]
+  + For MariaDB, it will probably be [[https://collectd.org/documentation/manpages/collectd.conf.5.shtml#plugin_mysql][collectd]] ( [[http://ftp.nchu.edu.tw/MySQL/doc/refman/5.0/en/server-status-variables.html][server status variables]] )
   + For CockroachDB, we have several leads:
     - [[https://www.cockroachlabs.com/docs/stable/monitor-cockroachdb-with-prometheus.html][Monitor CockroachDB with Prometheus]]
       + config file setups prometheus so he will scrape the time series metrics of a single, insecure local node every 10 seconds : [[https://github.com/cockroachdb/cockroach/blob/master/monitoring/prometheus.yml][default config file]]
@@ -218,3 +220,15 @@ FATAL: `thread_run' function failed: /usr/share/sysbench/oltp_common.lua:481: SQ
     - [[https://github.com/akopytov/sysbench/blob/master/src/lua/internal/sysbench.lua#L91][The implemented function]]
     - I don't understand how this is called and whether the default is called at all since this format isn't the kind of output I get
     - I still probably have to use [[https://mariadb.com/kb/en/library/sysbench-benchmark-setup/][MariaDB sysbench benchmark setup]] but they use their own lua scripts it seems
+
+* Wednesday 7 February [2018-02-07 mer.]
+
+- MySQL plugin for [[https://collectd.org/documentation/manpages/collectd.conf.5.shtml#plugin_mysql][collectd]] collects information about MySQL network traffic, executed statements, requests, query cache and threads using (from [[http://ftp.nchu.edu.tw/MySQL/doc/refman/5.0/en/server-status-variables.html#statvar_Bytes_received][source]]):
+  - =bytes (received/sent)=: the number of bytes received from/sent to all clients
+  - =com_<statement>=: number of time each statement (insert/delete, etc.) has been executed. For select, it uses =qcache_hits=
+  - =handler_<statement>=: number of time <statement> happened (e.g. read next, prepare, rollback)
+  - =qcache_<query/count>=: data relative to the query cache (e.g. inserts, hits, total blocks)
+  - =thread_<state>=: number of threads in that state (cached, connected, created, running)
+
+
+** Thinking about the proposal for the summit

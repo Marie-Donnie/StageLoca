@@ -221,6 +221,8 @@ FATAL: `thread_run' function failed: /usr/share/sysbench/oltp_common.lua:481: SQ
     - I don't understand how this is called and whether the default is called at all since this format isn't the kind of output I get
     - I still probably have to use [[https://mariadb.com/kb/en/library/sysbench-benchmark-setup/][MariaDB sysbench benchmark setup]] but they use their own lua scripts it seems
 
+
+
 * Wednesday 7 February [2018-02-07 mer.]
 
 - MySQL plugin for [[https://collectd.org/documentation/manpages/collectd.conf.5.shtml#plugin_mysql][collectd]] collects information about MySQL network traffic, executed statements, requests, query cache and threads using (from [[http://ftp.nchu.edu.tw/MySQL/doc/refman/5.0/en/server-status-variables.html#statvar_Bytes_received][source]]):
@@ -278,3 +280,118 @@ Every required tool is available to reproduce the experiments on Grid'5000.
 
 - [[https://docs.openstack.org/security-guide/identity/federated-keystone.html][federated keystone]]
 - [[https://mariadb.com/kb/en/library/what-is-mariadb-galera-cluster/][mariadb galera cluster]]
+
+
+* Thursday 8 February [2018-02-08 jeu.]
+
+- I am not sure if it is a good or bad thing, but Ronan discovered the [[https://www.cockroachlabs.com/docs/stable/demo-follow-the-workload.html][follow-the-worlkload]] option for CockroachDB, which means the purpose of my internship is void, since they already added an option to consider locality. But at least, it is a good thing for the global work of the discovery initiative
+  + Doing the tutorial on the VM I still have from openstack-cockroach-dev
+    - dl go
+    - install comcast via go
+      #+BEGIN_EXAMPLE
+      stack@contrib-jessie:/home/vagrant$ go get github.com/tylertreat/comcast
+package github.com/tylertreat/comcast: cannot download, $GOPATH not set. For more details see: go help gopath
+stack@contrib-jessie:/home/vagrant$ go help gopath
+The Go path is used to resolve import statements.
+It is implemented by and documented in the go/build package.
+
+The GOPATH environment variable lists places to look for Go code.
+On Unix, the value is a colon-separated string.
+On Windows, the value is a semicolon-separated string.
+On Plan 9, the value is a list.
+
+GOPATH must be set to get, build and install packages outside the
+standard Go tree.
+
+Each directory listed in GOPATH must have a prescribed structure:
+
+The src/ directory holds source code.  The path below 'src'
+determines the import path or executable name.
+
+The pkg/ directory holds installed package objects.
+As in the Go tree, each target operating system and
+architecture pair has its own subdirectory of pkg
+(pkg/GOOS_GOARCH).
+
+If DIR is a directory listed in the GOPATH, a package with
+source in DIR/src/foo/bar can be imported as "foo/bar" and
+has its compiled form installed to "DIR/pkg/GOOS_GOARCH/foo/bar.a".
+
+The bin/ directory holds compiled commands.
+Each command is named for its source directory, but only
+the final element, not the entire path.  That is, the
+command with source in DIR/src/foo/quux is installed into
+DIR/bin/quux, not DIR/bin/foo/quux.  The foo/ is stripped
+so that you can add DIR/bin to your PATH to get at the
+installed commands.  If the GOBIN environment variable is
+set, commands are installed to the directory it names instead
+of DIR/bin.
+
+Here's an example directory layout:
+
+    GOPATH=/home/user/gocode
+
+    /home/user/gocode/
+        src/
+            foo/
+                bar/               (go code in package bar)
+                    x.go
+                quux/              (go code in package main)
+                    y.go
+        bin/
+            quux                   (installed command)
+        pkg/
+            linux_amd64/
+                foo/
+                    bar.a          (installed package object)
+
+Go searches each directory listed in GOPATH to find source code,
+but new packages are always downloaded into the first directory
+in the list.
+      #+END_EXAMPLE
+    - solved this using, in the .bashrc and then sourcing it:
+      #+BEGIN_EXAMPLE
+export GOPATH=$HOME/go
+      #+END_EXAMPLE
+    - my machine is running really slow so I am going to work on g5k
+
+- Ronan tells me to directly implement the tutorial in juice, so I am searching how to make latency vary on enoslib
+  + maybe somewhere around [[https://github.com/BeyondTheClouds/enoslib/blob/master/enoslib/api.py#L366][here]], using the syntax in the doc for the conf file
+  + trying to make it work, but I'm wondering:
+    - how can I test if the latency is ok for our tests
+    - do I put as much regions as I have nodes with only a True/False option or do I give a number of region and I divide nodes between those regions ?
+
+
+
+
+** Proposal
+
+The Fog/Edge Massively Distributed Clouds (FEMDC) working group analyzes how OpenStack manages Fog/Edge Cloud infrastructures. In such infrastructures, handling the identity between regions is challenging because of latency and risk of network partition. The Keystone Identity Service offers different deployment approaches, from a centralized one, to a federation, as well as a replication using database clustering. In this presentation, we are going to compare them, varying the number of regions and latency between those regions. Especially:
+- One centralized Keystone handling requests of all regions
+- A replicated Keystone using Galera Cluster to synchronize databases in the different regions.
+- A replicated Keystone leveraging NewSQL mechanisms. Particularly, CockroachDB, the "cloud-native SQL database"
+- A federated Keystone
+We present the methodology, results and identification of possible improvements towards a massively distributed OpenStack.
+
+
+
+Since 2016, the FEMDC SiG has been investigating how OpenStack could operate Edge Cloud infrastructures. Among the challenges that have been identified by the SiG, dealing with latency issues and network split brains is important for most OpenStack services. In this presentation, we focus on how they impact the Keystone Identity Service. Keystone offers different deployment approaches, from a centralized one, to a federation, as well as a replication using database clustering. By varying the number of regions and latency between those regions, we compare the following deployments:
+- One centralized Keystone handling requests of all regions
+- A replicated Keystone using Galera Cluster to synchronize databases in the different regions
+- A replicated Keystone leveraging the NewSQL CockroachDB database
+- A federated Keystone
+We present the methodology, results and identification of possible improvements towards a more decentralized management of the OpenStack services. Experimented on Grid'5000.
+
+
+
+A comparison of different Keystone deployments in the context of Fog/Edge Cloud Infrastructures
+
+
+While Fog/Edge Cloud Infrastructures are becoming more recognised, the question of using OpenStack to operate such infrastructures, in particular the performance/scalability of the system, is often debated. In this presentation, we will present a reproducible way to evaluate the performance of OpenStack Keystone at a WAN level.
+
+Attendees may expect to learn:
+
+    scenarios to operate WANwide infrastructures
+    how to perform reproducible experiments thanks to the Enoslib framework
+    methodology to emulate network limitations in a WANwide deployment based on traffic shapping
+    preliminary results of the impact of the latency on the behaviour of Keystone

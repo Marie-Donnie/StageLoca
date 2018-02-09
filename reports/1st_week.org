@@ -1179,7 +1179,6 @@ Threads fairness:
 	- need to use =keystone-manage token_flush= (more on that at the bottom of [[https://docs.openstack.org/keystone/pike/admin/identity-troubleshoot.html][this]] page, but we might do something about that?)
     - nothing much more, it's mainly a presentation about how to enhance OS performance and what is costly
 
-
 ** Test plan
 
 - Goal :: compare Keystone over Cockroach and Keystone over Galera

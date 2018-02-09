@@ -488,3 +488,160 @@ root@:26257/> SHOW TESTING_RANGES FROM TABLE test.kv;
 Time: 11.188380688s
 	#+END_EXAMPLE
       + so it really worked, the range lease moved to the most active node
+
+
+- Will have to see if I can make the code better for cockroachdb deployments because the plays differs only from options in the command
+- I may have to think of another way to check where is the lease holder
+- Just some side notes:
+  + I can also describe subregions as described [[https://www.cockroachlabs.com/docs/stable/configure-replication-zones.html#descriptive-attributes-assigned-to-nodes][here]]
+  + [[https://www.cockroachlabs.com/docs/stable/known-limitations.html#load-based-lease-rebalancing-in-uneven-latency-deployments][About load-based lease rebalancing]]
+    - checked the dashboard using ~ssh -NL 8080:graphene-103.nancy.grid5000.fr:8080 nancy.g5k~
+      #+CAPTION: RSM architecture from the Raft article
+      #+NAME: fig:raft_RSM_architecture
+[[../images/Cockroach_dashboard.png]]
+  + =TESTING_RANGES= is part of the SQL grammar for CockroachDB, so I can also use:
+    #+BEGIN_EXAMPLE
+root@:26257/> SHOW TESTING_RANGES FROM TABLE sbtest.sbtest1;
++-----------+---------+----------+--------------+
+| Start Key | End Key | Replicas | Lease Holder |
++-----------+---------+----------+--------------+
+| NULL      | NULL    | {1,2,3}  |            1 |
++-----------+---------+----------+--------------+
+(1 row)
+
+Time: 4.375849264s
+    #+END_EXAMPLE
+
+
+- While trying to understand if I could use other tests for sysbench, i bumped into:
+  + [[https://github.com/akopytov/sysbench/blob/master/src/lua/oltp_common.lua][this file]]
+  + [[https://github.com/cockroachdb/cockroach/issues/17777][this issue]]
+  + [[https://github.com/amq/cockroach-galera-benchmark][this repo]]
+
+
+- I tried to use this configuration for the run of sysbench:
+  #+BEGIN_EXAMPLE
+  sysbench --db-driver=pgsql --pgsql-host="{{ hostvars[inventory_hostname]['ansible_' + control_network]['ipv4']['address'] }}" --pgsql-port=26257 --pgsql-user=root --table-size=1000000 --index-updates=0 --non-index-updates=1 --delete-inserts=0 oltp_read_write run
+
+root@graphene-128:~# docker logs sysbench
+sysbench 1.0.7 (using bundled LuaJIT 2.1.0-beta2)
+
+Running the test with following options:
+Number of threads: 1
+Initializing random number generator from current time
+
+
+Initializing worker threads...
+
+Threads started!
+
+SQL statistics:
+    queries performed:
+        read:                            9758
+        write:                           0
+        other:                           2091
+        total:                           11849
+    transactions:                        697    (69.66 per sec.)
+    queries:                             11849  (1184.24 per sec.)
+    ignored errors:                      0      (0.00 per sec.)
+    reconnects:                          0      (0.00 per sec.)
+
+General statistics:
+    total time:                          10.0035s
+    total number of events:              697
+
+Latency (ms):
+         min:                                 11.50
+         avg:                                 14.35
+         max:                                204.01
+         95th percentile:                     22.69
+         sum:                              10000.38
+
+Threads fairness:
+    events (avg/stddev):           697.0000/0.00
+    execution time (avg/stddev):   10.0004/0.00
+  #+END_EXAMPLE
+  The results are really better than those with writes... but then again, it is not really read/write if there are no writes
+
+- The gap is totally crazy
+  + with ~--delete-inserts=1~
+    #+BEGIN_EXAMPLE
+sysbench 1.0.7 (using bundled LuaJIT 2.1.0-beta2)
+
+Running the test with following options:
+Number of threads: 1
+Initializing random number generator from current time
+
+
+Initializing worker threads...
+
+Threads started!
+
+SQL statistics:
+    queries performed:
+        read:                            350
+        write:                           25
+        other:                           100
+        total:                           475
+    transactions:                        25     (2.46 per sec.)
+    queries:                             475    (46.79 per sec.)
+    ignored errors:                      0      (0.00 per sec.)
+    reconnects:                          0      (0.00 per sec.)
+
+General statistics:
+    total time:                          10.1503s
+    total number of events:              25
+
+Latency (ms):
+         min:                                193.37
+         avg:                                405.99
+         max:                                914.51
+         95th percentile:                    657.93
+         sum:                              10149.70
+
+Threads fairness:
+    events (avg/stddev):           25.0000/0.00
+    execution time (avg/stddev):   10.1497/0.00
+
+    #+END_EXAMPLE
+  + with ~--delete-inserts=0~
+    #+BEGIN_EXAMPLE
+sysbench 1.0.7 (using bundled LuaJIT 2.1.0-beta2)
+
+Running the test with following options:
+Number of threads: 1
+Initializing random number generator from current time
+
+
+Initializing worker threads...
+
+Threads started!
+
+SQL statistics:
+    queries performed:
+        read:                            10052
+        write:                           0
+        other:                           2154
+        total:                           12206
+    transactions:                        718    (71.72 per sec.)
+    queries:                             12206  (1219.24 per sec.)
+    ignored errors:                      0      (0.00 per sec.)
+    reconnects:                          0      (0.00 per sec.)
+
+General statistics:
+    total time:                          10.0091s
+    total number of events:              718
+
+Latency (ms):
+         min:                                 11.64
+         avg:                                 13.94
+         max:                                106.69
+         95th percentile:                     22.28
+         sum:                              10005.68
+
+Threads fairness:
+    events (avg/stddev):           718.0000/0.00
+    execution time (avg/stddev):   10.0057/0.00
+    #+END_EXAMPLE
+
+- Commented the volume that made MariaDB unable to boot after one execution

@@ -78,10 +78,109 @@ Threads fairness:
 #+END_EXAMPLE
   + I had to make another container because sysbench2 was already not responding, but this works and if it was a matter of creating another container, I would have the same error (container not running)
 
-- I try a clean deploy to check if at least works the first time or if I broke everything
-  + First deploy is ok
-    #+BEGIN_EXAMPLE
-  root@grisou-18:~# docker logs sysbench
+  + I try a clean deploy to check if at least works the first time or if I broke everything
+    + First deploy is ok
+      #+BEGIN_EXAMPLE
+    root@grisou-18:~# docker logs sysbench
+  sysbench 1.0.7 (using bundled LuaJIT 2.1.0-beta2)
+
+  Running the test with following options:
+  Number of threads: 1
+  Initializing random number generator from current time
+
+
+  Initializing worker threads...
+
+  Threads started!
+
+  SQL statistics:
+      queries performed:
+          read:                            4438
+          write:                           1268
+          other:                           634
+          total:                           6340
+      transactions:                        317    (31.58 per sec.)
+      queries:                             6340   (631.70 per sec.)
+      ignored errors:                      0      (0.00 per sec.)
+      reconnects:                          0      (0.00 per sec.)
+
+  General statistics:
+      total time:                          10.0344s
+      total number of events:              317
+
+  Latency (ms):
+           min:                                 24.31
+           avg:                                 31.65
+           max:                                 74.07
+           95th percentile:                     35.59
+           sum:                              10032.58
+
+  Threads fairness:
+      events (avg/stddev):           317.0000/0.00
+      execution time (avg/stddev):   10.0326/0.00
+      #+END_EXAMPLE
+    + second deploy, not that much
+      #+BEGIN_EXAMPLE
+      root@grisou-18:~# docker logs sysbench
+  sysbench 1.0.7 (using bundled LuaJIT 2.1.0-beta2)
+
+  Running the test with following options:
+  Number of threads: 1
+  Initializing random number generator from current time
+
+
+  Initializing worker threads...
+
+  FATAL: unable to connect to MySQL server on host '172.16.72.18', port 3306, aborting...
+  FATAL: error 2013: Lost connection to MySQL server at 'reading initial communication packet', system error: 0
+  FATAL: `thread_init' function failed: /usr/share/sysbench/oltp_common.lua:347: connection creation failed
+  FATAL: Thread initialization failed!
+  Error in my_thread_global_end(): 1 threads didn't exit
+      #+END_EXAMPLE
+    + tried with a cleanup, didn't work either, and in any case I should have find a way to destroy sysbench before mariadb
+    + when redeploying containers with prepare, Ronan makes me notice that the non-master mariadb nodes are 'changed'
+      - I checked to see if they are running:
+	#+BEGIN_EXAMPLE
+  root@grisou-40:~# docker ps -a
+  CONTAINER ID        IMAGE                   COMMAND                  CREATED             STATUS                     PORTS               NAMES
+  a04684ef6379        severalnines/sysbench   "sysbench --db-drive…"   2 minutes ago       Exited (1) 2 minutes ago                       sysbench
+  ba638bef2e30        mariadb                 "docker-entrypoint.s…"   27 minutes ago      Exited (1) 2 minutes ago                       mariadb-grisou-40
+  d561d3b8a480        grafana/grafana         "/run.sh"                27 minutes ago      Up 27 minutes                                  grafana
+  3d0b8d36226a        influxdb                "/entrypoint.sh infl…"   27 minutes ago      Up 27 minutes                                  influxdb
+  1f7909821e86        telegraf                "/entrypoint.sh tele…"   27 minutes ago      Up 27 minutes                                  telegraf
+	#+END_EXAMPLE
+      - So, the db container has been stopped AND there is a sysbench... of course, I didn't had the same "when" as for cockroachDB.
+      - I didn't reported here as I was working for the work after, so I'll try to explain what happened anyway
+	+ I still had errors in either sysbench (same one), the slaves (see below) or even the master
+	+ For the slaves I had something like that (from [[https://stackoverflow.com/questions/39678463/docker-compose-database-is-uninitialized][stackoverflow]], since I don't have the logs anymore:
+	  #+BEGIN_EXAMPLE
+error: database is uninitialized and password option is not specified
+You need to specify one of MYSQL_ROOT_PASSWORD, MYSQL_ALLOW_EMPTY_PASSWORD and MYSQL_RANDOM_ROOT_PASSWORD
+	  #+END_EXAMPLE
+	+ So I added the env variable =MYSQL_ROOT_PASSWORD= but then I had an init problem when checking the logs
+	+ Luckily for me, I remember that on the [[https://withblue.ink/2016/03/09/galera-cluster-mariadb-coreos-and-docker-part-1.html][tutorial I followed]], there was an explanation about touching the /mnt/data/mysql:
+	  #+BEGIN_EXAMPLE
+Because the Docker image by default initializes a new database, we are using a trick to make sure that the full init script is not run on replicas: touch the mysql data folder. This is located inside the path mounted as volume in the container: for example, if our persistent volume is stored on the host in /mnt/data, the data folder will be /mnt/data/mysql.
+	  #+END_EXAMPLE
+	+ So I tried different combinations between mounting or not the volumes, creating the directories and deleting the directories until it worked.
+	+ When doing these tries I managed to even break the master nodes, where I got an error:
+	  #+BEGIN_EXAMPLE
+	  Can't open and lock privilege tables: Table 'mysql.servers' doesn't exist
+	  #+END_EXAMPLE
+	+ It finally worked when I commented the mounting of the volume on the master
+
+
+  + Since it worked, I tried to put the same options as the tests I made for CockroachDB, i.e.:
+  #+BEGIN_SRC
+command: sysbench --db-driver=pgsql --pgsql-host="{{ hostvars[inventory_hostname]['ansible_' + control_network]['ipv4']['address'] }}" --pgsql-port=26257 --pgsql-user=root --table-size=1000000 --index-updates=0 --non-index-updates=1 --delete-inserts=0 oltp_read_write run
+  #+END_SRC
+  + So I ran
+#+BEGIN_SRC
+command: sysbench --db-driver=mysql --table-size=100000 --mysql-host="{{ hostvars[inventory_hostname]['ansible_' + control_network]['ipv4']['address'] }}" --mysql-port=3306 --mysql-user=sbtest --mysql-password=sbtest --index-updates=0 --non-index-updates=1 --delete-inserts=0  oltp_read_write run
+#+END_SRC
+  + Obtained:
+#+BEGIN_EXAMPLE
+root@grisou-18:~# docker logs sysbench
 sysbench 1.0.7 (using bundled LuaJIT 2.1.0-beta2)
 
 Running the test with following options:
@@ -95,46 +194,33 @@ Threads started!
 
 SQL statistics:
     queries performed:
-        read:                            4438
-        write:                           1268
-        other:                           634
-        total:                           6340
-    transactions:                        317    (31.58 per sec.)
-    queries:                             6340   (631.70 per sec.)
+        read:                            6426
+        write:                           301
+        other:                           1076
+        total:                           7803
+    transactions:                        459    (45.85 per sec.)
+    queries:                             7803   (779.50 per sec.)
     ignored errors:                      0      (0.00 per sec.)
     reconnects:                          0      (0.00 per sec.)
 
 General statistics:
-    total time:                          10.0344s
-    total number of events:              317
+    total time:                          10.0082s
+    total number of events:              459
 
 Latency (ms):
-         min:                                 24.31
-         avg:                                 31.65
-         max:                                 74.07
-         95th percentile:                     35.59
-         sum:                              10032.58
+         min:                                  1.50
+         avg:                                 21.80
+         max:                                184.77
+         95th percentile:                     36.89
+         sum:                              10006.17
 
 Threads fairness:
-    events (avg/stddev):           317.0000/0.00
-    execution time (avg/stddev):   10.0326/0.00
-    #+END_EXAMPLE
-  + second deploy, not that much
-    #+BEGIN_EXAMPLE
-    root@grisou-18:~# docker logs sysbench
-sysbench 1.0.7 (using bundled LuaJIT 2.1.0-beta2)
+    events (avg/stddev):           459.0000/0.00
+    execution time (avg/stddev):   10.0062/0.00
+#+END_EXAMPLE
+  + which is not as good as CockroachDB (cf friday of last week)
 
-Running the test with following options:
-Number of threads: 1
-Initializing random number generator from current time
+- Now I am wondering if sysbench is not launched *before* the syncing of all nodes, so I might need to add another =wait_for=
+  + [[https://github.com/Marie-Donnie/juice/commit/7b112e20fcfbb3d228a18787dbea36310455df71][done]]
 
-
-Initializing worker threads...
-
-FATAL: unable to connect to MySQL server on host '172.16.72.18', port 3306, aborting...
-FATAL: error 2013: Lost connection to MySQL server at 'reading initial communication packet', system error: 0
-FATAL: `thread_init' function failed: /usr/share/sysbench/oltp_common.lua:347: connection creation failed
-FATAL: Thread initialization failed!
-Error in my_thread_global_end(): 1 threads didn't exit
-    #+END_EXAMPLE
-  + tried with a cleanup, didn't work either, and in any case I should have find a way to destroy sysbench before mariadb
+- Tomorrow I'll use the trick with templating to remove refactor cockroachdb role

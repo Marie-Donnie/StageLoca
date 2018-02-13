@@ -224,3 +224,271 @@ Threads fairness:
   + [[https://github.com/Marie-Donnie/juice/commit/7b112e20fcfbb3d228a18787dbea36310455df71][done]]
 
 - Tomorrow I'll use the trick with templating to remove refactor cockroachdb role
+
+
+* Tuesday 13 February [2018-02-13 mar.]
+
+
+- Refactoring cockroachdb
+  + not sure if I can do it in only one play because of the required order (the master must be launched before the others)
+    #+BEGIN_SRC
+- name: Start cockroachdb
+ docker_container:
+   name: "cockroachdb-{{ inventory_hostname_short }}"
+   image: "cockroachdb/cockroach"
+   hostname: "{{ inventory_hostname }}"
+   detach: True
+   ports:
+     - 26257:26257
+     - 8080:8080
+   command: start --insecure --advertise-host="{{ hostvars[inventory_hostname]['ansible_' + control_network]['ipv4']['address'] }}" {% if (inventory_hostname != dbmaster_node) %} --join="{{ hostvars[dbmaster_node]['ansible_' + control_network]['ipv4']['address'] }}"{% endif %} {% if locality %} --locality=region="{{inventory_hostname_short}}"{% endif %}
+    #+END_SRC
+  + Ronan tells me to do it with two plays
+
+
+** Tests
+*** CockroachDB
+- Funny thing: I tried again to add "--index-updates=0 --non-index-updates=1 --delete-inserts=0" when deploying with Cockroach db on Grisou to be sure I can compare it to MariaDB:
+  + without:
+    #+BEGIN_EXAMPLE
+root@grisou-38:~# docker logs -f sysbench
+sysbench 1.0.7 (using bundled LuaJIT 2.1.0-beta2)
+
+Running the test with following options:
+Number of threads: 1
+Initializing random number generator from current time
+
+
+Initializing worker threads...
+
+Threads started!
+
+SQL statistics:
+    queries performed:
+        read:                            490
+        write:                           35
+        other:                           175
+        total:                           700
+    transactions:                        35     (3.49 per sec.)
+    queries:                             700    (69.81 per sec.)
+    ignored errors:                      0      (0.00 per sec.)
+    reconnects:                          0      (0.00 per sec.)
+
+General statistics:
+    total time:                          10.0247s
+    total number of events:              35
+
+Latency (ms):
+         min:                                143.33
+         avg:                                286.40
+         max:                                527.55
+         95th percentile:                    493.24
+         sum:                              10024.03
+
+Threads fairness:
+    events (avg/stddev):           35.0000/0.00
+    execution time (avg/stddev):   10.0240/0.00
+    #+END_EXAMPLE
+  + with
+    #+BEGIN_EXAMPLE
+root@grisou-38:~# docker logs -f sysbench
+sysbench 1.0.7 (using bundled LuaJIT 2.1.0-beta2)
+
+Running the test with following options:
+Number of threads: 1
+Initializing random number generator from current time
+
+
+Initializing worker threads...
+
+Threads started!
+
+SQL statistics:
+    queries performed:
+        read:                            15890
+        write:                           0
+        other:                           3405
+        total:                           19295
+    transactions:                        1135   (113.41 per sec.)
+    queries:                             19295  (1928.04 per sec.)
+    ignored errors:                      0      (0.00 per sec.)
+    reconnects:                          0      (0.00 per sec.)
+
+General statistics:
+    total time:                          10.0056s
+    total number of events:              1135
+
+Latency (ms):
+         min:                                  8.36
+         avg:                                  8.81
+         max:                                 16.06
+         95th percentile:                      9.56
+         sum:                              10002.95
+
+Threads fairness:
+    events (avg/stddev):           1135.0000/0.00
+    execution time (avg/stddev):   10.0030/0.00
+    #+END_EXAMPLE
+  + tried another one without to be sure:
+    #+BEGIN_EXAMPLE
+root@grisou-38:~# docker logs -f sysbench
+sysbench 1.0.7 (using bundled LuaJIT 2.1.0-beta2)
+
+Running the test with following options:
+Number of threads: 1
+Initializing random number generator from current time
+
+
+Initializing worker threads...
+
+Threads started!
+
+SQL statistics:
+    queries performed:
+        read:                            1232
+        write:                           90
+        other:                           438
+        total:                           1760
+    transactions:                        88     (8.79 per sec.)
+    queries:                             1760   (175.79 per sec.)
+    ignored errors:                      0      (0.00 per sec.)
+    reconnects:                          0      (0.00 per sec.)
+
+General statistics:
+    total time:                          10.0096s
+    total number of events:              88
+
+Latency (ms):
+         min:                                 97.19
+         avg:                                113.74
+         max:                                155.30
+         95th percentile:                    142.39
+         sum:                              10008.79
+
+Threads fairness:
+    events (avg/stddev):           88.0000/0.00
+    execution time (avg/stddev):   10.0088/0.00
+    #+END_EXAMPLE
+
+*** MariaDB
+
+- Without:
+#+BEGIN_EXAMPLE
+root@grisou-38:~# docker logs -f sysbench
+sysbench 1.0.7 (using bundled LuaJIT 2.1.0-beta2)
+
+Running the test with following options:
+Number of threads: 1
+Initializing random number generator from current time
+
+
+Initializing worker threads...
+
+Threads started!
+
+SQL statistics:
+    queries performed:
+        read:                            4326
+        write:                           690
+        other:                           1164
+        total:                           6180
+    transactions:                        309    (30.89 per sec.)
+    queries:                             6180   (617.83 per sec.)
+    ignored errors:                      0      (0.00 per sec.)
+    reconnects:                          0      (0.00 per sec.)
+
+General statistics:
+    total time:                          10.0005s
+    total number of events:              309
+
+Latency (ms):
+         min:                                 22.86
+         avg:                                 32.36
+         max:                                104.53
+         95th percentile:                     45.79
+         sum:                               9999.26
+
+Threads fairness:
+    events (avg/stddev):           309.0000/0.00
+    execution time (avg/stddev):   9.9993/0.00
+#+END_EXAMPLE
+- With:
+#+BEGIN_EXAMPLE
+root@grisou-38:~# docker logs -f sysbench
+sysbench 1.0.7 (using bundled LuaJIT 2.1.0-beta2)
+
+Running the test with following options:
+Number of threads: 1
+Initializing random number generator from current time
+
+
+Initializing worker threads...
+
+Threads started!
+
+SQL statistics:
+    queries performed:
+        read:                            12236
+        write:                           294
+        other:                           2328
+        total:                           14858
+    transactions:                        874    (87.37 per sec.)
+    queries:                             14858  (1485.26 per sec.)
+    ignored errors:                      0      (0.00 per sec.)
+    reconnects:                          0      (0.00 per sec.)
+
+General statistics:
+    total time:                          10.0015s
+    total number of events:              874
+
+Latency (ms):
+         min:                                  1.38
+         avg:                                 11.44
+         max:                                 72.69
+         95th percentile:                     34.33
+         sum:                               9999.14
+
+Threads fairness:
+    events (avg/stddev):           874.0000/0.00
+    execution time (avg/stddev):   9.9991/0.00
+#+END_EXAMPLE
+
+** Sysbench
+
+- Tried to use =common.lua= and =oltp_aria.lua= found in the sysbench-runner from [[https://code.launchpad.net/mariadb-tools][mariadb-tools]] but I couldn't make them work
+#+BEGIN_EXAMPLE
+root@grisou-38:~# docker logs -f sysbench
+sysbench 1.0.7 (using bundled LuaJIT 2.1.0-beta2)
+
+FATAL: Cannot find benchmark '/home/madelavergne/juice/oltp_aria.lua': no such built-in test, file or module
+#+END_EXAMPLE
+
+** Work with Ronan
+
+- Reworking juice (cf notes)
+
+
+- Keeping that somewhere:
+#+BEGIN_EXAMPLE
+  - name: Start sysbench on CockroachDB
+    docker_container:
+      name: "sysbench"
+      image: "severalnines/sysbench"
+      detach: True
+      volumes:
+        - "/home/madelavergne/juice:/home/madelavergne/juice"
+      command: sysbench --db-driver=pgsql --pgsql-host="{{ hostvars[inventory_hostname]['ansible_' + control_network]['ipv4']['address'] }}" --pgsql-port=26257 --pgsql-user=root --table-size=1000000 /home/madelavergne/juice/oltp_aria.lua prepare
+    when: db == 'cockroachdb'
+
+  - name: Run sysbench on CockroachDB
+    docker_container:
+      name: "sysbench"
+      image: "severalnines/sysbench"
+      detach: True
+      volumes:
+        - "/home/madelavergne/juice:/home/madelavergne/juice"
+      command: sysbench --db-driver=pgsql --pgsql-host="{{ hostvars[inventory_hostname]['ansible_' + control_network]['ipv4']['address'] }}" --pgsql-port=26257 --pgsql-user=root --table-size=1000000 /home/madelavergne/juice/oltp_aria.lua run
+    when: db == 'cockroachdb'
+#+END_EXAMPLE
+
+- Works for CockroachDB, have to try for MariaDB before pushing

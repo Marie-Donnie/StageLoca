@@ -496,8 +496,8 @@ Time: 11.188380688s
   + I can also describe subregions as described [[https://www.cockroachlabs.com/docs/stable/configure-replication-zones.html#descriptive-attributes-assigned-to-nodes][here]]
   + [[https://www.cockroachlabs.com/docs/stable/known-limitations.html#load-based-lease-rebalancing-in-uneven-latency-deployments][About load-based lease rebalancing]]
     - checked the dashboard using ~ssh -NL 8080:graphene-103.nancy.grid5000.fr:8080 nancy.g5k~
-      #+CAPTION: RSM architecture from the Raft article
-      #+NAME: fig:raft_RSM_architecture
+      #+CAPTION: Cockroach dashboard
+      #+NAME: fig:crdb_dashboard
 [[../images/Cockroach_dashboard.png]]
   + =TESTING_RANGES= is part of the SQL grammar for CockroachDB, so I can also use:
     #+BEGIN_EXAMPLE

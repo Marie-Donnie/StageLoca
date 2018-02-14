@@ -463,12 +463,55 @@ sysbench 1.0.7 (using bundled LuaJIT 2.1.0-beta2)
 FATAL: Cannot find benchmark '/home/madelavergne/juice/oltp_aria.lua': no such built-in test, file or module
 #+END_EXAMPLE
 
+- Solved the problem by mounting the volume for sysbench container
+
 ** Work with Ronan
 
-- Reworking juice (cf notes)
+- We searched why I got the error
+#+BEGIN_EXAMPLE
+Threads started!
+
+FATAL: PQexec() failed: 7 restart transaction: HandledRetryableTxnError: TransactionRetryError: retry txn (RETRY_SERIALIZABLE): "sql txn" id=08f0adef key=/Table/52/1/5019 rw=true pri=0.02680100 iso=SERIALIZABLE stat=PENDING epo=0 ts=1518527373.993209368,1 orig=1518527373.980746986,0 max=1518527373.980746986,0 wto=false rop=false seq=16
+FATAL: failed query was: COMMIT
+FATAL: `thread_run' function failed: /home/madelavergne/juice/oltp_aria.lua:90: db_query() failed
+#+END_EXAMPLE
+  + We looked into =oltp_aria.lua=
+  + Reminder:
+    - begin/commit mechanism differs from an implementation to another
+    - CockroachDB is optimist: he retries what went wrong if a problem occurs
+      + he uses a mechanism of savepoint/rollback (everything that occured between them is abandonned and retried)
+      + or we can also implement an exponential backoff algortihm to avoid contention
+  + we tried to comment ~BEGIN~ and ~COMMIT~ and replaced them with ~SELECT 1~
+    - the tests are then ok so we look into the driver, especially [[https://github.com/akopytov/sysbench/blob/master/src/drivers/pgsql/drv_pgsql.c#L690][this line]]
+    - we find out that pgsql driver doesn't allow any retry
+    - so we're going to have to make our own driver (by modifying pgsl driver a bit) to allow retries
+      + have to choose between rollbacks or exponential backoff
+      + maybe add an option to choose between those mechanisms
+    - when the driver will be modified, we will have to rebuild
+      + ./autogen.sh --with-pgsql
+      + ./configure
+      + make -j
+      + dockerize with ubuntu
 
 
-- Keeping that somewhere:
+- We looked into what tests should we do:
+  + maybe =range select=
+  + =point select= yes, with adjusted value in the command
+- The goal is to be able to, when there is something strange while using CockroachDB with Keystone, justify how it's possible to make it better on sysbench
+
+
+- Reworking juice
+  + Ronan showed me how collectd is used in Enos
+  + Have to rearrange juice so I can make tests separately from the deployment
+    - [X] tasks
+      + [X] prepare calls prepare.yml (all)
+      + [X] stress calls stress.yml (sysbench)
+      + [X] openstack calls openstack.yml (keystone)
+    - [X] backup and destroy uses the three files
+    - [X] move =wait_for= from sysbench deploy to the DB deploys
+    - [X] add collectd and cadvisor in "install monitoring agents" for every database node
+
+- Keeping that somewhere (removed it since we won't use it but I like to know how I did it):
 #+BEGIN_EXAMPLE
   - name: Start sysbench on CockroachDB
     docker_container:
@@ -492,3 +535,34 @@ FATAL: Cannot find benchmark '/home/madelavergne/juice/oltp_aria.lua': no such b
 #+END_EXAMPLE
 
 - Works for CockroachDB, have to try for MariaDB before pushing
+
+* Wednesday 14 February [2018-02-14 mer.]
+
+- Trying to make cadvisor work; some variables were a bit difficult to understand (=#influx_vip=)
+- Same problem with collectd
+
+- Made it work without errors but I don't know if it actually works
+  + Ronan notices some problems, especially with influxdb so I add another node for grafana, influx and registry
+
+- Ronan came to help me this afternoon, we made everything work ([[https://github.com/Marie-Donnie/juice/commit/be24209ec4bd95e1447144c94f783bf83126c0e1][commit]])
+  + We managed to get results on Grafana dashboard, showing CPU usage of 3 galera nodes (1 master 2 slaves) during a sysbench:
+      #+CAPTION: Grafana dashboard showing CPU usage of 3 galera nodes (1 master 2 slaves) during a sysbench
+      #+NAME: fig:first_grafana
+[[../images/first_grafana.png]]
+  + Since we used =prepare= to make everything work bit by bit, we didn't deploy from scratch
+  + When I did after the commit, I had a bug
+    #+BEGIN_EXAMPLE
+TASK [mariadb : Start the MariaDB-master container] ****************************************************
+skipping: [grisou-11.nancy.grid5000.fr]
+skipping: [grisou-34.nancy.grid5000.fr]
+fatal: [grisou-36.nancy.grid5000.fr]: FAILED! => {"changed": false, "failed": true, "msg": "Error connecting: Error while fetching server API version: ('Connection aborted.', error(2, 'No such file or directory'))"}
+
+TASK [mariadb : Waiting the MariaDB master to be ready] ************************************************
+skipping: [grisou-11.nancy.grid5000.fr]
+skipping: [grisou-34.nancy.grid5000.fr]
+
+TASK [mariadb : Start the MariaDB container] ***********************************************************
+fatal: [grisou-11.nancy.grid5000.fr]: FAILED! => {"changed": false, "failed": true, "msg": "Error connecting: Error while fetching server API version: ('Connection aborted.', error(2, 'No such file or directory'))"}
+fatal: [grisou-34.nancy.grid5000.fr]: FAILED! => {"changed": false, "failed": true, "msg": "Error connecting: Error while fetching server API version: ('Connection aborted.', error(2, 'No such file or directory'))"}
+    #+END_EXAMPLE
+  + After a bit of digging around what we changed in mariadb playbooks, I looked to the =prepare.yml= and I had a hunch that registry being only on control node might be responsible, so I put back 'all'

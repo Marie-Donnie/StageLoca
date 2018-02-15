@@ -536,6 +536,7 @@ FATAL: `thread_run' function failed: /home/madelavergne/juice/oltp_aria.lua:90: 
 
 - Works for CockroachDB, have to try for MariaDB before pushing
 
+
 * Wednesday 14 February [2018-02-14 mer.]
 
 - Trying to make cadvisor work; some variables were a bit difficult to understand (=#influx_vip=)
@@ -566,3 +567,34 @@ fatal: [grisou-11.nancy.grid5000.fr]: FAILED! => {"changed": false, "failed": tr
 fatal: [grisou-34.nancy.grid5000.fr]: FAILED! => {"changed": false, "failed": true, "msg": "Error connecting: Error while fetching server API version: ('Connection aborted.', error(2, 'No such file or directory'))"}
     #+END_EXAMPLE
   + After a bit of digging around what we changed in mariadb playbooks, I looked to the =prepare.yml= and I had a hunch that registry being only on control node might be responsible, so I put back 'all'
+
+
+* Thursday 15 February [2018-02-15 jeu.]
+
+- Today is maintenance day until 1pm. Funny how I forgot that when getting here earlier this morning.
+
+- Ronan sent me links to a collectd plugin: [[https://github.com/chrisboulton/collectd-python-mysql][python-mysql]] also described [[https://grafana.com/dashboards/561][here]]
+
+- While waiting, looking into [[https://github.com/astaxie/tidb][tidb]] and [[https://crate.io][cratedb]]
+  + Also [[https://github.com/rystsov/perseus][perseus]] which compares responsivness of distributed databases when a node is separated from the peers (split brain)
+
+- Making python mysql work ([[https://github.com/Marie-Donnie/juice/commit/15d8a2201b2876cb723453a130446b612791ad4c][commit]]):
+  + Added dependency to common deploy
+  + Added destroy/backup files for cadvisor and collectd
+  + Nothing to be done on =collectd.conf=
+  + Added mysql.py from python mysql plugin to ensure I have a working version
+  + Created plugin directory to be able to correctly copy the file at the right place
+  + [[
+https://github.com/Marie-Donnie/juice/blob/15d8a2201b2876cb723453a130446b612791ad4c/ansible/roles/collectd/templates/python-mysql.conf.j2][python mysql template]] has to have a ending (trailing?) return or it cannot be parsed (luckily for me, Ronan was passing by and he had the same problem with haproxy :p)
+  + We improved the separation between prepare and sysbench by removing the creation of the database from mariadb deploy and added removal/creation of the required database to sysbench deploy, along with the creation of the user sbtest
+  + We also changed their detach state to False so the deployment would wait for them to be completed
+  + There is currently a bug when user docker with enoslib version of ansible, so I had to specify which version of Docker to use
+  + Removed the database for mysql plugin to avoid duplicates with python mysql plugin
+
+- We then changed the table size for sysbench to try to get longer results and checked grafana:
+  + there are 2 good dashboards we used:
+    - [[https://grafana.com/dashboards/561][MySQL Metrics]] which gives informations about mariadb's performance
+    - [[https://grafana.com/dashboards/564][MySQL InnoDB Metrics]] centered specifically on InnoDB engine for MariaDB
+      #+CAPTION: Grafana dashboard showing MySQL Metrics during sysbench
+      #+NAME: fig:mysql_metrics
+[[../images/MySQL_metrics.png]]

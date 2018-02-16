@@ -1,0 +1,134 @@
+
+\documentclass[a4paper, 10pt, titlepage]{report}
+
+%% Mandatory stuff
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+%% --
+
+
+%% Color package for colored links
+\usepackage[usenames,dvipsnames]{xcolor}
+\definecolor{blues}{RGB}{153,50,204}
+%% --
+
+
+%% Code listings
+\usepackage{listings}
+% UTF8 compatibility options
+% UTF8 chars are OK in code comment
+% but not elsewhere
+\lstset{extendedchars=false, texcl}
+% Eye candy
+
+
+\lstdefinestyle{python}{
+  language=python,
+  basicstyle=\footnotesize\rmfamily,
+  identifierstyle=,
+  commentstyle=\itshape,
+  keywordstyle=,
+  stringstyle=,
+  showspaces=false,
+  showstringspaces=false,
+  tabsize=3,
+  breaklines=true
+}
+
+\newcommand{\code}[1]{\lstinline!#1!}
+
+\lstset{style=python}
+
+%% Theorems environments
+\usepackage{amsmath}
+\usepackage{amsthm}
+
+%% Hyperlinks for references, in color-O-vision and nice for long urls
+\PassOptionsToPackage{hyphens}{url}\usepackage[pdftex,%
+  pdfauthor={Marie Delavergne},%
+  pdftitle={Mémoire de Master 2 ALMA},%
+  pdfsubject={Mémoire de Master 2 ALMA - Un intergiciel d’une base de données NewSQL qui considère la localité de l’application cliente},%
+  colorlinks,%
+  linkcolor=blues,%
+  urlcolor=blues,%
+  plainpages=false]{hyperref}
+%% --
+
+%% Power to the tikz!
+\usepackage{tikz}
+%\usepackage{graphicx}
+%% --
+
+%% Page layout
+\usepackage{makeidx}
+\makeindex
+
+%% Plain page headings
+\pagestyle{headings}
+
+%% Smaller space between heading and matter
+\setlength\headsep{0.5in}
+ %% --
+
+%% Larger page
+\usepackage[left=4cm,right=4cm,top=5cm,bottom=4cm]{geometry}
+
+%% Adjust toc depth
+\setcounter{tocdepth}{4}
+
+%% Dotted toc
+\usepackage{tocloft}
+\renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}}
+
+%% Figures where I want them
+\usepackage{float}
+
+%% Nice caption
+\usepackage[font={footnotesize}]{caption}
+
+%% Footnote where they belong
+\usepackage[bottom]{footmisc}
+
+%% Comments
+\newcommand{\comment}[1]{}
+
+%% Image in title
+\usepackage{graphicx}
+
+%% Subfigures
+\usepackage{subcaption}
+
+%% Bibliography
+\usepackage[style=numeric]{biblatex}
+
+\addbibresource{biblio.bib}
+
+\begin{document}
+%
+%% \maketitle
+\begin{titlepage}
+	\centering
+	{\scshape\LARGE\bfseries Un intergiciel d’une base de données NewSQL qui considère la localité de l’application cliente \par}
+	\vspace{0cm}
+	{\Large\itshape Marie Delavergne\par}
+        {\Large - Mémoire de Master 2 ALMA -\par}
+
+	\vfill
+
+        % Bottom of the page
+        {\Large LS2N \par}
+        {\Large Ronan-Alexandre Cherrueau - Achour Mostefaoui \par}
+	{\Large Université de Nantes - Année 2017-2018 \par}
+
+
+\end{titlepage}
+
+
+\clearpage
+\tableofcontents
+\newpage
+
+\addcontentsline{toc}{section}{Introduction}
+\section*{Introduction}
+\end{document}

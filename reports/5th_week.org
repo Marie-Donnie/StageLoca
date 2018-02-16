@@ -598,3 +598,107 @@ https://github.com/Marie-Donnie/juice/blob/15d8a2201b2876cb723453a130446b612791a
       #+CAPTION: Grafana dashboard showing MySQL Metrics during sysbench
       #+NAME: fig:mysql_metrics
 [[../images/MySQL_metrics.png]]
+
+
+* Friday 16 February [2018-02-16 ven.]
+
+- Beginning working on putting Keystone upon this
+
+- Thought I would need to specify Openstack release (between pike and queens) but then I realized there were forks from OpenStack which didn't have queens version. I'm puting that aside for now:
+  #+BEGIN_EXAMPLE
+    --release RELEASE     OpenStack release to use [default: pike]
+        "release": release,
+  #+END_EXAMPLE
+
+- I copied [[https://github.com/BeyondTheClouds/openstack-cockroachdb-dev/blob/master/provision.yml][enos provision file]] from devstack (l.66) to have an idea of what I had to do, but this was done using Vagrant, so I have to adjust things a bit
+
+
+- Had to add the pip installs because they were required
+
+
+- What had to be done manually:
+  + pip: the deployement was stucked during pip installation
+    - tried to install them manually, but had to switch to root
+    - should be ok now since I removed sudo su stack from bashrc
+      #+BEGIN_EXAMPLE
+    pip install -e git+https://github.com/cockroachdb/cockroachdb-python.git#egg=cockroachdb
+    pip install -e git+https://github.com/rcherrueau/sqlalchemy-migrate.git@cockroachdb/pike#egg=sqlalchemy-migrate
+      #+END_EXAMPLE
+  + I required to switch to user stack, so I need to copy authorized keys to connect to stack
+    #+BEGIN_EXAMPLE
+  mkdir /opt/stack/.ssh
+  cp .ssh/authorized_keys /opt/stack/.ssh/
+    #+END_EXAMPLE
+  + chmod 777 /opt/stack/devstack/.localrc.password to avoid =ENTER A PASSWORD TO USE FOR THE DATABASE. / ENTER A PASSWORD TO USE FOR RABBIT.=
+  + [[http://manish-lamichhane.com.np/technology/install-libmysqlclient-dev-debain-9/][to solve libmysqlclient-dev problem]]
+    #+BEGIN_EXAMPLE
+  Package libmysqlclient-dev is not available, but is referred to by another package.
+  This may mean that the package is missing, has been obsoleted, or
+  is only available from another source
+
+  E: Package 'libmysqlclient-dev' has no installation candidate
+    #+END_EXAMPLE
+    - doesn't work: apt install default-libmysqlclient-dev
+  + execution order for creating/using the database?
+  + avoid duplicates? maybe using [[https://blog.zhaw.ch/icclab/how-to-install-a-multi-region-devstack-part-1/][regions tutorial]]
+
+- Got master node pass devstack
+#+BEGIN_EXAMPLE
+=========================
+DevStack Component Timing
+=========================
+Total runtime    324run_process        0
+apt-get-update     1
+osc               56
+wait_for_service   4
+dbsync           166
+pip_install       40
+apt-get            1
+=========================This is your host IP address: 172.16.72.6
+This is your host IPv6 address: ::1
+Keystone is serving at http://172.16.72.6/identity/
+The default users are: admin and demo
+The password: adminServices are running under systemd unit files.
+For more information see:
+https://docs.openstack.org/devstack/latest/systemd.htmlDevStack Version: pike
+Change:
+OS Version: Debian 9.3 stretch2018-02-16 15:43:48.779 | stack.sh completed in 324 seconds.
+#+END_EXAMPLE
+
+- Still have problems with the other nodes; have to figure out how to make them wait long enough
+  + tried:
+    #+BEGIN_EXAMPLE
+stack@grisou-7:~$ while $(sudo docker exec -i cockroachdb-grisou-7 ./cockroach sql --insecure --execute 'select * from [SHOW DATABASES] where "Database" = '\''keystone'\''') | grep "# 1 row"; do echo "&"; done
+bash: Database: command not found
+stack@grisou-7:~$ while $(sudo docker exec -i cockroachdb-grisou-7 ./cockroach sql --insecure --execute 'select * from [SHOW DATABASES] where "Database" = '\''keystone'\''') | grep "1 row"; do echo "&"; done
+bash: Database: command not found
+stack@grisou-7:~$ while $(sudo docker exec -i cockroachdb-grisou-7 ./cockroach sql --insecure --execute 'select * from [SHOW DATABASES]) | grep "# 1 row"; do echo "&"; done
+> ^C
+stack@grisou-7:~$ while $(sudo docker exec -i cockroachdb-grisou-7 ./cockroach sql --insecure --execute 'select * from [SHOW DATABASES]') | grep "# 1 row"; do echo "&"; done
+bash: Database: command not found
+stack@grisou-7:~$ while $(sudo docker exec -i cockroachdb-grisou-7 ./cockroach sql --insecure --execute 'select * from [SHOW DATABASES]') | grep "# 1 row"; do echo "&"; done
+bash: Database: command not found
+stack@grisou-7:~$ while $(sudo docker exec -i cockroachdb-grisou-7 ./cockroach sql --insecure --execute 'select * from [SHOW DATABASES]') | grep "# 1 row"; do echo "&"; done
+bash: Database: command not found
+stack@grisou-7:~$ while $(sudo docker exec -i cockroachdb-grisou-7 ./cockroach sql --insecure --execute 'select * from [SHOW DATABASES]') | grep "# 1 row"; do echo "&"; done
+bash: Database: command not found
+stack@grisou-7:~$ while "$(sudo docker exec -i cockroachdb-grisou-7 ./cockroach sql --insecure --execute 'select * from [SHOW DATABASES]')" | grep "# 1 row"; do echo "&"; done
+bash: $'Database\ncrdb_internal\ninformation_schema\nkeystone\npg_catalog\nsystem\n# 5 rows': command not found
+stack@grisou-7:~$ while [ "$(sudo docker exec -i cockroachdb-grisou-7 ./cockroach sql --insecure --execute 'select * from [SHOW DATABASES]')" | grep "# 1 row" ]; do echo "&"; done
+grep: ]: No such file or directory
+bash: [: missing `]'
+stack@grisou-7:~$ while $(fgrep "# 1" "$(sudo docker exec -i cockroachdb-grisou-7 ./cockroach sql --insecure --execute 'select * from [SHOW DATABASES]')"); do echo "&"; done
+grep: Database
+crdb_internal
+information_schema
+keystone
+pg_catalog
+system
+# 5 rows: No such file or directory
+    #+END_EXAMPLE
+
+
+- Btw, thanks to the logs:
+#+BEGIN_QUOTE
+admin already has admin on admin.
+#+END_QUOTE

@@ -4,3 +4,19 @@ tools/
 articles/
 no_push/
 talks/
+
+# latex
+*.bbl
+*.blg
+*.ilg
+*.ind
+*.aux
+*.bcf
+*.fls
+*.idx
+report.log
+*.out
+report.pdf
+*.run.xml
+*.toc
+*.fdb_latexmk

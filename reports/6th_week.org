@@ -1,0 +1,391 @@
+#+TITLE: Report for : Un intergiciel d’une base de données NewSQL qui considère la localité de l’application cliente -- 6th week --
+#+AUTHOR: Marie Delavergne
+
+* Monday 19 February [2018-02-19 lun.]
+
+- Resuming friday's work
+
+- Beginning to add what I had to do manually to the scripts
+  + To avoid chmods, I used =become_user=
+  + Still have a problem with mysql because I can't use
+    #+BEGIN_EXAMPLE
+- name: Install MySQL sources
+  command: dpkg -i /tmp/my-sql-apt-config.deb
+    #+END_EXAMPLE
+    - dkpg needs a manual confirmation
+
+- On the master, yeay, but still not on other nodes:
+  #+BEGIN_EXAMPLE
+
+=========================
+DevStack Component Timing
+=========================
+Total runtime    325
+
+run_process        0
+apt-get-update     2
+osc               55
+wait_for_service   3
+dbsync           170
+pip_install       40
+apt-get            1
+=========================
+
+
+
+This is your host IP address: 172.16.72.28
+This is your host IPv6 address: ::1
+Keystone is serving at http://172.16.72.28/identity/
+The default users are: admin and demo
+The password: admin
+
+Services are running under systemd unit files.
+For more information see:
+https://docs.openstack.org/devstack/latest/systemd.html
+
+DevStack Version: pike
+Change:
+OS Version: Debian 9.3 stretch
+
+2018-02-19 10:03:52.401 | stack.sh completed in 325 seconds.
+
+  #+END_EXAMPLE
+
+- Tried different versions to make it work :
+#+BEGIN_EXAMPLE
+    while [$(sudo docker exec -i cockroachdb-{{ inventory_hostname_short }} \
+		 ./cockroach sql --insecure \
+		 --execute "select * from [SHOW DATABASES] where \"Database\" = 'keystone'" | \
+		 fgrep "# 1 row") ]
+    do
+	echo "Waiting for database $db to be up"
+	sleep 5
+    done
+
+    while true
+    do
+	output=$(sudo docker exec -i cockroachdb-{{ inventory_hostname_short }} \
+			./cockroach sql --insecure \
+			--execute "select * from [SHOW DATABASES] where \"Database\" = 'keystone'" | \
+	           fgrep "row")
+        if "$output" == "# 1 row"
+        then
+	    break
+	else sleep 5
+	fi
+    done
+    while [$(sudo docker exec -i cockroachdb-{{ inventory_hostname_short }} \
+		 ./cockroach sql --insecure \
+		 --execute "select * from [SHOW DATABASES] where \"Database\" = 'keystone'" | \
+		 fgrep "row") == "# 1 row"]
+    do
+	echo "Waiting for database $db to be up"
+	sleep 5
+    done
+#+END_EXAMPLE
+
+- Finally found the command I needed trying to debug it on a node:
+#+BEGIN_EXAMPLE
+root@grisou-27:~# if [[$(sudo docker exec -i cockroachdb-grisou-27 ./cockroach sql --insecure --execute "select * from [SHOW DATABASES] where \"Database\" = 'keystone'" | fgrep "row") == "# 1 row"]]; then echo "lol" ; fi
+-bash: [[#: command not found
+root@grisou-27:~# if [[ $(sudo docker exec -i cockroachdb-grisou-27 ./cockroach sql --insecure --execute "select * from [SHOW DATABASES] where \"Database\" = 'keystone'" | fgrep "row") == "# 1 row" ]]; then echo "lol" ; fi
+lol
+#+END_EXAMPLE
+
+- Ronan tells me it might be better to separate ~stack~ operations
+  - I add ~when: inventory_hostname == dbmaster_node~ for stack and on the master node:
+#+BEGIN_EXAMPLE
+=========================
+DevStack Component Timing
+=========================
+Total runtime    330
+
+run_process        0
+apt-get-update     1
+osc               56
+wait_for_service   2
+dbsync           170
+pip_install       40
+apt-get            1
+=========================
+
+
+
+This is your host IP address: 172.16.72.28
+This is your host IPv6 address: ::1
+Keystone is serving at http://172.16.72.28/identity/
+The default users are: admin and demo
+The password: admin
+
+Services are running under systemd unit files.
+For more information see:
+https://docs.openstack.org/devstack/latest/systemd.html
+
+DevStack Version: pike
+Change:
+OS Version: Debian 9.3 stretch
+
+2018-02-19 12:46:02.970 | stack.sh completed in 330 seconds.
+#+END_EXAMPLE
+  + then I add ~when: inventory_hostname != dbmaster_node~ to =stack= and =unstack= operations and, on both corresponding nodes:
+#+BEGIN_EXAMPLE
+=========================
+DevStack Component Timing
+=========================
+Total runtime    115
+
+run_process        0
+apt-get-update     1
+osc               39
+wait_for_service   4
+dbsync             1
+pip_install       40
+apt-get            0
+=========================
+
+
+
+This is your host IP address: 172.16.72.27
+This is your host IPv6 address: ::1
+Keystone is serving at http://172.16.72.27/identity/
+The default users are: admin and demo
+The password: admin
+
+Services are running under systemd unit files.
+For more information see:
+https://docs.openstack.org/devstack/latest/systemd.html
+
+DevStack Version: pike
+Change:
+OS Version: Debian 9.3 stretch
+
+2018-02-19 12:52:36.319 | stack.sh completed in 115 seconds.
+#+END_EXAMPLE
+
+
+- Testing if it worked:
+  - ~su stack && cd /opt/stack~
+  - ~source /devstack/openrc admin admin~
+  - ~openstack endpoint list~
+    #+BEGIN_EXAMPLE    +----------------------------------+-----------+--------------+--------------+---------+-----------+------------------------------+
+| ID                               | Region    | Service Name | Service Type | Enabled | Interface | URL                          |
++----------------------------------+-----------+--------------+--------------+---------+-----------+------------------------------+
+| 080a88bb418b41d9b87e2b3fca850727 | grisou-28 | keystone     | identity     | True    | admin     | http://172.16.72.28/identity |
+| 4a1c008b7f95429caa2c74159f81a5dc | grisou-27 | keystone     | identity     | True    | admin     | http://172.16.72.27/identity |
+| 547f20e24b074582a5af3c8eeb6d6527 | grisou-29 | keystone     | identity     | True    | public    | http://172.16.72.29/identity |
+| 95cff11731d749c1887472853d60f277 | grisou-28 | keystone     | identity     | True    | public    | http://172.16.72.28/identity |
+| 9c17e99f185349f8b2de747ef3bc4914 | grisou-27 | keystone     | identity     | True    | public    | http://172.16.72.27/identity |
+| b39ef4d607a84ef99487a591a721e4e8 | grisou-29 | keystone     | identity     | True    | admin     | http://172.16.72.29/identity |
++----------------------------------+-----------+--------------+--------------+---------+-----------+------------------------------+
+    #+END_EXAMPLE
+
+
+- Trying to make rally test work
+  + add rally plugin to conf for grisou-29 + [[https://github.com/BeyondTheClouds/openstack-cockroachdb-dev/blob/f9e3e70a694069e147ea99790a59d779786d9b31/provision.yml#L227][code snippet for rally db (sqlite)]]
+  + changing loop so there will be no transaction errors... code is getting really crappy
+  + still a transaction problem
+    #+BEGIN_EXAMPLE
+    INFO migrate.versioning.api [-] 66 -> 67...
+INFO migrate.versioning.api [-] done
+INFO migrate.versioning.api [-] 67 -> 68...
+INFO migrate.versioning.api [-] done
+INFO migrate.versioning.api [-] 68 -> 69...
+INFO migrate.versioning.api [-] done
+INFO migrate.versioning.api [-] 69 -> 70...
+INFO migrate.versioning.api [-] done
+INFO migrate.versioning.api [-] 70 -> 71...
+INFO migrate.versioning.api [-] done
+INFO migrate.versioning.api [-] 71 -> 72...
+INFO migrate.versioning.api [-] done
+INFO migrate.versioning.api [-] 72 -> 73...
+CRITICAL keystone [-] Unhandled error: DbMigrationError: (psycopg2.extensions.TransactionRollbackError) restart transaction: HandledRetryableTxnError: TransactionRetryError: retry txn (RETRY_SERIALIZABLE): "sql txn" id=d2ebb843 key=/Table/SystemConfigSpan/Start rw=true pri=0.04365691 iso=SERIALIZABLE stat=PENDING epo=0 ts=1519058115.038771624,1 orig=1519058115.010307443,0 max=1519058115.011562054,0 wto=false rop=false seq=5
+ERROR keystone Traceback (most recent call last):
+ERROR keystone   File "/usr/local/bin/keystone-manage", line 10, in <module>
+ERROR keystone     sys.exit(main())
+ERROR keystone   File "/opt/stack/keystone/keystone/cmd/manage.py", line 45, in main
+ERROR keystone     cli.main(argv=sys.argv, config_files=config_files)
+ERROR keystone   File "/opt/stack/keystone/keystone/cmd/cli.py", line 1337, in main
+ERROR keystone     CONF.command.cmd_class.main()
+ERROR keystone   File "/opt/stack/keystone/keystone/cmd/cli.py", line 531, in main
+ERROR keystone     CONF.command.version)
+ERROR keystone   File "/opt/stack/keystone/keystone/common/sql/upgrades.py", line 250, in offline_sync_database_to_version
+ERROR keystone     expand_schema()
+ERROR keystone   File "/opt/stack/keystone/keystone/common/sql/upgrades.py", line 321, in expand_schema
+ERROR keystone     _sync_common_repo(version=None)
+ERROR keystone   File "/opt/stack/keystone/keystone/common/sql/upgrades.py", line 170, in _sync_common_repo
+ERROR keystone     init_version=init_version, sanity_check=False)
+ERROR keystone   File "/opt/stack/oslo.db/oslo_db/sqlalchemy/migration.py", line 81, in db_sync
+ERROR keystone     raise exception.DbMigrationError(ex)
+ERROR keystone DbMigrationError: (psycopg2.extensions.TransactionRollbackError) restart transaction: HandledRetryableTxnError: TransactionRetryError: retry txn (RETRY_SERIALIZABLE): "sql txn" id=d2ebb843 key=/Table/SystemConfigSpan/Start rw=true pri=0.04365691 iso=SERIALIZABLE stat=PENDING epo=0 ts=1519058115.038771624,1 orig=1519058115.010307443,0 max=1519058115.011562054,0 wto=false rop=false seq=5
+ERROR keystone
+ERROR keystone
++ lib/keystone:init_keystone:1             :   exit_trap
++ stack.sh:exit_trap:521                   :   local r=1
+++ stack.sh:exit_trap:522                   :   jobs -p
++ stack.sh:exit_trap:522                   :   jobs=
++ stack.sh:exit_trap:525                   :   [[ -n '' ]]
++ stack.sh:exit_trap:531                   :   '[' -f /tmp/tmp.7YYzFGv6Yi ']'
++ stack.sh:exit_trap:532                   :   rm /tmp/tmp.7YYzFGv6Yi
++ stack.sh:exit_trap:536                   :   kill_spinner
++ stack.sh:kill_spinner:417                :   '[' '!' -z '' ']'
++ stack.sh:exit_trap:538                   :   [[ 1 -ne 0 ]]
++ stack.sh:exit_trap:539                   :   echo 'Error on exit'
+Error on exit
++ stack.sh:exit_trap:540                   :   generate-subunit 1519057968 147 fail
++ stack.sh:exit_trap:541                   :   [[ -z /opt/stack/logs ]]
++ stack.sh:exit_trap:544                   :   /opt/stack/devstack/tools/worlddump.py -d /opt/stack/logs
+/bin/sh: 1: arp: not found
++ stack.sh:exit_trap:550                   :   exit 1
+    #+END_EXAMPLE
+
+
+* Tuesday 20 February [2018-02-20 mar.]
+
+- Trying to fix the transaction problem
+  #+BEGIN_EXAMPLE
+  INFO migrate.versioning.api [-] 90 -> 91...
+CRITICAL keystone [-] Unhandled error: DbMigrationError: (psycopg2.extensions.TransactionRollbackError) restart transaction: HandledRetryableTxnError: TransactionRetryError: retry txn (RETRY_SERIALIZABLE): "sql txn" id=8af7eb67 key=/Table/SystemConfigSpan/Start rw=true pri=0.02680793 iso=SERIALIZABLE stat=PENDING epo=0 ts=1519118932.918165955,1 orig=1519118932.896067115,0 max=1519118932.896067115,0 wto=false rop=false seq=216
+ERROR keystone Traceback (most recent call last):
+ERROR keystone   File "/usr/local/bin/keystone-manage", line 10, in <module>
+ERROR keystone     sys.exit(main())
+ERROR keystone   File "/opt/stack/keystone/keystone/cmd/manage.py", line 45, in main
+ERROR keystone     cli.main(argv=sys.argv, config_files=config_files)
+ERROR keystone   File "/opt/stack/keystone/keystone/cmd/cli.py", line 1337, in main
+ERROR keystone     CONF.command.cmd_class.main()
+ERROR keystone   File "/opt/stack/keystone/keystone/cmd/cli.py", line 531, in main
+ERROR keystone     CONF.command.version)
+ERROR keystone   File "/opt/stack/keystone/keystone/common/sql/upgrades.py", line 250, in offline_sync_database_to_version
+ERROR keystone     expand_schema()
+ERROR keystone   File "/opt/stack/keystone/keystone/common/sql/upgrades.py", line 321, in expand_schema
+ERROR keystone     _sync_common_repo(version=None)
+ERROR keystone   File "/opt/stack/keystone/keystone/common/sql/upgrades.py", line 170, in _sync_common_repo
+ERROR keystone     init_version=init_version, sanity_check=False)
+ERROR keystone   File "/opt/stack/oslo.db/oslo_db/sqlalchemy/migration.py", line 81, in db_sync
+ERROR keystone     raise exception.DbMigrationError(ex)
+ERROR keystone DbMigrationError: (psycopg2.extensions.TransactionRollbackError) restart transaction: HandledRetryableTxnError: TransactionRetryError: retry txn (RETRY_SERIALIZABLE): "sql txn" id=8af7eb67 key=/Table/SystemConfigSpan/Start rw=true pri=0.02680793 iso=SERIALIZABLE stat=PENDING epo=0 ts=1519118932.918165955,1 orig=1519118932.896067115,0 max=1519118932.896067115,0 wto=false rop=false seq=216
+ERROR keystone
+ERROR keystone
++ lib/keystone:init_keystone:1             :   exit_trap
++ stack.sh:exit_trap:521                   :   local r=1
+++ stack.sh:exit_trap:522                   :   jobs -p
++ stack.sh:exit_trap:522                   :   jobs=
++ stack.sh:exit_trap:525                   :   [[ -n '' ]]
++ stack.sh:exit_trap:531                   :   '[' -f /tmp/tmp.iyGSFnxAVD ']'
++ stack.sh:exit_trap:532                   :   rm /tmp/tmp.iyGSFnxAVD
++ stack.sh:exit_trap:536                   :   kill_spinner
++ stack.sh:kill_spinner:417                :   '[' '!' -z '' ']'
++ stack.sh:exit_trap:538                   :   [[ 1 -ne 0 ]]
++ stack.sh:exit_trap:539                   :   echo 'Error on exit'
+Error on exit
++ stack.sh:exit_trap:540                   :   generate-subunit 1519118271 662 fail
++ stack.sh:exit_trap:541                   :   [[ -z /opt/stack/logs ]]
++ stack.sh:exit_trap:544                   :   /opt/stack/devstack/tools/worlddump.py -d /opt/stack/logs
+/bin/sh: 1: arp: not found
++ stack.sh:exit_trap:550                   :   exit 1
+  #+END_EXAMPLE
+  + digging a little deeper:
+    - ~docker exec -it cockroachdb-grisou-1 ./cockroach sql --insecure~
+    - with ~sleep 40~, the migrations are ok and the deployment finish \o/
+      #+BEGIN_EXAMPLE
+=========================
+DevStack Component Timing
+=========================
+Total runtime    399
+
+run_process        1
+apt-get-update     1
+osc               76
+wait_for_service   3
+dbsync           173
+pip_install       73
+apt-get            0
+=========================
+
+
+
+This is your host IP address: 172.16.72.1
+This is your host IPv6 address: ::1
+Keystone is serving at http://172.16.72.1/identity/
+The default users are: admin and demo
+The password: admin
+
+Services are running under systemd unit files.
+For more information see:
+https://docs.openstack.org/devstack/latest/systemd.html
+
+DevStack Version: pike
+Change:
+OS Version: Debian 9.3 stretch
+
+2018-02-20 09:50:59.207 | stack.sh completed in 399 seconds.
+
+=========================
+DevStack Component Timing
+=========================
+Total runtime    399
+
+run_process        0
+apt-get-update     1
+osc               58
+wait_for_service   3
+dbsync             1
+pip_install       73
+apt-get            0
+=========================
+
+
+
+This is your host IP address: 172.16.72.34
+This is your host IPv6 address: ::1
+Keystone is serving at http://172.16.72.34/identity/
+The default users are: admin and demo
+The password: admin
+
+Services are running under systemd unit files.
+For more information see:
+https://docs.openstack.org/devstack/latest/systemd.html
+
+DevStack Version: pike
+Change:
+OS Version: Debian 9.3 stretch
+
+2018-02-20 09:50:59.608 | stack.sh completed in 399 seconds.
+
+=========================
+DevStack Component Timing
+=========================
+Total runtime    401
+
+run_process        1
+apt-get-update     1
+osc               58
+wait_for_service   4
+dbsync             1
+pip_install       74
+apt-get            1
+=========================
+
+
+
+This is your host IP address: 172.16.72.46
+This is your host IPv6 address: ::1
+Keystone is serving at http://172.16.72.46/identity/
+The default users are: admin and demo
+The password: admin
+
+Services are running under systemd unit files.
+For more information see:
+https://docs.openstack.org/devstack/latest/systemd.html
+
+DevStack Version: pike
+Change:
+OS Version: Debian 9.3 stretch
+
+2018-02-20 09:51:01.150 | stack.sh completed in 401 seconds.
+      #+END_EXAMPLE
+      + thinking of adding even more time to be sure
+      + ronan tells me we could make sqlalchemy-migrate allow retries
+
+
+
+- Found the line responsible for libmysqldev-client error [[https://github.com/openstack/requirements/blob/master/bindep.txt#L9][here]]

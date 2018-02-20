@@ -1,4 +1,4 @@
-#+TITLE: Report for : Un intergiciel d’une base de données NewSQL qui considère la localité de l’application cliente -- 4th week --
+#+TITLE: Report for : Un intergiciel d’une base de données NewSQL qui considère la localité de l’application cliente -- 5th week --
 #+AUTHOR: Marie Delavergne
 
 * Monday 12 February [2018-02-12 lun.]
@@ -702,3 +702,6 @@ system
 #+BEGIN_QUOTE
 admin already has admin on admin.
 #+END_QUOTE
+
+
+- Bonus: =oarwalltime <nb_job> +1:00= pour prolonger le job (doit être numéro de job, pas le numéro oargrid)

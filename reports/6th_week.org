@@ -384,8 +384,257 @@ OS Version: Debian 9.3 stretch
 2018-02-20 09:51:01.150 | stack.sh completed in 401 seconds.
       #+END_EXAMPLE
       + thinking of adding even more time to be sure
-      + ronan tells me we could make sqlalchemy-migrate allow retries
-
+      + ronan tells me we could make sqlalchemy-migrate allow retries but for now we use this trick
 
 
 - Found the line responsible for libmysqldev-client error [[https://github.com/openstack/requirements/blob/master/bindep.txt#L9][here]]
+
+- Adding a rally container using [[https://github.com/BeyondTheClouds/enos/blob/master/enos/ansible/roles/bench/tasks/rally.yml][enos rally play]]
+  + Solving
+    #+BEGIN_EXAMPLE
+    Error reading /root/rally/source/samples/tasks/scenarios/keystone/create-and-list-roles.yaml: [Errno 13] Permission denied: u'/root/rally/source/samples/tasks/scenarios/keystone/create-and-list-roles.yaml'"
+    #+END_EXAMPLE
+    - Lost a lot of time for nothing, I just add to change path to =/home/rally/...=
+  + Added =os_env= in the conf to have the right environment to launch rally tests
+  + When launching after that, I realize that one node managed to do the rally scenario
+    #+BEGIN_EXAMPLE
+    2018-02-20 16:29:02.179 1 INFO rally.task.engine [-] Task c8dc795f-e999-43cf-9763-6aaa9ff253b0 | Starting:  Task validation.
+2018-02-20 16:29:02.256 1 INFO rally.task.engine [-] Task c8dc795f-e999-43cf-9763-6aaa9ff253b0 | Starting:  Task validation of syntax.
+2018-02-20 16:29:02.263 1 INFO rally.task.engine [-] Task c8dc795f-e999-43cf-9763-6aaa9ff253b0 | Completed: Task validation of syntax.
+2018-02-20 16:29:02.263 1 INFO rally.task.engine [-] Task c8dc795f-e999-43cf-9763-6aaa9ff253b0 | Starting:  Task validation of required platforms.
+2018-02-20 16:29:02.271 1 INFO rally.task.engine [-] Task c8dc795f-e999-43cf-9763-6aaa9ff253b0 | Completed: Task validation of required platforms.
+2018-02-20 16:29:02.271 1 INFO rally.task.engine [-] Task c8dc795f-e999-43cf-9763-6aaa9ff253b0 | Starting:  Task validation of semantic.
+2018-02-20 16:29:02.271 1 INFO rally.task.engine [-] Check health of the environment '520e3e46-eb9c-4090-a1ac-9a27790a37b6'.
+2018-02-20 16:29:04.540 1 INFO rally.task.engine [-] Platform existing@openstack (available: True): OK!
+2018-02-20 16:29:05.688 1 INFO rally.task.context [-] Task c8dc795f-e999-43cf-9763-6aaa9ff253b0 | Context users@openstack setup()  finished in 1.14 sec
+2018-02-20 16:29:05.693 1 INFO rally.task.context [-] Task c8dc795f-e999-43cf-9763-6aaa9ff253b0 | Context users@openstack cleanup() started
+2018-02-20 16:29:07.065 1 INFO rally.task.context [-] Task c8dc795f-e999-43cf-9763-6aaa9ff253b0 | Context users@openstack cleanup() finished in 1.37 sec
+2018-02-20 16:29:07.065 1 INFO rally.task.engine [-] Task c8dc795f-e999-43cf-9763-6aaa9ff253b0 | Completed: Task validation of semantic.
+2018-02-20 16:29:07.065 1 INFO rally.task.engine [-] Task c8dc795f-e999-43cf-9763-6aaa9ff253b0 | Completed: Task validation.
+2018-02-20 16:29:07.065 1 INFO rally.api [-] Task c8dc795f-e999-43cf-9763-6aaa9ff253b0 input file is valid.
+2018-02-20 16:29:07.066 1 INFO rally.api [-] Run Task c8dc795f-e999-43cf-9763-6aaa9ff253b0 against Deployment 520e3e46-eb9c-4090-a1ac-9a27790a37b6
+2018-02-20 16:29:07.066 1 INFO rally.task.engine [-] Task c8dc795f-e999-43cf-9763-6aaa9ff253b0 | Starting:  Running task.
+2018-02-20 16:29:07.205 1 INFO rally.task.engine [-] Running workload:
+  position = 0
+  config = {
+   "version": 2,
+   "title": "A cropped version of a bigger task.",
+   "description": "Auto-generated task from a single workload (uuid=0e93970e-a79e-49c7-8af9-9399a94229da)",
+   "subtasks": [
+      {
+         "title": "KeystoneBasic.create_and_list_roles",
+         "description": "Create a role, then list all roles.",
+         "scenario": {
+            "KeystoneBasic.create_and_list_roles": {
+               "create_role_kwargs": {},
+               "list_role_kwargs": {}
+            }
+         },
+         "contexts": {
+            "users": {
+               "tenants": 3,
+               "users_per_tenant": 2
+            }
+         },
+         "runner": {
+            "constant": {
+               "times": 10,
+               "concurrency": 2
+            }
+         },
+         "hooks": [],
+         "sla": {
+            "failure_rate": {
+               "max": 0
+            }
+         }
+      }
+   ]
+}
+2018-02-20 16:29:09.416 1 INFO rally.task.context [-] Task c8dc795f-e999-43cf-9763-6aaa9ff253b0 | Context users@openstack setup()  finished in 2.20 sec
+2018-02-20 16:29:09.416 1 INFO rally.task.context [-] Task c8dc795f-e999-43cf-9763-6aaa9ff253b0 | Context admin_cleanup@openstack setup()  finished in 0.00 msec
+--------------------------------------------------------------------------------
+Preparing input task
+--------------------------------------------------------------------------------
+
+Task is:
+---
+  KeystoneBasic.create_and_list_roles:
+    -
+      args:
+        create_role_kwargs: {}
+        list_role_kwargs: {}
+      runner:
+        type: "constant"
+        times: 10
+        concurrency: 2
+      context:
+        users:
+          tenants: 3
+          users_per_tenant: 2
+      sla:
+        failure_rate:
+          max: 0
+
+Task syntax is correct :)
+Running Rally version 0.0.0
+--------------------------------------------------------------------------------
+Task  c8dc795f-e999-43cf-9763-6aaa9ff253b0: started
+--------------------------------------------------------------------------------
+
+Running Task... This can take a while...
+
+To track task status use:
+
+	rally task status
+	or
+	rally task detailed
+
+Using task: c8dc795f-e999-43cf-9763-6aaa9ff253b0
+2018-02-20 16:29:09.428 134 INFO rally.task.runner [-] Task c8dc795f-e999-43cf-9763-6aaa9ff253b0 | ITER: 1 START
+2018-02-20 16:29:09.429 135 INFO rally.task.runner [-] Task c8dc795f-e999-43cf-9763-6aaa9ff253b0 | ITER: 2 START
+2018-02-20 16:29:09.930 135 INFO rally.task.runner [-] Task c8dc795f-e999-43cf-9763-6aaa9ff253b0 | ITER: 2 END: OK
+2018-02-20 16:29:09.932 135 INFO rally.task.runner [-] Task c8dc795f-e999-43cf-9763-6aaa9ff253b0 | ITER: 3 START
+2018-02-20 16:29:09.950 134 INFO rally.task.runner [-] Task c8dc795f-e999-43cf-9763-6aaa9ff253b0 | ITER: 1 END: OK
+2018-02-20 16:29:09.953 134 INFO rally.task.runner [-] Task c8dc795f-e999-43cf-9763-6aaa9ff253b0 | ITER: 4 START
+2018-02-20 16:29:10.249 135 INFO rally.task.runner [-] Task c8dc795f-e999-43cf-9763-6aaa9ff253b0 | ITER: 3 END: OK
+2018-02-20 16:29:10.252 135 INFO rally.task.runner [-] Task c8dc795f-e999-43cf-9763-6aaa9ff253b0 | ITER: 5 START
+2018-02-20 16:29:10.264 134 INFO rally.task.runner [-] Task c8dc795f-e999-43cf-9763-6aaa9ff253b0 | ITER: 4 END: OK
+2018-02-20 16:29:10.267 134 INFO rally.task.runner [-] Task c8dc795f-e999-43cf-9763-6aaa9ff253b0 | ITER: 6 START
+2018-02-20 16:29:10.660 135 INFO rally.task.runner [-] Task c8dc795f-e999-43cf-9763-6aaa9ff253b0 | ITER: 5 END: OK
+2018-02-20 16:29:10.665 135 INFO rally.task.runner [-] Task c8dc795f-e999-43cf-9763-6aaa9ff253b0 | ITER: 7 START
+2018-02-20 16:29:10.681 134 INFO rally.task.runner [-] Task c8dc795f-e999-43cf-9763-6aaa9ff253b0 | ITER: 6 END: OK
+2018-02-20 16:29:10.684 134 INFO rally.task.runner [-] Task c8dc795f-e999-43cf-9763-6aaa9ff253b0 | ITER: 8 START
+2018-02-20 16:29:11.061 135 INFO rally.task.runner [-] Task c8dc795f-e999-43cf-9763-6aaa9ff253b0 | ITER: 7 END: OK
+2018-02-20 16:29:11.064 135 INFO rally.task.runner [-] Task c8dc795f-e999-43cf-9763-6aaa9ff253b0 | ITER: 9 START
+2018-02-20 16:29:11.084 134 INFO rally.task.runner [-] Task c8dc795f-e999-43cf-9763-6aaa9ff253b0 | ITER: 8 END: OK
+2018-02-20 16:29:11.086 134 INFO rally.task.runner [-] Task c8dc795f-e999-43cf-9763-6aaa9ff253b0 | ITER: 10 START
+2018-02-20 16:29:11.348 135 INFO rally.task.runner [-] Task c8dc795f-e999-43cf-9763-6aaa9ff253b0 | ITER: 9 END: OK
+2018-02-20 16:29:11.367 134 INFO rally.task.runner [-] Task c8dc795f-e999-43cf-9763-6aaa9ff253b0 | ITER: 10 END: OK
+2018-02-20 16:29:11.391 1 INFO rally.task.context [-] Task c8dc795f-e999-43cf-9763-6aaa9ff253b0 | Context admin_cleanup@openstack cleanup() started
+2018-02-20 16:29:13.675 1 INFO rally.task.context [-] Task c8dc795f-e999-43cf-9763-6aaa9ff253b0 | Context admin_cleanup@openstack cleanup() finished in 2.28 sec
+2018-02-20 16:29:13.675 1 INFO rally.task.context [-] Task c8dc795f-e999-43cf-9763-6aaa9ff253b0 | Context users@openstack cleanup() started
+2018-02-20 16:29:14.489 1 WARNING rally.common.broker [-] Failed to consume a task from the queue: An unexpected error prevented the server from fulfilling your request. (HTTP 500) (Request-ID: req-26bd112d-3eaa-4995-a0b8-8cc8583381a7): InternalServerError: An unexpected error prevented the server from fulfilling your request. (HTTP 500) (Request-ID: req-26bd112d-3eaa-4995-a0b8-8cc8583381a7)
+2018-02-20 16:29:14.533 1 WARNING rally.common.broker [-] Failed to consume a task from the queue: An unexpected error prevented the server from fulfilling your request. (HTTP 500) (Request-ID: req-4cd1376a-52bf-4d38-bfe3-96e6b4f5a6aa): InternalServerError: An unexpected error prevented the server from fulfilling your request. (HTTP 500) (Request-ID: req-4cd1376a-52bf-4d38-bfe3-96e6b4f5a6aa)
+2018-02-20 16:29:14.579 1 WARNING rally.common.broker [-] Failed to consume a task from the queue: An unexpected error prevented the server from fulfilling your request. (HTTP 500) (Request-ID: req-16414109-1241-47e4-8f25-b30c4236061d): InternalServerError: An unexpected error prevented the server from fulfilling your request. (HTTP 500) (Request-ID: req-16414109-1241-47e4-8f25-b30c4236061d)
+2018-02-20 16:29:17.157 1 INFO rally.task.context [-] Task c8dc795f-e999-43cf-9763-6aaa9ff253b0 | Context users@openstack cleanup() finished in 3.48 sec
+2018-02-20 16:29:17.261 1 INFO rally.task.engine [-] Load duration is: 1.680391
+2018-02-20 16:29:17.261 1 INFO rally.task.engine [-] Full runner duration is: 1.971573
+2018-02-20 16:29:17.261 1 INFO rally.task.engine [-] Full duration is: 9.944312
+2018-02-20 16:29:17.501 1 INFO rally.task.engine [-] Task c8dc795f-e999-43cf-9763-6aaa9ff253b0 | Completed: Running task.
+
+--------------------------------------------------------------------------------
+Task c8dc795f-e999-43cf-9763-6aaa9ff253b0: finished
+--------------------------------------------------------------------------------
+
+test scenario KeystoneBasic.create_and_list_roles
+args position 0
+args values:
+{
+  "runner": {
+    "times": 10,
+    "concurrency": 2
+  },
+  "contexts": {
+    "users": {
+      "tenants": 3,
+      "users_per_tenant": 2
+    }
+  },
+  "args": {
+    "create_role_kwargs": {},
+    "list_role_kwargs": {}
+  },
+  "sla": {
+    "failure_rate": {
+      "max": 0
+    }
+  },
+  "hooks": []
+}
+
+--------------------------------------------------------------------------------
+Task c8dc795f-e999-43cf-9763-6aaa9ff253b0 has 0 error(s)
+--------------------------------------------------------------------------------
+
++----------------------------------------------------------------------------------------------------------------------------+
+|                                                    Response Times (sec)                                                    |
++-------------------------+-----------+--------------+--------------+--------------+-----------+-----------+---------+-------+
+| Action                  | Min (sec) | Median (sec) | 90%ile (sec) | 95%ile (sec) | Max (sec) | Avg (sec) | Success | Count |
++-------------------------+-----------+--------------+--------------+--------------+-----------+-----------+---------+-------+
+| keystone_v3.create_role | 0.159     | 0.178        | 0.209        | 0.225        | 0.242     | 0.184     | 100.0%  | 10    |
+| keystone_v3.list_roles  | 0.019     | 0.02         | 0.025        | 0.031        | 0.038     | 0.022     | 100.0%  | 10    |
+| total                   | 0.18      | 0.197        | 0.245        | 0.253        | 0.261     | 0.206     | 100.0%  | 10    |
+|  -> duration            | 0.18      | 0.197        | 0.245        | 0.253        | 0.261     | 0.206     | 100.0%  | 10    |
+|  -> idle_duration       | 0.0       | 0.0          | 0.0          | 0.0          | 0.0       | 0.0       | 100.0%  | 10    |
++-------------------------+-----------+--------------+--------------+--------------+-----------+-----------+---------+-------+
+
+Load duration: 1.680391
+Full duration: 9.944312
+
+HINTS:
+* To plot HTML graphics with this data, run:
+	rally task report c8dc795f-e999-43cf-9763-6aaa9ff253b0 --out output.html
+
+* To generate a JUnit report, run:
+	rally task export c8dc795f-e999-43cf-9763-6aaa9ff253b0 --type junit --to output.xml
+
+* To get raw JSON output of task results, run:
+	rally task report c8dc795f-e999-43cf-9763-6aaa9ff253b0 --json --out output.json
+
+    #+END_EXAMPLE
+  + the others get
+    #+BEGIN_EXAMPLE
+    2018-02-20 16:29:02.032 1 INFO rally.task.engine [-] Task 3cc19a7c-a343-4f7b-9ece-31f3c60cb3dd | Starting:  Task validation.
+2018-02-20 16:29:02.069 1 INFO rally.task.engine [-] Task 3cc19a7c-a343-4f7b-9ece-31f3c60cb3dd | Starting:  Task validation of syntax.
+2018-02-20 16:29:02.077 1 INFO rally.task.engine [-] Task 3cc19a7c-a343-4f7b-9ece-31f3c60cb3dd | Completed: Task validation of syntax.
+2018-02-20 16:29:02.077 1 INFO rally.task.engine [-] Task 3cc19a7c-a343-4f7b-9ece-31f3c60cb3dd | Starting:  Task validation of required platforms.
+2018-02-20 16:29:02.085 1 INFO rally.task.engine [-] Task 3cc19a7c-a343-4f7b-9ece-31f3c60cb3dd | Completed: Task validation of required platforms.
+2018-02-20 16:29:02.085 1 INFO rally.task.engine [-] Task 3cc19a7c-a343-4f7b-9ece-31f3c60cb3dd | Starting:  Task validation of semantic.
+2018-02-20 16:29:02.085 1 INFO rally.task.engine [-] Check health of the environment '9cbf107b-9e1a-46b7-b382-42a2f8f435f7'.
+2018-02-20 16:29:03.353 1 INFO rally.task.engine [-] Platform existing@openstack (available: True): OK!
+2018-02-20 16:29:03.566 1 WARNING rally.common.broker [-] Failed to consume a task from the queue: The request you have made requires authentication. (HTTP 401) (Request-ID: req-103b5fda-51b4-477c-98fb-c15d354e6b69): Unauthorized: The request you have made requires authentication. (HTTP 401) (Request-ID: req-103b5fda-51b4-477c-98fb-c15d354e6b69)
+2018-02-20 16:29:03.567 1 INFO rally.task.context [-] Task 3cc19a7c-a343-4f7b-9ece-31f3c60cb3dd | Context users@openstack cleanup() started
+2018-02-20 16:29:03.618 1 INFO rally.task.context [-] Task 3cc19a7c-a343-4f7b-9ece-31f3c60cb3dd | Context users@openstack cleanup() finished in 50.83 msec
+--------------------------------------------------------------------------------
+Preparing input task
+--------------------------------------------------------------------------------
+
+Task is:
+---
+  KeystoneBasic.create_and_list_roles:
+    -
+      args:
+        create_role_kwargs: {}
+        list_role_kwargs: {}
+      runner:
+        type: "constant"
+        times: 10
+        concurrency: 2
+      context:
+        users:
+          tenants: 3
+          users_per_tenant: 2
+      sla:
+        failure_rate:
+          max: 0
+
+Task syntax is correct :)
+Running Rally version 0.0.0
+--------------------------------------------------------------------------------
+Task  3cc19a7c-a343-4f7b-9ece-31f3c60cb3dd: started
+--------------------------------------------------------------------------------
+
+Running Task... This can take a while...
+
+To track task status use:
+
+	rally task status
+	or
+	rally task detailed
+
+Using task: 3cc19a7c-a343-4f7b-9ece-31f3c60cb3dd
+Task config is invalid: `Unable to setup context 'users': 'Failed to create the requested number of tenants.'`
+    #+END_EXAMPLE
+
+    + so I have to see why it only works on one node - especially since it is always the same -

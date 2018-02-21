@@ -242,8 +242,8 @@ Error on exit
 * Tuesday 20 February [2018-02-20 mar.]
 
 - Trying to fix the transaction problem
-  #+BEGIN_EXAMPLE
-  INFO migrate.versioning.api [-] 90 -> 91...
+#+BEGIN_EXAMPLE
+INFO migrate.versioning.api [-] 90 -> 91...
 CRITICAL keystone [-] Unhandled error: DbMigrationError: (psycopg2.extensions.TransactionRollbackError) restart transaction: HandledRetryableTxnError: TransactionRetryError: retry txn (RETRY_SERIALIZABLE): "sql txn" id=8af7eb67 key=/Table/SystemConfigSpan/Start rw=true pri=0.02680793 iso=SERIALIZABLE stat=PENDING epo=0 ts=1519118932.918165955,1 orig=1519118932.896067115,0 max=1519118932.896067115,0 wto=false rop=false seq=216
 ERROR keystone Traceback (most recent call last):
 ERROR keystone   File "/usr/local/bin/keystone-manage", line 10, in <module>
@@ -573,15 +573,14 @@ Load duration: 1.680391
 Full duration: 9.944312
 
 HINTS:
-* To plot HTML graphics with this data, run:
+ To plot HTML graphics with this data, run:
 	rally task report c8dc795f-e999-43cf-9763-6aaa9ff253b0 --out output.html
 
-* To generate a JUnit report, run:
+ To generate a JUnit report, run:
 	rally task export c8dc795f-e999-43cf-9763-6aaa9ff253b0 --type junit --to output.xml
 
-* To get raw JSON output of task results, run:
+ To get raw JSON output of task results, run:
 	rally task report c8dc795f-e999-43cf-9763-6aaa9ff253b0 --json --out output.json
-
     #+END_EXAMPLE
   + the others get
     #+BEGIN_EXAMPLE
@@ -638,3 +637,128 @@ Task config is invalid: `Unable to setup context 'users': 'Failed to create the 
     #+END_EXAMPLE
 
     + so I have to see why it only works on one node - especially since it is always the same -
+
+
+* Wednesday 21 February [2018-02-21 mer.]
+
+- Today I had to quickly explain to a student from middle school -they have a 3 day 'internship' to see how people work in a domain- the university, the bachelor and master's degrees
+
+- I have now an error when trying to launch ~./juice.py deploy~
+  #+BEGIN_EXAMPLE
+DEBUG:urllib3.connectionpool:https://api-ext.grid5000.fr:443 "GET /3.0/sites HTTP/1.1" 503 397
+Traceback (most recent call last):
+  File "./juice.py", line 261, in <module>
+    doc_lookup(args['<command>'], argv)
+  File "/home/madelavergne/juice/utils/doc.py", line 26, in doc_lookup
+    return fn(**docopt(fn.__doc__, argv=argv))
+  File "/home/madelavergne/juice/utils/doc.py", line 18, in decorated
+    fn(*args, **kwargs)
+  File "./juice.py", line 66, in deploy
+    g5k(config=config)
+  File "/home/madelavergne/juice/utils/doc.py", line 18, in decorated
+    fn(*args, **kwargs)
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/enoslib/task.py", line 50, in decorated
+    fn(*args, **kwargs)
+  File "./juice.py", line 80, in g5k
+    roles, networks = provider.init(force_deploy=force)
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/enoslib/infra/enos_g5k/provider.py", line 161, in init
+    r.launch(**self.provider_conf)
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/enoslib/infra/enos_g5k/api.py", line 81, in launch
+    self.reserve(**kwargs)
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/enoslib/infra/enos_g5k/api.py", line 93, in reserve
+    reservation_date)
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/enoslib/infra/enos_g5k/utils.py", line 42, in get_or_create_job
+    gridjob, _ = ex5.planning.get_job_by_name(job_name)
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/execo_g5k/planning.py", line 61, in get_job_by_name
+    sites = get_g5k_sites()
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/execo_g5k/api_utils.py", line 459, in get_g5k_sites
+    return list(get_api_data()['hierarchy'])
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/execo_g5k/api_utils.py", line 270, in get_api_data
+    _data = _get_api()
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/execo_g5k/api_utils.py", line 360, in _get_api
+    for site in sorted(_get_g5k_sites_uncached()):
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/execo_g5k/api_utils.py", line 257, in _get_g5k_sites_uncached
+    return [site['uid'] for site in get_resource_attributes('/sites')['items']]
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/execo_g5k/api_utils.py", line 252, in get_resource_attributes
+    response = _get_g5k_api().get(path)
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/execo_g5k/api_utils.py", line 209, in get
+    raise APIException(uri, 'GET', response=response)
+execo_g5k.api_utils.APIException: <APIException uri='https://api-ext.grid5000.fr/3.0/sites' method=GET status=503/"Service Unavailable" content="<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>503 Service Unavailable</title>
+</head><body>
+<h1>Service Unavailable</h1>
+<p>The server is temporarily unable to service your
+request due to maintenance downtime or capacity
+problems. Please try again later.</p>
+<hr>
+<address>Apache/2.4.10 (Debian) Server at api-server-v3.lyon.grid5000.fr Port 4444</address>
+</body></html>
+">
+  #+END_EXAMPLE
+
+- Seems it solved itself...
+
+- Deployment of Openstack worked on "slave" nodes, but not on master
+#+BEGIN_EXAMPLE
+++ functions-common:oscwrap:2537            :   start=1519210576793
++++ functions-common:oscwrap:2538            :   command openstack role assignment list --role member --user 14c75c79de61446fb3a12ef57149b540 --project
++++ functions-common:oscwrap:2538            :   openstack role assignment list --role member --user 14c75c79de61446fb3a12ef57149b540 --project
+usage: openstack role assignment list [-h] [-f {csv,json,table,value,yaml}]
+                                      [-c COLUMN] [--max-width <integer>]
+                                      [--fit-width] [--print-empty]
+                                      [--noindent]
+                                      [--quote {all,minimal,none,nonnumeric}]
+                                      [--effective] [--role <role>]
+                                      [--role-domain <role-domain>] [--names]
+                                      [--user <user>]
+                                      [--user-domain <user-domain>]
+                                      [--group <group>]
+                                      [--group-domain <group-domain>]
+                                      [--domain <domain> | --project <project>]
+                                      [--project-domain <project-domain>]
+                                      [--inherited] [--auth-user]
+                                      [--auth-project]
+openstack role assignment list: error: argument --project: expected one argument
+++ functions-common:oscwrap:2538            :   out=
+++ functions-common:oscwrap:2539            :   rc=2
++++ functions-common:oscwrap:2540            :   date +%s%3N
+++ functions-common:oscwrap:2540            :   end=1519210577861
+++ functions-common:oscwrap:2541            :   echo 1068
+++ functions-common:oscwrap:2543            :   echo ''
+++ functions-common:oscwrap:2544            :   return 2
++ functions-common:get_or_add_user_project_role:871 :   user_role_id=
++ functions-common:get_or_add_user_project_role:872 :   [[ -z '' ]]
++ functions-common:get_or_add_user_project_role:874 :   openstack role add member --user 14c75c79de61446fb3a12ef57149b540 --project
+usage: openstack role add [-h] [--domain <domain> | --project <project>]
+                          [--user <user> | --group <group>]
+                          [--group-domain <group-domain>]
+                          [--project-domain <project-domain>]
+                          [--user-domain <user-domain>] [--inherited]
+                          [--role-domain <role-domain>]
+                          <role>
+openstack role add: error: argument --project: expected one argument
++ functions-common:get_or_add_user_project_role:1 :   exit_trap
++ stack.sh:exit_trap:521                   :   local r=2
+++ stack.sh:exit_trap:522                   :   jobs -p
++ stack.sh:exit_trap:522                   :   jobs=
++ stack.sh:exit_trap:525                   :   [[ -n '' ]]
++ stack.sh:exit_trap:531                   :   '[' -f /tmp/tmp.gun4nbKXB0 ']'
++ stack.sh:exit_trap:532                   :   rm /tmp/tmp.gun4nbKXB0
++ stack.sh:exit_trap:536                   :   kill_spinner
++ stack.sh:kill_spinner:417                :   '[' '!' -z '' ']'
++ stack.sh:exit_trap:538                   :   [[ 2 -ne 0 ]]
++ stack.sh:exit_trap:539                   :   echo 'Error on exit'
+Error on exit
++ stack.sh:exit_trap:540                   :   generate-subunit 1519209972 606 fail
++ stack.sh:exit_trap:541                   :   [[ -z /opt/stack/logs ]]
++ stack.sh:exit_trap:544                   :   /opt/stack/devstack/tools/worlddump.py -d /opt/stack/logs
+/bin/sh: 1: arp: not found
++ stack.sh:exit_trap:550                   :   exit 2
+#+END_EXAMPLE
+
+- When I relaunched the experiment, there was a transaction problem again... And again. I will need to find a better workaround or fix.
+
+- It was way more difficult than I thought to make scenarios work from a directory
+  + I also discovered how to remove last x containers: ~docker rm $(docker ps -aqn x)~
+  + It seems to work but I will have to get the reports also

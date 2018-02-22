@@ -762,3 +762,71 @@ Error on exit
 - It was way more difficult than I thought to make scenarios work from a directory
   + I also discovered how to remove last x containers: ~docker rm $(docker ps -aqn x)~
   + It seems to work but I will have to get the reports also
+
+
+* Thursday 22 February [2018-02-22 jeu.]
+
+** Jad's presentation
+
+Nitro: Network-Aware Virtual Machine Images Management in Geo-Distributed Clouds
+
+Abstract:
+
+Recently, most large cloud providers, like Amazon and Microsoft, replicate their Virtual Machine Images (VMIs) on multiple geo-graphically distributed data centers to offer fast service provisioning. Provisioning a service may require to transfer a VMI over the wide-area network and therefore is dictated by the distribution of VMIs and the network bandwidth in-between sites. Nevertheless, existing methods to facilitate VMIs management (i.e., retrieving VMIs) overlook network heterogeneity in geo-distributed clouds. In this paper, we design, implement and evaluate Nitro, a novel VMI management system that helps to minimize the transfer time of VMIs over a heterogeneous WAN. To achieve this goal, Nitro incorporates two complementary features. First, it makes use of deduplication to reduce the amount of data which will be transferred due to the high similarities within an image and in-between images. Second, Nitro is equipped with a network-aware data transfer strategy to effectively exploit links with high bandwidth when acquiring data and thus expedites the provisioning time. Our results show that the network-aware data transfer strategy offers optimal solution when acquiring VMIs while introducing minimal overhead. Moreover, Nitro outperforms state-of-the-art VMI storage systems (e.g., Openstack Swift) by up to 77%.
+
+cf Nitro talk
+
+** Juicy stuff
+
+- Have to get the reports
+  + during ~juice openstack~, I got
+    #+BEGIN_EXAMPLE
+    INFO migrate.versioning.api [-] 90 -> 91...
+CRITICAL keystone [-] Unhandled error: DbMigrationError: (psycopg2.extensions.TransactionRollbackError) restart transaction: HandledRetryableTxnError: TransactionRetryError: retry txn (RETRY_SERIALIZABLE): "sql txn" id=2965edd6 key=/Table/SystemConfigSpan/Start rw=true pri=0.03802320 iso=SERIALIZABLE stat=PENDING epo=0 ts=1519305600.672679962,1 orig=1519305600.671018918,0 max=1519305600.671018918,0 wto=false rop=false seq=13
+ERROR keystone Traceback (most recent call last):
+ERROR keystone   File "/usr/local/bin/keystone-manage", line 10, in <module>
+ERROR keystone     sys.exit(main())
+ERROR keystone   File "/opt/stack/keystone/keystone/cmd/manage.py", line 45, in main
+ERROR keystone     cli.main(argv=sys.argv, config_files=config_files)
+ERROR keystone   File "/opt/stack/keystone/keystone/cmd/cli.py", line 1337, in main
+ERROR keystone     CONF.command.cmd_class.main()
+ERROR keystone   File "/opt/stack/keystone/keystone/cmd/cli.py", line 531, in main
+ERROR keystone     CONF.command.version)
+ERROR keystone   File "/opt/stack/keystone/keystone/common/sql/upgrades.py", line 250, in offline_sync_database_to_version
+ERROR keystone     expand_schema()
+ERROR keystone   File "/opt/stack/keystone/keystone/common/sql/upgrades.py", line 321, in expand_schema
+ERROR keystone     _sync_common_repo(version=None)
+ERROR keystone   File "/opt/stack/keystone/keystone/common/sql/upgrades.py", line 170, in _sync_common_repo
+ERROR keystone     init_version=init_version, sanity_check=False)
+ERROR keystone   File "/opt/stack/oslo.db/oslo_db/sqlalchemy/migration.py", line 81, in db_sync
+ERROR keystone     raise exception.DbMigrationError(ex)
+ERROR keystone DbMigrationError: (psycopg2.extensions.TransactionRollbackError) restart transaction: HandledRetryableTxnError: TransactionRetryError: retry txn (RETRY_SERIALIZABLE): "sql txn" id=2965edd6 key=/Table/SystemConfigSpan/Start rw=true pri=0.03802320 iso=SERIALIZABLE stat=PENDING epo=0 ts=1519305600.672679962,1 orig=1519305600.671018918,0 max=1519305600.671018918,0 wto=false rop=false seq=13
+ERROR keystone
+ERROR keystone
++ lib/keystone:init_keystone:1             :   exit_trap
++ stack.sh:exit_trap:521                   :   local r=1
+++ stack.sh:exit_trap:522                   :   jobs -p
++ stack.sh:exit_trap:522                   :   jobs=
++ stack.sh:exit_trap:525                   :   [[ -n '' ]]
++ stack.sh:exit_trap:531                   :   '[' -f /tmp/tmp.dLdvutYINB ']'
++ stack.sh:exit_trap:532                   :   rm /tmp/tmp.dLdvutYINB
++ stack.sh:exit_trap:536                   :   kill_spinner
++ stack.sh:kill_spinner:417                :   '[' '!' -z '' ']'
++ stack.sh:exit_trap:538                   :   [[ 1 -ne 0 ]]
++ stack.sh:exit_trap:539                   :   echo 'Error on exit'
+Error on exit
++ stack.sh:exit_trap:540                   :   generate-subunit 1519305094 507 fail
++ stack.sh:exit_trap:541                   :   [[ -z /opt/stack/logs ]]
++ stack.sh:exit_trap:544                   :   /opt/stack/devstack/tools/worlddump.py -d /opt/stack/logs
+/bin/sh: 1: arp: not found
++ stack.sh:exit_trap:550                   :   exit 1
+    #+END_EXAMPLE
+  + Ran smoothly using ~sleep $(( ( RANDOM % 20 )  + 50 ))~. Maybe I got lucky, but I was afraid at first random because both nodes decided to sleep 59
+
+- Also adding the ~info~ command to juice
+  + got difficulties since it uses a parameter but [[https://stackoverflow.com/questions/10307696/how-to-put-a-variable-into-python-docstring][this]] helped me
+  + now ~./juice.py info~ works, this might be handy \o/
+
+- Maybe I will be able to download libmysqlclient-dev using [[https://askubuntu.com/questions/952113/how-to-bypass-dpkg-prompt][noninteractive]]
+
+- Worked a bit on the README file, which helped me to see where there are/were still problems to use juice

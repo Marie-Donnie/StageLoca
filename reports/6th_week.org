@@ -830,3 +830,31 @@ Error on exit
 - Maybe I will be able to download libmysqlclient-dev using [[https://askubuntu.com/questions/952113/how-to-bypass-dpkg-prompt][noninteractive]]
 
 - Worked a bit on the README file, which helped me to see where there are/were still problems to use juice
+
+
+* Friday 23 February [2018-02-23 ven.]
+
+** Juicy work
+
+- Deploying. Nervous about openstack deployment
+  + ~DEBIAN_FRONTEND=noninteractive~ worked
+  + still had a transaction error, and a second time
+  + tried to connect using ssh from one node to another to see if I can just grep my way out of this, but the nodes can't communicate this way
+  + Finally worked after a dozen of tries and changing sleep time to ~sleep $(( ( RANDOM % 30 )  + 60 ))~
+
+- Added a tasks ran to know what has been used and backup/destroy only if necessary
+- Added tags to skip ~ansible-playbook example.yml --skip-tags "notification"~ or run only those tags ~ansible-playbook example.yml --tags "configuration,packages"~
+
+- Trying to run devstack on MariaDB
+  + Multiple problems:
+    - Had to create a lib-galera.j2
+    - Adapt deployment of openstack
+    - Adapt local.conf.j2 to enable required service depending of the parameter given
+    - Keystone wanted to use a mariadb driver
+      + needed to echo 'mysql' in ~get_database_type_galera~ (got stuck A LOT of time on this...)
+    - Nodes also needed to sleep like for cockroach, so I had to change the commands
+- But now it works!
+
+** Other
+
+- Found a [[https://www.cockroachlabs.com/blog/database-evolution/][CockroachDB demo]]

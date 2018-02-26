@@ -1,0 +1,119 @@
+#+TITLE: Report for : Un intergiciel d’une base de données NewSQL qui considère la localité de l’application cliente -- 7th week --
+#+AUTHOR: Marie Delavergne
+
+* Monday 26 February [2018-02-26 lun.]
+
+- Making Rally work with MariaDB
+  + doesn't seem that I need to change anything on ~deploy.yml~
+  + worked nicely except for the same error I got with CockroachDB =Failed to create the requested number of tenants.=
+    - looking around [[http://lists.openstack.org/pipermail/openstack-dev/2016-June/097089.html][these mails]]
+    - getting the feeling it is really wrong to start new docker each time since they are not connected
+    - trying to run scenarios in the container where the deployment has been made
+      #+BEGIN_EXAMPLE
+root@graphene-44:~# docker logs rally-graphene-44
+2018-02-26 10:38:56.614 1 WARNING rally.plugins.openstack.platforms.existing [-] endpoint is deprecated and not used.
++--------------------------------------+----------------------------+-----------+------------------+--------+
+| uuid                                 | created_at                 | name      | status           | active |
++--------------------------------------+----------------------------+-----------+------------------+--------+
+| fd0ac948-772b-457e-a713-646cf4acda4e | 2018-02-26T10:38:56.494285 | discovery | deploy->finished |        |
++--------------------------------------+----------------------------+-----------+------------------+--------+
+Using deployment: fd0ac948-772b-457e-a713-646cf4acda4e
+~/.rally/openrc was updated
+
+HINTS:
+
+* To use standard OpenStack clients, set up your env by running:
+	source ~/.rally/openrc
+  OpenStack clients are now configured, e.g run:
+	openstack image list
+      #+END_EXAMPLE
+    - seems that there are no deployments that can be found
+     #+BEGIN_EXAMPLE
+root@graphene-44:~# docker run -v /root/rally_home:/home/rally/data xrally/xrally-openstack deployment check
+There is no default deployment.
+	Please use command:
+	rally deployment use <deployment_uuid>|<deployment_name>
+or pass uuid of deployment to the --uuid argument of this command
+     #+END_EXAMPLE
+
+- We tried to debug everything, comparing a working Rally (i.e. the one I am running on Vagrant) with ours.
+- When we arrived at ~with context.ContextManager(ctx_obj)~ from ~rally/task/engine.py~, we inspected =ctx_obj=
+  + on g5k:
+#+BEGIN_SRC python
+{'task': <rally.common.objects.task.Task object at 0x7fe42185e210>, 'config': {'users@openstack': {}}, 'env': {'status': u'READY', 'platforms': {u'openstack': OrderedDict([(u'admin', OrderedDict([(u'password', u'admin'), (u'project_domain_name', u'Default'), (u'user_domain_name', u'Default'), (u'username', u'admin'), (u'tenant_name', u'admin'), (u'profiler_conn_str', None), (u'https_insecure', False), (u'profiler_hmac_key', None), (u'https_cacert', u''), (u'endpoint_type', None), (u'auth_url', u'http://172.16.64.44/identity/v3'), (u'region_name', u'graphene-44'), (u'domain_name', None)])), (u'users', [])])}, 'extras': OrderedDict(), 'uuid': u'3b590fcb-52a1-4c67-831f-a058540bf984', 'spec': OrderedDict([(u'existing@openstack', OrderedDict([(u'admin', OrderedDict([(u'password', u'admin'), (u'project_domain_name', u'Default'), (u'project_name', u'admin'), (u'user_domain_name', u'Default'), (u'username', u'admin')])), (u'auth_url', u'http://172.16.64.44/identity/v3'), (u'endpoint', None), (u'endpoint_type', None), (u'https_cacert', u''), (u'https_insecure', False), (u'profiler_conn_str', None), (u'profiler_hmac_key', None), (u'region_name', u'graphene-44')]))]), 'created_at': '2018-02-26T14:07:55.186520', 'description': u'', 'updated_at': '2018-02-26T14:07:55.435883', 'name': u'lil'}}
+#+END_SRC
+  + on vagrant:
+#+BEGIN_SRC python
+{'admin': {'credential': <rally.plugins.openstack.credential.OpenStackCredential object at 0x7f6942e43ed0>}, 'task': <rally.common.objects.task.Task object at 0x7f6942f05a50>, 'config': {'users@openstack': {'user_choice_method': 'random'}}}
+#+END_SRC
+- Then from
+#+BEGIN_EXAMPLE
+ipdb> ctx
+<rally.plugins.openstack.context.keystone.users.UserGenerator object at 0x7ff08f9fbf50>
+ipdb> ctx.context
+{'admin': {'credential': {'username': u'admin', 'profiler_hmac_key': None, 'profiler_conn_str': None, 'endpoint': None, 'region_name': u'graphene-44', 'https_insecure': False, 'permission': None, 'tenant_name': u'admin', 'user_domain_name': u'Default', 'https_cacert': u'', 'domain_name': None, 'endpoint_type': None, 'auth_url': u'http://172.16.64.44/identity/v3', 'password': u'admin', 'project_domain_name': u'Default'}}, 'task': <rally.common.objects.task.Task object at 0x7ff08fcece90>, 'config': {'users@openstack': {'user_choice_method': 'random'}}, 'env': {'status': u'READY', 'platforms': {u'openstack': OrderedDict([(u'admin', OrderedDict([(u'password', u'admin'), (u'project_domain_name', u'Default'), (u'user_domain_name', u'Default'), (u'username', u'admin'), (u'tenant_name', u'admin'), (u'profiler_conn_str', None), (u'https_insecure', False), (u'profiler_hmac_key', None), (u'https_cacert', u''), (u'endpoint_type', None), (u'auth_url', u'http://172.16.64.44/identity/v3'), (u'region_name', u'graphene-44'), (u'domain_name', None)])), (u'users', [])])}, 'extras': OrderedDict(), 'uuid': u'3b590fcb-52a1-4c67-831f-a058540bf984', 'spec': OrderedDict([(u'existing@openstack', OrderedDict([(u'admin', OrderedDict([(u'password', u'admin'), (u'project_domain_name', u'Default'), (u'project_name', u'admin'), (u'user_domain_name', u'Default'), (u'username', u'admin')])), (u'auth_url', u'http://172.16.64.44/identity/v3'), (u'endpoint', None), (u'endpoint_type', None), (u'https_cacert', u''), (u'https_insecure', False), (u'profiler_conn_str', None), (u'profiler_hmac_key', None), (u'region_name', u'graphene-44')]))]), 'created_at': '2018-02-26T14:07:55.186520', 'description': u'', 'updated_at': '2018-02-26T14:07:55.435883', 'name': u'lil'}}
+#+END_EXAMPLE
+- Using ~pprint.pprint(ctx.context['admin']['credential'])~
+  + on g5k
+#+BEGIN_SRC python
+  {'auth_url': u'http://172.16.64.44/identity',
+   'domain_name': None,
+   'endpoint': None,
+   'endpoint_type': None,
+   'https_cacert': None,
+   'https_insecure': False,
+   'password': u'admin',
+   'permission': u'user',
+   'profiler_conn_str': None,
+   'profiler_hmac_key': None,
+   'project_domain_name': u'Default',
+   'region_name': u'graphene-44',
+   'tenant_name': u'admin',
+   'user_domain_name': u'Default',
+   'username': u'admin'}
+#+END_SRC
+  + on vagrant:
+#+BEGIN_SRC python
+{'_clients_cache': {},
+ 'auth_url': u'http://10.0.2.15/identity',
+ 'domain_name': None,
+ 'endpoint': None,
+ 'endpoint_type': None,
+ 'https_cacert': None,
+ 'https_insecure': False,
+ 'password': u'admin',
+ 'permission': 'user',
+ 'profiler_conn_str': None,
+ 'profiler_hmac_key': None,
+ 'project_domain_name': u'Default',
+ 'region_name': u'RegionOne',
+ 'tenant_name': u'admin',
+ 'user_domain_name': u'Default',
+ 'username': u'admin'}
+#+END_SRC
+
+- We tried, using pdb during the execution, at
+#+BEGIN_EXAMPLE
+> /usr/local/lib/python2.7/dist-packages/rally/plugins/openstack/context/keystone/users.py(167)consume()
+    166                 cache["client"] = identity.Identity(
+--> 167                     clients, name_generator=self.generate_random_name)
+    168             tenant = cache["client"].create_project(domain_name=domain)
+#+END_EXAMPLE
+to use our own credentials:
+#+BEGIN_EXAMPLE
+ipdb> auth = v3.Password(auth_url='http://172.16.64.44/identity/v3', password='admin', username='admin', user_id='b5c447fc8f514b2a9523b130c86f2384', user_domain_id='default', user_domain_name='Default', project_id='09c6b61b4faf425a847a75baf496608c', project_name='admin', project_domain_id='default', project_domain_name='Default')
+ipdb> sess = session.Session(auth=auth, verify=None)
+ipdb> keystone = client.Client(session=sess)
+ipdb> keystone.users.list()
+*** Unauthorized: The request you have made requires authentication. (HTTP 401) (Request-ID: req-7e7c9a6b-c068-419c-a30c-151cd47e0b87)
+#+END_EXAMPLE
+- The reservation ended just when we (meaning Ronan) made it work by settings the urls for the endpoints using ~openstack endpoint set --url http://172.16.64.41/identity/v3 <id>~ and used
+#+BEGIN_EXAMPLE
+ipdb> keystone = client.Client(auth_url='http://172.16.64.44/identity/v3', password='admin', username='admin', user_id='b5c447fc8f514b2a9523b130c86f2384', user_domain_id='default', user_domain_name='Default', pr
+oject_id='09c6b61b4faf425a847a75baf496608c', project_name='admin', project_domain_id='default', project_domain_name='Default', version=(3,), region_name='graphene-44')
+ipdb> keystone.users.list()
+[<User domain_id=default, email=demo@example.com, enabled=True, id=07c1e5255ebe4ec6aaf0b5068ed66875, links={u'self': u'http://172.16.64.44/identity/v3/users/07c1e5255ebe4ec6aaf0b5068ed66875'}, name=demo, options={}, password_expires_at=None>, <User domain_id=default, email=alt_demo@example.com, enabled=True, id=71478f86b4cd4583ac405772af7f70c2, links={u'self': u'http://172.16.64.44/identity/v3/users/71478f86b4cd4583ac405772af7f70c2'}, name=alt_demo, options={}, password_expires_at=None>, <User default_project_id=631e8439b90c43a998cc75629d5433ec, domain_id=default, enabled=True, id=9d1c5b0909574db993d8c9a024e68ff3, links={u'self': u'http://172.16.64.44/identity/v3/users/9d1c5b0909574db993d8c9a024e68ff3'}, name=c_rally_daef7609_hip9sZuz, options={}, password_expires_at=None>, <User domain_id=default, enabled=True, id=b5c447fc8f514b2a9523b130c86f2384, links={u'self': u'http://172.16.64.44/identity/v3/users/b5c447fc8f514b2a9523b130c86f2384'}, name=admin, options={}, password_expires_at=None>, <User domain_id=default, enabled=True, id=fa3265c3ceda4b62899eeec84c488a6f, links={u'self': u'http://172.16.64.44/identity/v3/users/fa3265c3ceda4b62899eeec84c488a6f'}, name=machin, options={}, password_expires_at=None>]
+#+END_EXAMPLE
+- So I will try to use the first version and ~client.Client(session=sess, region_name=<nom-de-la-region>)~ to see if it really works
+
+- And... I will have to figure out how to use this

@@ -22,7 +22,7 @@ Using deployment: fd0ac948-772b-457e-a713-646cf4acda4e
 
 HINTS:
 
-* To use standard OpenStack clients, set up your env by running:
+ To use standard OpenStack clients, set up your env by running:
 	source ~/.rally/openrc
   OpenStack clients are now configured, e.g run:
 	openstack image list
@@ -117,3 +117,420 @@ ipdb> keystone.users.list()
 - So I will try to use the first version and ~client.Client(session=sess, region_name=<nom-de-la-region>)~ to see if it really works
 
 - And... I will have to figure out how to use this
+
+
+* Tuesday 27 February [2018-02-27 mar.]
+
+- Resuming yesterday's work
+  + Using ~docker run -itv /root/rally_home:/home/rally/data --entrypoint=bash xrally/xrally-openstack~ to access a rally container
+  + I checked on the nodes which scenarios didn't work, and I was surprised to see this:
+#+BEGIN_EXAMPLE
+aeb93822d90b        xrally/xrally-openstack   "rally task start /h…"   30 minutes ago      Exited (0) 29 minutes ago                                                                                                                get-entities.yaml
+fd15d3cf934a        xrally/xrally-openstack   "rally task start /h…"   31 minutes ago      Exited (0) 30 minutes ago                                                                                                                create-user.yaml
+33dfeba18ef6        xrally/xrally-openstack   "rally task start /h…"   31 minutes ago      Exited (0) 31 minutes ago                                                                                                                create-user-update-password.yaml
+c8172224dcce        xrally/xrally-openstack   "rally task start /h…"   32 minutes ago      Exited (0) 31 minutes ago                                                                                                                create-user-set-enabled-and-delete.yaml
+ab6bff332427        xrally/xrally-openstack   "rally task start /h…"   32 minutes ago      Exited (0) 32 minutes ago                                                                                                                create-update-and-delete-tenant.yaml
+f7c032d5d5e8        xrally/xrally-openstack   "rally task start /h…"   32 minutes ago      Exited (137) 32 minutes ago                                                                                                              create-tenant.yaml
+446c44f3da4b        xrally/xrally-openstack   "rally task start /h…"   33 minutes ago      Exited (0) 33 minutes ago                                                                                                                create-tenant-with-users.yaml
+96b15786f937        xrally/xrally-openstack   "rally task start /h…"   33 minutes ago      Exited (2) 33 minutes ago                                                                                                                create-and-update-user.yaml
+ad1fa5f2250d        xrally/xrally-openstack   "rally task start /h…"   34 minutes ago      Exited (0) 33 minutes ago                                                                                                                create-and-list-users.yaml
+2f5a0fc79c11        xrally/xrally-openstack   "rally task start /h…"   34 minutes ago      Exited (0) 34 minutes ago                                                                                                                create-and-list-tenants.yaml
+b13cb6da55fe        xrally/xrally-openstack   "rally task start /h…"   34 minutes ago      Exited (0) 34 minutes ago                                                                                                                create-and-list-services.yaml
+5c345dd1790f        xrally/xrally-openstack   "rally task start /h…"   34 minutes ago      Exited (0) 34 minutes ago                                                                                                                create-and-list-roles.yaml
+454cd85cf26b        xrally/xrally-openstack   "rally task start /h…"   34 minutes ago      Exited (0) 34 minutes ago                                                                                                                create-and-list-ec2credentials.yaml
+d9e181311f43        xrally/xrally-openstack   "rally task start /h…"   35 minutes ago      Exited (0) 34 minutes ago                                                                                                                create-and-get-role.yaml
+14c231d45190        xrally/xrally-openstack   "rally task start /h…"   35 minutes ago      Exited (0) 35 minutes ago                                                                                                                create-and-delete-user.yaml
+148c40edef70        xrally/xrally-openstack   "rally task start /h…"   35 minutes ago      Exited (0) 35 minutes ago                                                                                                                create-and-delete-service.yaml
+d48c01e9b44f        xrally/xrally-openstack   "rally task start /h…"   35 minutes ago      Exited (0) 35 minutes ago                                                                                                                create-and-delete-role.yaml
+1694e9b7b278        xrally/xrally-openstack   "rally task start /h…"   35 minutes ago      Exited (0) 35 minutes ago                                                                                                                create-and-delete-ec2credential.yaml
+56321babe58e        xrally/xrally-openstack   "rally task start /h…"   36 minutes ago      Exited (0) 35 minutes ago                                                                                                                create-add-and-list-user-roles.yaml
+537d164b36e2        xrally/xrally-openstack   "rally task start /h…"   36 minutes ago      Exited (0) 36 minutes ago                                                                                                                authenticate-user-and-validate-token.yaml
+027b27b4cfc5        xrally/xrally-openstack   "rally task start /h…"   37 minutes ago      Exited (0) 36 minutes ago                                                                                                                add-and-remove-user-role.yaml
+
+#+END_EXAMPLE
+  + Only two tests didn't pass
+    - =create-and-update-user.yaml=:
+#+BEGIN_EXAMPLE
+------------------------------------------------------------------------------
+Unauthorized: The request you have made requires authentication. (HTTP 401) (Request-ID: req-1cad4072-fbfd-4002-954e-755d076db388)
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python2.7/dist-packages/rally/task/runner.py", line 71, in _run_scenario_once
+    getattr(scenario_inst, method_name)(**scenario_kwargs)
+  File "/usr/local/lib/python2.7/dist-packages/rally/plugins/openstack/scenarios/keystone/basic.py", line 429, in run
+    user_data = self.admin_clients("keystone").users.get(user.id)
+  File "/usr/local/lib/python2.7/dist-packages/keystoneclient/v3/users.py", line 149, in get
+    user_id=base.getid(user))
+  File "/usr/local/lib/python2.7/dist-packages/keystoneclient/base.py", line 75, in func
+    return f(*args, **new_kwargs)
+  File "/usr/local/lib/python2.7/dist-packages/keystoneclient/base.py", line 349, in get
+    self.key)
+  File "/usr/local/lib/python2.7/dist-packages/keystoneclient/base.py", line 150, in _get
+    resp, body = self.client.get(url, **kwargs)
+  File "/usr/local/lib/python2.7/dist-packages/keystoneauth1/adapter.py", line 304, in get
+    return self.request(url, 'GET', **kwargs)
+  File "/usr/local/lib/python2.7/dist-packages/keystoneauth1/adapter.py", line 463, in request
+    resp = super(LegacyJsonAdapter, self).request(*args, **kwargs)
+  File "/usr/local/lib/python2.7/dist-packages/keystoneauth1/adapter.py", line 189, in request
+    return self.session.request(url, method, **kwargs)
+  File "/usr/local/lib/python2.7/dist-packages/keystoneauth1/session.py", line 737, in request
+    raise exceptions.from_response(resp, method, url)
+Unauthorized: The request you have made requires authentication. (HTTP 401) (Request-ID: req-1cad4072-fbfd-4002-954e-755d076db388)
+
+--------------------------------------------------------------------------------
++----------------------------------------------------------------------------------------------------------------------------+
+|                                                    Response Times (sec)                                                    |
++-------------------------+-----------+--------------+--------------+--------------+-----------+-----------+---------+-------+
+| Action                  | Min (sec) | Median (sec) | 90%ile (sec) | 95%ile (sec) | Max (sec) | Avg (sec) | Success | Count |
++-------------------------+-----------+--------------+--------------+--------------+-----------+-----------+---------+-------+
+| keystone_v3.create_user | 0.108     | 0.122        | 0.158        | 0.18         | 0.203     | 0.133     | 100.0%  | 10    |
+| keystone_v3.update_user | 0.108     | 0.124        | 0.157        | 0.157        | 0.157     | 0.129     | 100.0%  | 10    |
+| <no-name-action>        | 0.0       | 0.0          | 0.0          | 0.0          | 0.0       | 0.0       | 0.0%    | 10    |
+| total                   | 0.293     | 0.333        | 0.37         | 0.385        | 0.4       | 0.335     | 0.0%    | 10    |
+|  -> duration            | 0.293     | 0.333        | 0.37         | 0.385        | 0.4       | 0.335     | 0.0%    | 10    |
+|  -> idle_duration       | 0.0       | 0.0          | 0.0          | 0.0          | 0.0       | 0.0       | 0.0%    | 10    |
++-------------------------+-----------+--------------+--------------+--------------+-----------+-----------+---------+-------+
+
+Load duration: 2.144772
+Full duration: 6.448864
+
+HINTS:
+ To plot HTML graphics with this data, run:
+	rally task report 0eff0b85-4df7-4be3-b723-32aeffbee1d4 --out output.html
+
+ To generate a JUnit report, run:
+	rally task export 0eff0b85-4df7-4be3-b723-32aeffbee1d4 --type junit --to output.xml
+
+ To get raw JSON output of task results, run:
+	rally task report 0eff0b85-4df7-4be3-b723-32aeffbee1d4 --json --out output.json
+
+At least one workload did not pass SLA criteria.
+#+END_EXAMPLE
+
+    - =create-tenant.yaml=, the logs are simply empty
+
+- To remove Rally containers
+#+BEGIN_SRC sh
+docker ps -a | grep rally | grep -oEe '^([a-z]|[0-9]){12}'
+#+END_SRC
+
+- Made some enhancements to backups and destroys
+  + tried to make rally destroy better but couldn't find a way to do it properly
+
+- Trying to see why some scenarios have the same bug in Cockroach as in MariaDB since I have no more error with MariaDB
+#+BEGIN_EXAMPLE
+0682ea40b469        xrally/xrally-openstack   "rally task start /h…"   2 minutes ago            Exited (201) 2 minutes ago                                                         rally-get-entities.yaml
+
+c9aefd47d1d5        xrally/xrally-openstack   "rally task start /h…"   2 minutes ago            Exited (201) 2 minutes ago                                                         rally-create-user.yaml
+
+285cf52b5058        xrally/xrally-openstack   "rally task start /h…"   2 minutes ago            Exited (201) 2 minutes ago                                                         rally-create-user-update-password.yaml
+
+a59e02a0b5b7        xrally/xrally-openstack   "rally task start /h…"   3 minutes ago            Exited (201) 2 minutes ago                                                         rally-create-user-set-enabled-and-delete.yaml
+
+352ca8b75c16        xrally/xrally-openstack   "rally task start /h…"   3 minutes ago            Exited (201) 3 minutes ago                                                         rally-create-update-and-delete-tenant.yaml
+
+625bcd5b9ff0        xrally/xrally-openstack   "rally task start /h…"   3 minutes ago            Exited (201) 3 minutes ago                                                         rally-create-tenant.yaml
+
+6a9641f51e9f        xrally/xrally-openstack   "rally task start /h…"   3 minutes ago            Exited (201) 3 minutes ago                                                         rally-create-tenant-with-users.yaml
+
+7ebb5a69aed8        xrally/xrally-openstack   "rally task start /h…"   3 minutes ago            Exited (201) 3 minutes ago                                                         rally-create-and-update-user.yaml
+
+2288038a1d88        xrally/xrally-openstack   "rally task start /h…"   3 minutes ago            Exited (201) 3 minutes ago                                                         rally-create-and-list-users.yaml
+
+1d33ee753e9f        xrally/xrally-openstack   "rally task start /h…"   3 minutes ago            Exited (137) 3 minutes ago                                                         rally-create-and-list-tenants.yaml
+
+60fcfb9d33ef        xrally/xrally-openstack   "rally task start /h…"   3 minutes ago            Exited (201) 3 minutes ago                                                         rally-create-and-list-services.yaml
+
+15943cee3fab        xrally/xrally-openstack   "rally task start /h…"   3 minutes ago            Exited (201) 3 minutes ago                                                         rally-create-and-list-roles.yaml
+
+a7cf8ba4252c        xrally/xrally-openstack   "rally task start /h…"   3 minutes ago            Exited (201) 3 minutes ago                                                         rally-create-and-list-ec2credentials.yaml
+
+09b070be7468        xrally/xrally-openstack   "rally task start /h…"   3 minutes ago            Exited (201) 3 minutes ago                                                         rally-create-and-get-role.yaml
+
+1f4186394dc6        xrally/xrally-openstack   "rally task start /h…"   3 minutes ago            Exited (201) 3 minutes ago                                                         rally-create-and-delete-user.yaml
+
+6a14deb2dee7        xrally/xrally-openstack   "rally task start /h…"   3 minutes ago            Exited (201) 3 minutes ago                                                         rally-create-and-delete-service.yaml
+
+e8d5e103d488        xrally/xrally-openstack   "rally task start /h…"   3 minutes ago            Exited (201) 3 minutes ago                                                         rally-create-and-delete-role.yaml
+
+e7f8a2972fac        xrally/xrally-openstack   "rally task start /h…"   3 minutes ago            Exited (201) 3 minutes ago                                                         rally-create-and-delete-ec2credential.yaml
+
+42a3f6ceaab6        xrally/xrally-openstack   "rally task start /h…"   5 minutes ago            Exited (0) 4 minutes ago                                                           rally-create-add-and-list-user-roles.yaml
+
+5bbc3a1d6d0a        xrally/xrally-openstack   "rally task start /h…"   5 minutes ago            Exited (0) 5 minutes ago                                                           rally-authenticate-user-and-validate-token.yaml
+
+735a73a858ea        xrally/xrally-openstack   "rally task start /h…"   7 minutes ago            Exited (2) 5 minutes ago                                                           rally-add-and-remove-user-role.yaml
+#+END_EXAMPLE
+
+- My node 51 (on which I run rally) does not respond anymore
+  + Ronan tells me about =kaconsole3= and =kareboot3=
+    #+BEGIN_EXAMPLE
+    madelavergne@fnancy:~$ kareboot3 -m grisou-51
+Reboot operation #R-19df6613-80b6-4a7e-8d24-33668294b79a started
+Launching a reboot on grisou-51.nancy.grid5000.fr
+Performing a Reboot[Simple] step
+  reboot
+   * Performing a soft reboot on grisou-51.nancy.grid5000.fr
+   * Performing a hard reboot on grisou-51.nancy.grid5000.fr
+  wait_reboot
+End of step Reboot[Simple] after 164s
+End of reboot for grisou-51.nancy.grid5000.fr after 164s
+End of reboot on cluster grisou after 164s
+Reboot operation #R-19df6613-80b6-4a7e-8d24-33668294b79a done
+
+The reboot operation is successful on nodes
+grisou-51.nancy.grid5000.fr
+    #+END_EXAMPLE
+  + After that, I ran ~docker logs rally-add-and-remove-user-role.yaml~
+#+BEGIN_EXAMPLE
+InternalServerError: An unexpected error prevented the server from fulfilling your request. (HTTP 500) (Request-ID: req-a0d2a577-3392-4904-bb1e-2a07d01fe2ed)
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python2.7/dist-packages/rally/task/runner.py", line 71, in _run_scenario_once
+    getattr(scenario_inst, method_name)(**scenario_kwargs)
+  File "/usr/local/lib/python2.7/dist-packages/rally/plugins/openstack/scenarios/keystone/basic.py", line 198, in run
+    project_id=tenant_id)
+  File "/usr/local/lib/python2.7/dist-packages/rally/task/service.py", line 116, in wrapper
+    return func(instance, *args, **kwargs)
+  File "/usr/local/lib/python2.7/dist-packages/rally/plugins/openstack/services/identity/identity.py", line 179, in revoke_role
+    project_id=project_id)
+  File "/usr/local/lib/python2.7/dist-packages/rally/task/service.py", line 116, in wrapper
+    return func(instance, *args, **kwargs)
+  File "/usr/local/lib/python2.7/dist-packages/rally/plugins/openstack/services/identity/keystone_v3.py", line 324, in revoke_role
+    project_id=project_id)
+  File "/usr/local/lib/python2.7/dist-packages/rally/task/service.py", line 116, in wrapper
+    return func(instance, *args, **kwargs)
+  File "/usr/local/lib/python2.7/dist-packages/rally/task/atomic.py", line 91, in func_atomic_actions
+    f = func(self, *args, **kwargs)
+  File "/usr/local/lib/python2.7/dist-packages/rally/plugins/openstack/services/identity/keystone_v3.py", line 197, in revoke_role
+    project=project_id)
+  File "/usr/local/lib/python2.7/dist-packages/keystoneclient/v3/roles.py", line 390, in revoke
+    **kwargs)
+  File "/usr/local/lib/python2.7/dist-packages/keystoneclient/base.py", line 75, in func
+    return f(*args, **new_kwargs)
+  File "/usr/local/lib/python2.7/dist-packages/keystoneclient/base.py", line 426, in delete
+    self.build_url(dict_args_in_out=kwargs))
+  File "/usr/local/lib/python2.7/dist-packages/keystoneclient/base.py", line 219, in _delete
+    return self.client.delete(url, **kwargs)
+  File "/usr/local/lib/python2.7/dist-packages/keystoneauth1/adapter.py", line 319, in delete
+    return self.request(url, 'DELETE', **kwargs)
+  File "/usr/local/lib/python2.7/dist-packages/keystoneauth1/adapter.py", line 463, in request
+    resp = super(LegacyJsonAdapter, self).request(*args, **kwargs)
+  File "/usr/local/lib/python2.7/dist-packages/keystoneauth1/adapter.py", line 189, in request
+    return self.session.request(url, method, **kwargs)
+  File "/usr/local/lib/python2.7/dist-packages/keystoneauth1/session.py", line 737, in request
+    raise exceptions.from_response(resp, method, url)
+InternalServerError: An unexpected error prevented the server from fulfilling your request. (HTTP 500) (Request-ID: req-a0d2a577-3392-4904-bb1e-2a07d01fe2ed)
+#+END_EXAMPLE
+  + Of course, cockroachdb container exited when the node was down, but when retrying to launch rally scenarios:
+#+BEGIN_EXAMPLE
+f97a8c8b66ec        xrally/xrally-openstack   "rally task start /h…"   4 minutes ago       Exited (201) 4 minutes ago                                                       rally-get-entities.yaml
+0c98caf65893        xrally/xrally-openstack   "rally task start /h…"   4 minutes ago       Exited (201) 4 minutes ago                                                       rally-create-user.yaml
+04d4f9724241        xrally/xrally-openstack   "rally task start /h…"   4 minutes ago       Exited (201) 4 minutes ago                                                       rally-create-user-update-password.yaml
+c875af546bc6        xrally/xrally-openstack   "rally task start /h…"   4 minutes ago       Exited (201) 4 minutes ago                                                       rally-create-user-set-enabled-and-delete.yaml
+9bce6055684a        xrally/xrally-openstack   "rally task start /h…"   4 minutes ago       Exited (201) 4 minutes ago                                                       rally-create-update-and-delete-tenant.yaml
+e664ba3aa6bd        xrally/xrally-openstack   "rally task start /h…"   4 minutes ago       Exited (201) 4 minutes ago                                                       rally-create-tenant.yaml
+24d5117a245e        xrally/xrally-openstack   "rally task start /h…"   4 minutes ago       Exited (201) 4 minutes ago                                                       rally-create-tenant-with-users.yaml
+38cc24c12b93        xrally/xrally-openstack   "rally task start /h…"   4 minutes ago       Exited (201) 4 minutes ago                                                       rally-create-and-update-user.yaml
+997963c20cce        xrally/xrally-openstack   "rally task start /h…"   4 minutes ago       Exited (201) 4 minutes ago                                                       rally-create-and-list-users.yaml
+568dc82dbcfc        xrally/xrally-openstack   "rally task start /h…"   4 minutes ago       Exited (201) 4 minutes ago                                                       rally-create-and-list-tenants.yaml
+bd89f7a014ef        xrally/xrally-openstack   "rally task start /h…"   4 minutes ago       Exited (201) 4 minutes ago                                                       rally-create-and-list-services.yaml
+52dacaf7400a        xrally/xrally-openstack   "rally task start /h…"   4 minutes ago       Exited (201) 4 minutes ago                                                       rally-create-and-list-roles.yaml
+9fa19b822ffc        xrally/xrally-openstack   "rally task start /h…"   4 minutes ago       Exited (201) 4 minutes ago                                                       rally-create-and-list-ec2credentials.yaml
+4fea3354b62e        xrally/xrally-openstack   "rally task start /h…"   5 minutes ago       Exited (201) 5 minutes ago                                                       rally-create-and-get-role.yaml
+c551f70c6633        xrally/xrally-openstack   "rally task start /h…"   5 minutes ago       Exited (201) 5 minutes ago                                                       rally-create-and-delete-user.yaml
+a0b48c186bcd        xrally/xrally-openstack   "rally task start /h…"   5 minutes ago       Exited (201) 5 minutes ago                                                       rally-create-and-delete-service.yaml
+d55baf72791a        xrally/xrally-openstack   "rally task start /h…"   5 minutes ago       Exited (201) 5 minutes ago                                                       rally-create-and-delete-role.yaml
+98c387caf25d        xrally/xrally-openstack   "rally task start /h…"   5 minutes ago       Exited (201) 5 minutes ago                                                       rally-create-and-delete-ec2credential.yaml
+7fb8df2c2550        xrally/xrally-openstack   "rally task start /h…"   5 minutes ago       Exited (201) 5 minutes ago                                                       rally-create-add-and-list-user-roles.yaml
+f349c45ff1eb        xrally/xrally-openstack   "rally task start /h…"   5 minutes ago       Exited (201) 5 minutes ago                                                       rally-authenticate-user-and-validate-token.yaml
+8b0fabb64d66        xrally/xrally-openstack   "rally task start /h…"   5 minutes ago       Exited (201) 5 minutes ago                                                       rally-add-and-remove-user-role.yaml
+#+END_EXAMPLE
+  + And for rally-add-and-remove-user-role.yaml:
+#+BEGIN_EXAMPLE
+2018-02-27 16:08:58.433 1 WARNING rally.common.broker [-] Failed to consume a task from the queue: The request you have made requires authentication. (HTTP 401) (Request-ID: req-a0e75006-c113-4f6b-acb2-3c8406084351): Unauthorized: The request you have made requires authentication. (HTTP 401) (Request-ID: req-a0e75006-c113-4f6b-acb2-3c8406084351)
+
+[...]
+Task config is invalid: `Unable to setup context 'users': 'Failed to create the requested number of tenants.'`
+#+END_EXAMPLE
+
+- Redeploying everything
+
+#+BEGIN_EXAMPLE
+CONTAINER ID        IMAGE                     COMMAND                  CREATED             STATUS                      PORTS                                              NAMES
+46029966497d        xrally/xrally-openstack   "rally task start /h…"   6 minutes ago       Exited (2) 4 minutes ago                                                       rally-get-entities.yaml
+3993394e5036        xrally/xrally-openstack   "rally task start /h…"   7 minutes ago       Exited (2) 6 minutes ago                                                       rally-create-user.yaml
+2c989a3fd7f9        xrally/xrally-openstack   "rally task start /h…"   10 minutes ago      Exited (2) 8 minutes ago                                                       rally-create-user-update-password.yaml
+4a86036393cc        xrally/xrally-openstack   "rally task start /h…"   13 minutes ago      Exited (2) 10 minutes ago                                                      rally-create-user-set-enabled-and-delete.yaml
+76bd62aab703        xrally/xrally-openstack   "rally task start /h…"   14 minutes ago      Exited (0) 13 minutes ago                                                      rally-create-update-and-delete-tenant.yaml
+36be176fff55        xrally/xrally-openstack   "rally task start /h…"   14 minutes ago      Exited (2) 14 minutes ago                                                      rally-create-tenant.yaml
+93cee782ffe2        xrally/xrally-openstack   "rally task start /h…"   15 minutes ago      Exited (2) 14 minutes ago                                                      rally-create-tenant-with-users.yaml
+341c99fe76dc        xrally/xrally-openstack   "rally task start /h…"   16 minutes ago      Exited (2) 15 minutes ago                                                      rally-create-and-update-user.yaml
+bd12bbfa0e42        xrally/xrally-openstack   "rally task start /h…"   17 minutes ago      Exited (2) 16 minutes ago                                                      rally-create-and-list-users.yaml
+fa3ba93303cf        xrally/xrally-openstack   "rally task start /h…"   17 minutes ago      Exited (0) 17 minutes ago                                                      rally-create-and-list-tenants.yaml
+c975e2b8d4b3        xrally/xrally-openstack   "rally task start /h…"   18 minutes ago      Exited (0) 17 minutes ago                                                      rally-create-and-list-services.yaml
+15f5f322878d        xrally/xrally-openstack   "rally task start /h…"   18 minutes ago      Exited (0) 18 minutes ago                                                      rally-create-and-list-roles.yaml
+21ae9ac09a2e        xrally/xrally-openstack   "rally task start /h…"   18 minutes ago      Exited (0) 18 minutes ago                                                      rally-create-and-list-ec2credentials.yaml
+c269323c4042        xrally/xrally-openstack   "rally task start /h…"   19 minutes ago      Exited (0) 18 minutes ago                                                      rally-create-and-get-role.yaml
+95a7e21bffcf        xrally/xrally-openstack   "rally task start /h…"   20 minutes ago      Exited (2) 19 minutes ago                                                      rally-create-and-delete-user.yaml
+d9a4e7305565        xrally/xrally-openstack   "rally task start /h…"   20 minutes ago      Exited (0) 20 minutes ago                                                      rally-create-and-delete-service.yaml
+802e0681be49        xrally/xrally-openstack   "rally task start /h…"   21 minutes ago      Exited (0) 20 minutes ago                                                      rally-create-and-delete-role.yaml
+fc726c4ce808        xrally/xrally-openstack   "rally task start /h…"   21 minutes ago      Exited (0) 21 minutes ago                                                      rally-create-and-delete-ec2credential.yaml
+136882540bb9        xrally/xrally-openstack   "rally task start /h…"   23 minutes ago      Exited (0) 21 minutes ago                                                      rally-create-add-and-list-user-roles.yaml
+f3b9f697a68a        xrally/xrally-openstack   "rally task start /h…"   23 minutes ago      Exited (0) 23 minutes ago                                                      rally-authenticate-user-and-validate-token.yaml
+2185ba1dea6e        xrally/xrally-openstack   "rally task start /h…"   24 minutes ago      Exited (2) 23 minutes ago                                                      rally-add-and-remove-user-role.yaml
+#+END_EXAMPLE
+
+- Exit(2) is:
+#+BEGIN_EXAMPLE
+
+2018-02-27 17:03:10.341 140 INFO rally.task.runner [-] Task a743629e-756b-40a9-97f9-844cb3d4a536 | ITER: 95 END: Error InternalServerError: An unexpected error prevented the server from fulfilling your request. (HTTP 500) (Request-ID: req-301ba158-cae8-47c3-8bed-5361f70708e4)
+
+InternalServerError: An unexpected error prevented the server from fulfilling your request. (HTTP 500) (Request-ID: req-ec5d88e0-9895-4ab7-972b-0fb3d03668df)
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python2.7/dist-packages/rally/task/runner.py", line 71, in _run_scenario_once
+    getattr(scenario_inst, method_name)(**scenario_kwargs)
+  File "/usr/local/lib/python2.7/dist-packages/rally/common/logging.py", line 329, in wrapper
+    return f(*args, **kwargs)
+  File "/usr/local/lib/python2.7/dist-packages/rally/plugins/openstack/scenarios/keystone/basic.py", line 161, in run
+    self.admin_keystone.create_user(**kwargs)
+  File "/usr/local/lib/python2.7/dist-packages/rally/task/service.py", line 116, in wrapper
+    return func(instance, *args, **kwargs)
+  File "/usr/local/lib/python2.7/dist-packages/rally/plugins/openstack/services/identity/identity.py", line 92, in create_user
+    default_role=default_role)
+  File "/usr/local/lib/python2.7/dist-packages/rally/task/service.py", line 116, in wrapper
+    return func(instance, *args, **kwargs)
+  File "/usr/local/lib/python2.7/dist-packages/rally/plugins/openstack/services/identity/keystone_v3.py", line 284, in create_user
+    enabled=enabled))
+  File "/usr/local/lib/python2.7/dist-packages/rally/task/service.py", line 116, in wrapper
+    return func(instance, *args, **kwargs)
+  File "/usr/local/lib/python2.7/dist-packages/rally/task/atomic.py", line 91, in func_atomic_actions
+    f = func(self, *args, **kwargs)
+  File "/usr/local/lib/python2.7/dist-packages/rally/plugins/openstack/services/identity/keystone_v3.py", line 103, in create_user
+    domain=domain_id, enabled=enabled)
+  File "/usr/local/lib/python2.7/dist-packages/debtcollector/renames.py", line 43, in decorator
+    return wrapped(*args, **kwargs)
+  File "/usr/local/lib/python2.7/dist-packages/keystoneclient/v3/users.py", line 93, in create
+    log=not bool(password))
+  File "/usr/local/lib/python2.7/dist-packages/keystoneclient/base.py", line 174, in _post
+    resp, body = self.client.post(url, body=body, **kwargs)
+  File "/usr/local/lib/python2.7/dist-packages/keystoneauth1/adapter.py", line 310, in post
+    return self.request(url, 'POST', **kwargs)
+  File "/usr/local/lib/python2.7/dist-packages/keystoneauth1/adapter.py", line 463, in request
+    resp = super(LegacyJsonAdapter, self).request(*args, **kwargs)
+  File "/usr/local/lib/python2.7/dist-packages/keystoneauth1/adapter.py", line 189, in request
+    return self.session.request(url, method, **kwargs)
+  File "/usr/local/lib/python2.7/dist-packages/keystoneauth1/session.py", line 737, in request
+    raise exceptions.from_response(resp, method, url)
+InternalServerError: An unexpected error prevented the server from fulfilling your request. (HTTP 500) (Request-ID: req-ec5d88e0-9895-4ab7-972b-0fb3d03668df)
+#+END_EXAMPLE
+
+- In Keystone
+#+BEGIN_EXAMPLE
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi [None req-2a1d2967-76f7-45d7-9241-9a5624272b73 None None] (psycopg2.extensions.TransactionRollbackError) r
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: : DBDeadlock: (psycopg2.extensions.TransactionRollbackError) restart transaction: HandledRetryableTxnError: TransactionRetryError: re
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi Traceback (most recent call last):
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi   File "/opt/stack/keystone/keystone/common/wsgi.py", line 228, in __call__
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi     result = method(req, **params)
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi   File "/opt/stack/keystone/keystone/common/controller.py", line 94, in inner
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi     return f(self, request, *args, **kwargs)
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi   File "/opt/stack/keystone/keystone/assignment/controllers.py", line 688, in revoke_grant
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi     request.context_dict)
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi   File "/opt/stack/keystone/keystone/common/manager.py", line 110, in wrapped
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi     __ret_val = __f(*args, **kwargs)
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi   File "/opt/stack/keystone/keystone/notifications.py", line 605, in wrapper
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi     result = f(wrapped_self, role_id, *args, **kwargs)
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi   File "/opt/stack/keystone/keystone/assignment/core.py", line 393, in delete_grant
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi     project_id, inherited_to_projects)
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi   File "/opt/stack/keystone/keystone/assignment/backends/sql.py", line 113, in delete_grant
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi     target_id=target_id)
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi   File "/usr/lib/python2.7/contextlib.py", line 24, in __exit__
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi     self.gen.next()
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi   File "/opt/stack/oslo.db/oslo_db/sqlalchemy/enginefacade.py", line 1029, in _transaction_scope
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi     yield resource
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi   File "/usr/lib/python2.7/contextlib.py", line 24, in __exit__
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi     self.gen.next()
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi   File "/opt/stack/oslo.db/oslo_db/sqlalchemy/enginefacade.py", line 641, in _session
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi     self.session.rollback()
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi   File "/usr/local/lib/python2.7/dist-packages/oslo_utils/excutils.py", line 220, in __exit__
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi     self.force_reraise()
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi   File "/usr/local/lib/python2.7/dist-packages/oslo_utils/excutils.py", line 196, in force_reraise
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi     six.reraise(self.type_, self.value, self.tb)
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi   File "/opt/stack/oslo.db/oslo_db/sqlalchemy/enginefacade.py", line 638, in _session
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi     self._end_session_transaction(self.session)
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi   File "/opt/stack/oslo.db/oslo_db/sqlalchemy/enginefacade.py", line 666, in _end_session_transaction
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi     session.commit()
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/orm/session.py", line 906, in commit
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi     self.transaction.commit()
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/orm/session.py", line 465, in commit
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi     t[1].commit()
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/engine/base.py", line 1632, in commit
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi     self._do_commit()
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/engine/base.py", line 1663, in _do_commit
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi     self.connection._commit_impl()
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/engine/base.py", line 723, in _commit_impl
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi     self._handle_dbapi_exception(e, None, None, None, None)
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/engine/base.py", line 1398, in _handle_dbapi_exc
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi     util.raise_from_cause(newraise, exc_info)
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/util/compat.py", line 203, in raise_from_cause
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi     reraise(type(exception), exception, tb=exc_tb, cause=cause)
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/engine/base.py", line 721, in _commit_impl
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi     self.engine.dialect.do_commit(self.connection)
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/engine/default.py", line 443, in do_commit
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi     dbapi_connection.commit()
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi DBDeadlock: (psycopg2.extensions.TransactionRollbackError) restart transaction: HandledRetryableTxnError:
+
+Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi
+#+END_EXAMPLE

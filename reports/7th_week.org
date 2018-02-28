@@ -99,13 +99,13 @@ ipdb> ctx.context
 --> 167                     clients, name_generator=self.generate_random_name)
     168             tenant = cache["client"].create_project(domain_name=domain)
 #+END_EXAMPLE
-to use our own credentials:
+to use our own credentials (using [[https://github.com/openstack/keystoneauth/blob/master/keystoneauth1/identity/v3/password.py#L55][password class code]], [[https://docs.openstack.org/keystoneauth/latest/using-sessions.html][using sessions doc]], [[https://docs.openstack.org/python-keystoneclient/latest/using-api-v3.html][using keystone v3 api doc]]):
 #+BEGIN_EXAMPLE
 ipdb> auth = v3.Password(auth_url='http://172.16.64.44/identity/v3', password='admin', username='admin', user_id='b5c447fc8f514b2a9523b130c86f2384', user_domain_id='default', user_domain_name='Default', project_id='09c6b61b4faf425a847a75baf496608c', project_name='admin', project_domain_id='default', project_domain_name='Default')
 ipdb> sess = session.Session(auth=auth, verify=None)
 ipdb> keystone = client.Client(session=sess)
 ipdb> keystone.users.list()
-*** Unauthorized: The request you have made requires authentication. (HTTP 401) (Request-ID: req-7e7c9a6b-c068-419c-a30c-151cd47e0b87)
+Unauthorized: The request you have made requires authentication. (HTTP 401) (Request-ID: req-7e7c9a6b-c068-419c-a30c-151cd47e0b87)
 #+END_EXAMPLE
 - The reservation ended just when we (meaning Ronan) made it work by settings the urls for the endpoints using ~openstack endpoint set --url http://172.16.64.41/identity/v3 <id>~ and used
 #+BEGIN_EXAMPLE
@@ -533,4 +533,49 @@ Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ER
 Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi DBDeadlock: (psycopg2.extensions.TransactionRollbackError) restart transaction: HandledRetryableTxnError:
 
 Feb 27 17:44:30 grisou-47.nancy.grid5000.fr devstack@keystone.service[21482]: ERROR keystone.common.wsgi
+#+END_EXAMPLE
+
+
+* Wednesday 28 February [2018-02-28 mer.]
+
+- Searching how to avoid the bug, using what Ronan said to me:
+  + he was thinking that maybe there was a decorator missing to retry, or there weren't enough retries for CockroachDB
+    - for option 1, we should see the name of the keystone function that requires retries
+    - for option 2, we should see =/oslo_db/api.py= in the stack trace (cf https://github.com/BeyondTheClouds/oslo.db/blob/cockroachdb/pike/oslo_db/api.py#L84)
+  + so maybe we need to add a filter to tell oslo that Cockroach error is a retry type (cf [[https://github.com/BeyondTheClouds/oslo.db/commit/c90883818e448d15ce8cef0e5e0e4beaa80e56e4][this commit]])
+
+
+#+BEGIN_SRC sh
+docker run -v /root/rally_home:/home/rally/data xrally/xrally-openstack task start /home/rally/source/samples/tasks/scenarios/keystone/add-and-remove-user-role.yaml --deployment discovery
+#+END_SRC
+
+#+BEGIN_EXAMPLE
+Help on class TransactionRollbackError in module psycopg2.extensions:
+
+class TransactionRollbackError(psycopg2.OperationalError)
+ |  Error causing transaction rollback (deadlocks, serialization failures, etc).
+ |
+ |  Method resolution order:
+ |      TransactionRollbackError
+ |      psycopg2.OperationalError
+ |      psycopg2.DatabaseError
+ |      psycopg2.Error
+ |      exceptions.StandardError
+ |      exceptions.Exception
+ |      exceptions.BaseException
+ |      __builtin__.object
+ |
+ |  Data descriptors inherited from psycopg2.DatabaseError:
+ |
+ |  __weakref__
+ |      list of weak references to the object (if defined)
+ |
+ |  ----------------------------------------------------------------------
+#+END_EXAMPLE
+
+#+BEGIN_EXAMPLE
+from psycopg2 import extensions as psycopg2_exc
+
+@filters("cockroachdb", psycopg2_exc.TransactionRollbackError, (r"^.*retry txn.*",
+    r"^.*restart transaction.*", r"^.*DBDeadlock.*"))
 #+END_EXAMPLE

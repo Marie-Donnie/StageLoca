@@ -573,9 +573,24 @@ class TransactionRollbackError(psycopg2.OperationalError)
  |  ----------------------------------------------------------------------
 #+END_EXAMPLE
 
+- Added a filter to =/opt/stack/oslo.db/oslo_db/exc_filters= but won't be necessary
 #+BEGIN_EXAMPLE
 from psycopg2 import extensions as psycopg2_exc
 
 @filters("cockroachdb", psycopg2_exc.TransactionRollbackError, (r"^.*retry txn.*",
     r"^.*restart transaction.*", r"^.*DBDeadlock.*"))
 #+END_EXAMPLE
+
+
+* Thursday 29 February [2018-03-01 jeu.]
+
+- =openstack= task just don't pass the migrations so I'm trying to fix it for good.
+
+- editing file as we discussed with Ronan ~vim /tmp/src/sqlalchemy-migrate/migrate/versioning/script/sql.py~
+
+- we are adding a loop that will exit when the transaction is done (with a ~return~), if it's a Rollback (psycopg2.extensions.TransactionRollbackError), we use a sleep with exponential time using the number of retries (a bit like exponential backoff, but without the random generation)
+- to test syntax:
+#+BEGIN_SRC
+docker exec cockroachdb-grisou-40 ./cockroach sql --port 26257 --insecure -e "DROP DATABASE IF EXISTS keystone CASCADE" -e "CREATE DATABASE keystone"
+keystone-manage db_sync
+#+END_SRC

@@ -582,7 +582,7 @@ from psycopg2 import extensions as psycopg2_exc
 #+END_EXAMPLE
 
 
-* Thursday 29 February [2018-03-01 jeu.]
+* Thursday 1 March [2018-03-01 jeu.]
 
 - =openstack= task just don't pass the migrations so I'm trying to fix it for good.
 
@@ -594,3 +594,154 @@ from psycopg2 import extensions as psycopg2_exc
 docker exec cockroachdb-grisou-40 ./cockroach sql --port 26257 --insecure -e "DROP DATABASE IF EXISTS keystone CASCADE" -e "CREATE DATABASE keystone"
 keystone-manage db_sync
 #+END_SRC
+
+* Friday 2 March [2018-03-02 ven.]
+
+- Since Rally only worked on one node, grisou-38 (which was not the master), we tried to see if rally was able to make the tests when changing the region name
+#+BEGIN_EXAMPLE
+root@grisou-20:~# openstack endpoint list
++----------------------------------+-----------+--------------+--------------+---------+-----------+------------------------------+
+| ID                               | Region    | Service Name | Service Type | Enabled | Interface | URL                          |
++----------------------------------+-----------+--------------+--------------+---------+-----------+------------------------------+
+| 1c49a8bc239a4a03b64b705e09fb34cd | grisou-20 | keystone     | identity     | True    | public    | http://172.16.72.20/identity |
+| 5535fa987d0d44aa98ac96f1e74a6f18 | grisou-38 | keystone     | identity     | True    | admin     | http://172.16.72.38/identity |
+| 923578babfd945efaf66485e4b5232df | grisou-20 | keystone     | identity     | True    | admin     | http://172.16.72.20/identity |
+| 99676ee997b44915af749aba450f4df9 | grisou-43 | keystone     | identity     | True    | admin     | http://172.16.72.43/identity |
+| c6d59df8c81749b7ac30011019f432ab | grisou-38 | keystone     | identity     | True    | public    | http://172.16.72.38/identity |
+| fddb0d4a74704618acab0b19f8941bf5 | grisou-43 | keystone     | identity     | True    | public    | http://172.16.72.43/identity |
++----------------------------------+-----------+--------------+--------------+---------+-----------+------------------------------+
+root@grisou-20:~# openstack endpoint set 5535fa987d0d44aa98ac96f1e74a6f18 --region osef
+root@grisou-20:~# openstack endpoint set c6d59df8c81749b7ac30011019f432ab --region osef
+root@grisou-20:~# openstack endpoint list
++----------------------------------+-----------+--------------+--------------+---------+-----------+------------------------------+
+| ID                               | Region    | Service Name | Service Type | Enabled | Interface | URL                          |
++----------------------------------+-----------+--------------+--------------+---------+-----------+------------------------------+
+| 1c49a8bc239a4a03b64b705e09fb34cd | grisou-20 | keystone     | identity     | True    | public    | http://172.16.72.20/identity |
+| 5535fa987d0d44aa98ac96f1e74a6f18 | osef      | keystone     | identity     | True    | admin     | http://172.16.72.38/identity |
+| 923578babfd945efaf66485e4b5232df | grisou-20 | keystone     | identity     | True    | admin     | http://172.16.72.20/identity |
+| 99676ee997b44915af749aba450f4df9 | grisou-43 | keystone     | identity     | True    | admin     | http://172.16.72.43/identity |
+| c6d59df8c81749b7ac30011019f432ab | osef      | keystone     | identity     | True    | public    | http://172.16.72.38/identity |
+| fddb0d4a74704618acab0b19f8941bf5 | grisou-43 | keystone     | identity     | True    | public    | http://172.16.72.43/identity |
++----------------------------------+-----------+--------------+--------------+---------+-----------+------------------------------+
+root@grisou-20:~# openstack endpoint set 99676ee997b44915af749aba450f4df9 --region grisou-38
+root@grisou-20:~# openstack endpoint set fddb0d4a74704618acab0b19f8941bf5 --region grisou-38
+root@grisou-20:~# openstack endpoint list
++----------------------------------+-----------+--------------+--------------+---------+-----------+------------------------------+
+| ID                               | Region    | Service Name | Service Type | Enabled | Interface | URL                          |
++----------------------------------+-----------+--------------+--------------+---------+-----------+------------------------------+
+| 1c49a8bc239a4a03b64b705e09fb34cd | grisou-20 | keystone     | identity     | True    | public    | http://172.16.72.20/identity |
+| 5535fa987d0d44aa98ac96f1e74a6f18 | osef      | keystone     | identity     | True    | admin     | http://172.16.72.38/identity |
+| 923578babfd945efaf66485e4b5232df | grisou-20 | keystone     | identity     | True    | admin     | http://172.16.72.20/identity |
+| 99676ee997b44915af749aba450f4df9 | grisou-38 | keystone     | identity     | True    | admin     | http://172.16.72.43/identity |
+| c6d59df8c81749b7ac30011019f432ab | osef      | keystone     | identity     | True    | public    | http://172.16.72.38/identity |
+| fddb0d4a74704618acab0b19f8941bf5 | grisou-38 | keystone     | identity     | True    | public    | http://172.16.72.43/identity |
++----------------------------------+-----------+--------------+--------------+---------+-----------+------------------------------+
+root@grisou-20:~# openstack catalog list
++----------+----------+----------------------------------------+
+| Name     | Type     | Endpoints                              |
++----------+----------+----------------------------------------+
+| keystone | identity | grisou-20                              |
+|          |          |   public: http://172.16.72.20/identity |
+|          |          | osef                                   |
+|          |          |   admin: http://172.16.72.38/identity  |
+|          |          | grisou-20                              |
+|          |          |   admin: http://172.16.72.20/identity  |
+|          |          | grisou-38                              |
+|          |          |   admin: http://172.16.72.43/identity  |
+|          |          | osef                                   |
+|          |          |   public: http://172.16.72.38/identity |
+|          |          | grisou-38                              |
+|          |          |   public: http://172.16.72.43/identity |
+|          |          |                                        |
++----------+----------+----------------------------------------+
+#+END_EXAMPLE
+
+#+BEGIN_SRC bash
+root@grisou-43:~# docker run -it --entrypoint=bash -v /root/rally_home:/home/rally/data xrally/xrally-openstack
+#+END_SRC
+
+#+BEGIN_SRC
+cd /usr/local/lib/python2.7/dist-packages/rally
+
+sudo pip install ipdb
+
+sudo vim +347 plugins/openstack/osclients.py
+sudo vim plugins/openstack/context/keystone/users.py
+#+END_SRC
+
+#+BEGIN_EXAMPLE
+     clop = client.Client(**kw)
+     import ipdb ; ipdb.set_trace()
+     return clop
+#+END_EXAMPLE
+
+#+BEGIN_SRC
+rally task start ~/source/samples/tasks/scenarios/keystone/add-and-remove-user-role.json --deployment=discovery
+#+END_SRC
+
+
+#+BEGIN_EXAMPLE
+export OS_USER_DOMAIN_ID=default
+export OS_AUTH_URL=http://172.16.72.38/identity
+export OS_PROJECT_DOMAIN_ID=default
+export OS_REGION_NAME=grisou-38
+export OS_PROJECT_NAME=admin
+export OS_IDENTITY_API_VERSION=3
+export OS_TENANT_NAME=admin
+export OS_AUTH_TYPE=password
+export OS_PASSWORD=admin
+export OS_USERNAME=admin
+#+END_EXAMPLE
+
+
+- Finally, it works on all regions, thanks to [[https://github.com/Marie-Donnie/rally/commit/2304aeb99105a6bdec62725f9d991f83511c4939][this addition]]
+
+#+BEGIN_EXAMPLE
+root@grisou-43:~# docker ps -a
+CONTAINER ID        IMAGE                              COMMAND                  CREATED             STATUS                         PORTS                                              NAMES
+dac935388ecd        beyondtheclouds/xrally-openstack   "rally task start /h…"   2 minutes ago       Up 2 minutes                                                                      create-and-list-users.yaml-16-43-52
+c9662cf88634        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 minutes ago       Exited (0) 2 minutes ago                                                          create-and-list-tenants.yaml-16-43-22
+2d13c889bca9        beyondtheclouds/xrally-openstack   "rally task start /h…"   5 minutes ago       Exited (0) 3 minutes ago                                                          create-and-list-services.yaml-16-40-54
+65088a3b8567        beyondtheclouds/xrally-openstack   "rally task start /h…"   6 minutes ago       Exited (0) 5 minutes ago                                                          create-and-list-roles.yaml-16-40-28
+6ea176815a82        beyondtheclouds/xrally-openstack   "rally task start /h…"   8 minutes ago       Exited (0) 6 minutes ago                                                          create-and-list-ec2credentials.yaml-16-38-11
+442d1b95aebb        beyondtheclouds/xrally-openstack   "rally task start /h…"   9 minutes ago       Exited (0) 8 minutes ago                                                          create-and-get-role.yaml-16-37-30
+22f58120a913        beyondtheclouds/xrally-openstack   "rally task start /h…"   11 minutes ago      Exited (2) 9 minutes ago                                                          create-and-delete-user.yaml-16-35-43
+f6ef754cb22b        beyondtheclouds/xrally-openstack   "rally task start /h…"   12 minutes ago      Exited (0) 11 minutes ago                                                         create-and-delete-service.yaml-16-34-43
+16d848008c53        beyondtheclouds/xrally-openstack   "rally task start /h…"   13 minutes ago      Exited (0) 12 minutes ago                                                         create-and-delete-role.yaml-16-33-25
+2017ceb1be44        beyondtheclouds/xrally-openstack   "rally task start /h…"   14 minutes ago      Exited (0) 13 minutes ago                                                         create-and-delete-ec2credential.yaml-16-32-33
+47a003d2bc2e        beyondtheclouds/xrally-openstack   "rally task start /h…"   18 minutes ago      Exited (0) 14 minutes ago                                                         create-add-and-list-user-roles.yaml-16-28-27
+04d4acea6ada        beyondtheclouds/xrally-openstack   "rally task start /h…"   19 minutes ago      Exited (0) 18 minutes ago                                                         authenticate-user-and-validate-token.yaml-16-27-41
+0336fdc36522        beyondtheclouds/xrally-openstack   "rally task start /h…"   19 minutes ago      Exited (201) 19 minutes ago                                                       add-and-remove-user-role.yaml-16-27-33
+
+root@grisou-38:~# docker ps -a
+CONTAINER ID        IMAGE                              COMMAND                  CREATED              STATUS                          PORTS                                              NAMES
+f7464b9b4851        beyondtheclouds/xrally-openstack   "rally task start /h…"   9 seconds ago        Up 8 seconds                                                                       create-and-list-roles.yaml-16-47-04
+693a9c18bb46        beyondtheclouds/xrally-openstack   "rally task start /h…"   About a minute ago   Exited (0) 10 seconds ago                                                          create-and-list-ec2credentials.yaml-16-46-11
+4edbe07ec452        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 minutes ago        Exited (0) About a minute ago                                                      create-and-get-role.yaml-16-43-55
+88252faa3210        beyondtheclouds/xrally-openstack   "rally task start /h…"   5 minutes ago        Exited (0) 3 minutes ago                                                           create-and-delete-user.yaml-16-41-53
+706804b9255e        beyondtheclouds/xrally-openstack   "rally task start /h…"   6 minutes ago        Exited (0) 5 minutes ago                                                           create-and-delete-service.yaml-16-40-48
+cbf39f2377d4        beyondtheclouds/xrally-openstack   "rally task start /h…"   8 minutes ago        Exited (0) 6 minutes ago                                                           create-and-delete-role.yaml-16-38-47
+568919db32cc        beyondtheclouds/xrally-openstack   "rally task start /h…"   9 minutes ago        Exited (0) 8 minutes ago                                                           create-and-delete-ec2credential.yaml-16-38-09
+459a52f642cd        beyondtheclouds/xrally-openstack   "rally task start /h…"   14 minutes ago       Exited (0) 9 minutes ago                                                           create-add-and-list-user-roles.yaml-16-32-27
+bbe6b4d78e78        beyondtheclouds/xrally-openstack   "rally task start /h…"   15 minutes ago       Exited (0) 14 minutes ago                                                          authenticate-user-and-validate-token.yaml-16-32-09
+15bacf7c11a9        beyondtheclouds/xrally-openstack   "rally task start /h…"   19 minutes ago       Exited (2) 15 minutes ago                                                          add-and-remove-user-role.yaml-16-27-33
+
+
+CONTAINER ID        IMAGE                              COMMAND                  CREATED              STATUS                          PORTS                                              NAMES
+fe9a8cd1c327        beyondtheclouds/xrally-openstack   "rally task start /h…"   8 seconds ago        Up 7 seconds                                                                       create-and-list-users.yaml-16-47-24
+6c0d9b3f845c        beyondtheclouds/xrally-openstack   "rally task start /h…"   35 seconds ago       Exited (0) 10 seconds ago                                                          create-and-list-tenants.yaml-16-46-57
+cea2eec43da6        beyondtheclouds/xrally-openstack   "rally task start /h…"   About a minute ago   Exited (0) 36 seconds ago                                                          create-and-list-services.yaml-16-46-16
+356e0d6a9cbc        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 minutes ago        Exited (0) About a minute ago                                                      create-and-list-roles.yaml-16-43-50
+03902db55d04        beyondtheclouds/xrally-openstack   "rally task start /h…"   5 minutes ago        Exited (0) 3 minutes ago                                                           create-and-list-ec2credentials.yaml-16-41-43
+5fde6db55caf        beyondtheclouds/xrally-openstack   "rally task start /h…"   6 minutes ago        Exited (0) 5 minutes ago                                                           create-and-get-role.yaml-16-40-44
+b7e069159d61        beyondtheclouds/xrally-openstack   "rally task start /h…"   8 minutes ago        Exited (2) 6 minutes ago                                                           create-and-delete-user.yaml-16-38-41
+824591ecd2e9        beyondtheclouds/xrally-openstack   "rally task start /h…"   9 minutes ago        Exited (0) 8 minutes ago                                                           create-and-delete-service.yaml-16-37-52
+c8092996c49e        beyondtheclouds/xrally-openstack   "rally task start /h…"   10 minutes ago       Exited (0) 9 minutes ago                                                           create-and-delete-role.yaml-16-37-22
+d0f77f0837b1        beyondtheclouds/xrally-openstack   "rally task start /h…"   11 minutes ago       Exited (0) 10 minutes ago                                                          create-and-delete-ec2credential.yaml-16-35-44
+aee98ba3828a        beyondtheclouds/xrally-openstack   "rally task start /h…"   15 minutes ago       Exited (0) 11 minutes ago                                                          create-add-and-list-user-roles.yaml-16-32-07
+ef4026eb1f7e        beyondtheclouds/xrally-openstack   "rally task start /h…"   15 minutes ago       Exited (0) 15 minutes ago                                                          authenticate-user-and-validate-token.yaml-16-31-44
+57da93e35369        beyondtheclouds/xrally-openstack   "rally task start /h…"   19 minutes ago       Exited (2) 15 minutes ago                                                          add-and-remove-user-role.yaml-16-27-33
+
+#+END_EXAMPLE
+
+- Still some exit(2) and the deployment is still not working each time, but this is progress!

@@ -1,0 +1,219 @@
+#+TITLE: Report for : Un intergiciel d’une base de données NewSQL qui considère la localité de l’application cliente -- 8th week --
+#+AUTHOR: Marie Delavergne
+
+
+* Monday 5 March [2018-03-05 lun.]
+
+- Trying to do everything from scratch
+  + No problem with ~openstack~ task, but I will be making the deployment in two steps anyway
+  + A bit long, but rally is mostly working
+#+BEGIN_EXAMPLE
+root@grisou-20:~# docker ps -a
+CONTAINER ID        IMAGE                              COMMAND                  CREATED             STATUS                   PORTS                                              NAMES
+4c6bbc23611f        beyondtheclouds/xrally-openstack   "rally task start /h…"   2 hours ago         Exited (0) 2 hours ago                                                      get-entities.yaml-11-43-05
+caf8c993d72e        beyondtheclouds/xrally-openstack   "rally task start /h…"   2 hours ago         Exited (0) 2 hours ago                                                      create-user.yaml-11-37-09
+0a87ef95bc84        beyondtheclouds/xrally-openstack   "rally task start /h…"   2 hours ago         Exited (0) 2 hours ago                                                      create-user-update-password.yaml-11-18-33
+bd5177735251        beyondtheclouds/xrally-openstack   "rally task start /h…"   2 hours ago         Exited (2) 2 hours ago                                                      create-user-set-enabled-and-delete.yaml-11-02-30
+8eef33d2cd84        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (2) 2 hours ago                                                      create-update-and-delete-tenant.yaml-11-01-06
+b737c7d2ff4b        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                      create-tenant.yaml-11-00-30
+3bea5b7babfb        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                      create-tenant-with-users.yaml-10-52-57
+23aa550ca5b1        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                      create-and-update-user.yaml-10-51-53
+7397884c7a75        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                      create-and-list-users.yaml-10-43-02
+2f90b223672b        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                      create-and-list-tenants.yaml-10-42-28
+46cdf3e4714c        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                      create-and-list-services.yaml-10-41-24
+3007d8108350        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                      create-and-list-roles.yaml-10-40-56
+ba33625c1a16        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                      create-and-list-ec2credentials.yaml-10-40-23
+8d8f3344d284        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                      create-and-get-role.yaml-10-39-49
+b6578eb3c2f5        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                      create-and-delete-user.yaml-10-35-50
+6a90270508b7        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                      create-and-delete-service.yaml-10-33-10
+92b0888afaad        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                      create-and-delete-role.yaml-10-32-24
+d5b13158f3ad        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                      create-and-delete-ec2credential.yaml-10-31-57
+cfe9a5767de8        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                      create-add-and-list-user-roles.yaml-10-27-44
+8b80162c12da        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                      authenticate-user-and-validate-token.yaml-10-26-42
+568b1c90e85a        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                      add-and-remove-user-role.yaml-10-20-06
+
+
+
+0a0e6501f8ad        beyondtheclouds/xrally-openstack   "rally task start /h…"   2 hours ago         Exited (2) 2 hours ago                                                        get-entities.yaml-11-47-53
+b9da8a4b8b73        beyondtheclouds/xrally-openstack   "rally task start /h…"   2 hours ago         Exited (0) 2 hours ago                                                        create-user.yaml-11-38-22
+ce27dc23969c        beyondtheclouds/xrally-openstack   "rally task start /h…"   2 hours ago         Exited (2) 2 hours ago                                                        create-user-update-password.yaml-11-22-58
+d30ab6dc7107        beyondtheclouds/xrally-openstack   "rally task start /h…"   2 hours ago         Exited (2) 2 hours ago                                                        create-user-set-enabled-and-delete.yaml-11-08-41
+331a038126f6        beyondtheclouds/xrally-openstack   "rally task start /h…"   2 hours ago         Exited (0) 2 hours ago                                                        create-update-and-delete-tenant.yaml-11-02-59
+440af1662adc        beyondtheclouds/xrally-openstack   "rally task start /h…"   2 hours ago         Exited (0) 2 hours ago                                                        create-tenant.yaml-11-01-41
+56ad10810a65        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 2 hours ago                                                        create-tenant-with-users.yaml-10-53-45
+c23f79ba3e56        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                        create-and-update-user.yaml-10-52-07
+cdc99a036ff1        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                        create-and-list-users.yaml-10-44-16
+20ea883666fe        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                        create-and-list-tenants.yaml-10-43-17
+e20584faaa39        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                        create-and-list-services.yaml-10-41-25
+1b91195d7380        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                        create-and-list-roles.yaml-10-40-51
+b23fd78e5e18        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                        create-and-list-ec2credentials.yaml-10-40-14
+38624b757e01        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (201) 3 hours ago                                                      create-and-get-role.yaml-10-40-08
+1ae03daf1110        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                        create-and-delete-user.yaml-10-37-34
+eb22ca21ff26        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                        create-and-delete-service.yaml-10-34-28
+8a76f0344c12        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                        create-and-delete-role.yaml-10-33-12
+0de9b651865a        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                        create-and-delete-ec2credential.yaml-10-32-30
+e65e7e70125c        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                        create-add-and-list-user-roles.yaml-10-26-25
+5a08d4997316        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                        authenticate-user-and-validate-token.yaml-10-26-15
+6bf7cb52e83c        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                        add-and-remove-user-role.yaml-10-20-06
+
+
+95562226cb12        beyondtheclouds/xrally-openstack   "rally task start /h…"   2 hours ago         Exited (0) 2 hours ago                                                      get-entities.yaml-11-42-10
+198282939ddf        beyondtheclouds/xrally-openstack   "rally task start /h…"   2 hours ago         Exited (0) 2 hours ago                                                      create-user.yaml-11-37-01
+879eac53060f        beyondtheclouds/xrally-openstack   "rally task start /h…"   2 hours ago         Exited (2) 2 hours ago                                                      create-user-update-password.yaml-11-21-24
+9dfd9bf9ce25        beyondtheclouds/xrally-openstack   "rally task start /h…"   2 hours ago         Exited (2) 2 hours ago                                                      create-user-set-enabled-and-delete.yaml-11-03-19
+76f1c922500a        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (2) 2 hours ago                                                      create-update-and-delete-tenant.yaml-11-01-35
+2d269aca405c        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                      create-tenant.yaml-11-00-38
+a03cd707588a        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                      create-tenant-with-users.yaml-10-53-32
+1827f094f052        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                      create-and-update-user.yaml-10-51-55
+6ae6c3153281        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                      create-and-list-users.yaml-10-43-19
+c3b0478bcb50        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                      create-and-list-tenants.yaml-10-42-56
+6bfdbcf008a3        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                      create-and-list-services.yaml-10-41-25
+a546118b63f1        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                      create-and-list-roles.yaml-10-40-12
+cc3a03e07300        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                      create-and-list-ec2credentials.yaml-10-39-47
+6299f68bff27        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                      create-and-get-role.yaml-10-38-20
+7ff835d5190d        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                      create-and-delete-user.yaml-10-33-11
+b54083af4718        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                      create-and-delete-service.yaml-10-32-19
+b30d763d070a        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                      create-and-delete-role.yaml-10-31-52
+c837b6887030        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                      create-and-delete-ec2credential.yaml-10-31-21
+1ad3c785b14d        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                      create-add-and-list-user-roles.yaml-10-26-34
+149de24ce481        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                      authenticate-user-and-validate-token.yaml-10-26-18
+28dbc4d77a3a        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 hours ago         Exited (0) 3 hours ago                                                      add-and-remove-user-role.yaml-10-20-06
+
+#+END_EXAMPLE
+  + Got some bugs around readwithinuncertaintyintervalerror and
+#+BEGIN_EXAMPLE
+ConnectTimeout: Request to http://172.16.72.20/identity/v3/users/0e828c6d64014a3aa7ae7c39769f139f timed out
+
+Traceback (most recent call last):
+ File "/usr/local/lib/python2.7/dist-packages/rally/task/runner.py", line 71, in _run_scenario_once
+   getattr(scenario_inst, method_name)(**scenario_kwargs)
+ File "/usr/local/lib/python2.7/dist-packages/rally/plugins/openstack/scenarios/keystone/basic.py", line 90, in run
+   self.admin_keystone.delete_user(user.id)
+ File "/usr/local/lib/python2.7/dist-packages/rally/task/service.py", line 116, in wrapper
+   return func(instance, *args, **kwargs)
+ File "/usr/local/lib/python2.7/dist-packages/rally/plugins/openstack/services/identity/identity.py", line 109, in delete_user
+   self._impl.delete_user(user_id)
+ File "/usr/local/lib/python2.7/dist-packages/rally/plugins/openstack/services/identity/keystone_common.py", line 31, in delete_user
+   return self._impl.delete_user(user_id)
+ File "/usr/local/lib/python2.7/dist-packages/rally/plugins/openstack/services/identity/keystone_common.py", line 103, in delete_user
+   self._clients.keystone(self.version).users.delete(user_id)
+ File "/usr/local/lib/python2.7/dist-packages/keystoneclient/v3/users.py", line 296, in delete
+   user_id=base.getid(user))
+ File "/usr/local/lib/python2.7/dist-packages/keystoneclient/base.py", line 75, in func
+   return f(*args, **new_kwargs)
+ File "/usr/local/lib/python2.7/dist-packages/keystoneclient/base.py", line 426, in delete
+   self.build_url(dict_args_in_out=kwargs))
+ File "/usr/local/lib/python2.7/dist-packages/keystoneclient/base.py", line 219, in _delete
+   return self.client.delete(url, **kwargs)
+ File "/usr/local/lib/python2.7/dist-packages/keystoneauth1/adapter.py", line 319, in delete
+   return self.request(url, 'DELETE', **kwargs)
+ File "/usr/local/lib/python2.7/dist-packages/keystoneauth1/adapter.py", line 463, in request
+   resp = super(LegacyJsonAdapter, self).request(*args, **kwargs)
+ File "/usr/local/lib/python2.7/dist-packages/keystoneauth1/adapter.py", line 189, in request
+   return self.session.request(url, method, **kwargs)
+ File "/usr/local/lib/python2.7/dist-packages/keystoneauth1/session.py", line 698, in request
+   resp = send(**kwargs)
+ File "/usr/local/lib/python2.7/dist-packages/keystoneauth1/session.py", line 763, in _send_request
+   raise exceptions.ConnectTimeout(msg)
+ConnectTimeout: Request to http://172.16.72.20/identity/v3/users/0e828c6d64014a3aa7ae7c39769f139f timed out
+#+END_EXAMPLE
+
+
+- Trying to see how to make a collectd plugin for Cockroach using [[https://github.com/signalfx/integrations/blob/master/collectd-postgresql/10-postgresql.conf][this project]] but Ronan tells me it's better to ask Cockroachdb guys to make it since it would be useful for a lot of people
+
+
+- Trying to see if =mysql.conf.j2= needs ~inventory_hostname~ or if I keep ~dbmaster_node~
+  + deploying with mariadb after ~backup~ and ~destroy~, checking endpoints using ~docker run --rm -it mariadb mysql -h 172.16.72.20 -u root -p~
+#+BEGIN_EXAMPLE
+MariaDB [(none)]> SELECT * from keystone.endpoint;
++----------------------------------+--------------------+-----------+----------------------------------+------------------------------+-------+---------+-----------+
+| id                               | legacy_endpoint_id | interface | service_id                       | url                          | extra | enabled | region_id |
++----------------------------------+--------------------+-----------+----------------------------------+------------------------------+-------+---------+-----------+
+| 3e3102cb25f74091a23d001bb1cc86ca | NULL               | admin     | 220cb7fca5bb493693e5918b17babc6b | http://172.16.72.20/identity | {}    |       1 | grisou-20 |
+| 69cbb635f84345c38e1145239f59cff7 | NULL               | admin     | 220cb7fca5bb493693e5918b17babc6b | http://172.16.72.3/identity  | {}    |       1 | grisou-3  |
+| 798b25903cd64cd9a0a05a904bddea4d | NULL               | public    | 220cb7fca5bb493693e5918b17babc6b | http://172.16.72.3/identity  | {}    |       1 | grisou-3  |
+| 88ff5ca8ae2d4650ad01a29ab6939dc5 | NULL               | public    | 220cb7fca5bb493693e5918b17babc6b | http://172.16.72.14/identity | {}    |       1 | grisou-14 |
+| 9a8724755a744677b8f6d031b7da5d2c | NULL               | public    | 220cb7fca5bb493693e5918b17babc6b | http://172.16.72.20/identity | {}    |       1 | grisou-20 |
+| c05cff00dcae4ec29e7d70517f202de1 | NULL               | admin     | 220cb7fca5bb493693e5918b17babc6b | http://172.16.72.14/identity | {}    |       1 | grisou-14 |
++----------------------------------+--------------------+-----------+----------------------------------+------------------------------+-------+---------+-----------+
+#+END_EXAMPLE
+  + mysql plugin keeps informations about the cluster, so there is no need to change this
+
+- Searching how to add latency to the network
+  + Changed the conf to add a network where only the databases are
+  + Added the constraints to tc
+    - emulates does not seem to take my constraint into account when launched
+    - moreover, after changing the conf and doing an inventory, nothing seems changed, and after a deploy (even from scratch) I get =RTNETLINK answers: File exists=
+    - trying to see if I can change a nic to UP since I get
+      #+BEGIN_EXAMPLE
+root@grisou-3:~# ip a
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1
+   link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+   inet 127.0.0.1/8 scope host lo
+      valid_lft forever preferred_lft forever
+   inet6 ::1/128 scope host
+      valid_lft forever preferred_lft forever
+2: eth4: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN group default qlen 1000
+   link/ether 24:6e:96:03:0b:fc brd ff:ff:ff:ff:ff:ff
+3: eth5: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN group default qlen 1000
+   link/ether 24:6e:96:03:0b:fd brd ff:ff:ff:ff:ff:ff
+4: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc htb state UP group default qlen 1000
+   link/ether 24:6e:96:03:0b:f8 brd ff:ff:ff:ff:ff:ff
+   inet 172.16.72.3/20 brd 172.16.79.255 scope global eth0
+      valid_lft forever preferred_lft forever
+   inet6 fe80::266e:96ff:fe03:bf8/64 scope link
+      valid_lft forever preferred_lft forever
+5: eth1: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN group default qlen 1000
+   link/ether 24:6e:96:03:0b:fa brd ff:ff:ff:ff:ff:ff
+6: eth2: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN group default qlen 1000
+   link/ether a0:36:9f:7e:4b:88 brd ff:ff:ff:ff:ff:ff
+7: eth3: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN group default qlen 1000
+   link/ether a0:36:9f:7e:4b:8a brd ff:ff:ff:ff:ff:ff
+      #+END_EXAMPLE
+    - and worse, in the env file, I have
+  #+BEGIN_EXAMPLE
+ control:
+ - !!python/object:enoslib.host.Host
+   address: grisou-48.nancy.grid5000.fr
+   alias: grisou-48.nancy.grid5000.fr
+   extra:
+     control_network: eth0
+     database_network: eth0
+     enos_devices: [eth0, eth0]
+   keyfile: null
+   port: null
+   user: root
+ database:
+ - !!python/object:enoslib.host.Host
+   address: grisou-28.nancy.grid5000.fr
+   alias: grisou-28.nancy.grid5000.fr
+   extra:
+     control_network: eth0
+     database_network: eth0
+     enos_devices: [eth0, eth0]
+   keyfile: null
+   port: null
+   user: root
+ - !!python/object:enoslib.host.Host
+   address: grisou-4.nancy.grid5000.fr
+   alias: grisou-4.nancy.grid5000.fr
+   extra:
+     control_network: eth0
+     database_network: eth0
+     enos_devices: [eth0, eth0]
+   keyfile: null
+   port: null
+   user: root
+ - !!python/object:enoslib.host.Host
+   address: grisou-3.nancy.grid5000.fr
+   alias: grisou-3.nancy.grid5000.fr
+   extra:
+     control_network: eth0
+     database_network: eth0
+     enos_devices: [eth0, eth0]
+   keyfile: null
+   port: null
+   user: root
+  #+END_EXAMPLE
+  - when using [[https://github.com/BeyondTheClouds/enoslib/blob/978a3431c0d4dbae5621e1de08fc5858720238c8/enoslib/infra/enos_g5k/provider.py#L139][local-kvlan]], I can't access the machines and the deployment, after deploying debian on 4 nodes, only consider the control node which is not on the vlan.
+  - will try tomorrow on a routed vlan (kavlan)

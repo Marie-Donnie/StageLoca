@@ -595,6 +595,7 @@ docker exec cockroachdb-grisou-40 ./cockroach sql --port 26257 --insecure -e "DR
 keystone-manage db_sync
 #+END_SRC
 
+
 * Friday 2 March [2018-03-02 ven.]
 
 - Since Rally only worked on one node, grisou-38 (which was not the master), we tried to see if rally was able to make the tests when changing the region name
@@ -745,3 +746,5 @@ ef4026eb1f7e        beyondtheclouds/xrally-openstack   "rally task start /h…" 
 #+END_EXAMPLE
 
 - Still some exit(2) and the deployment is still not working each time, but this is progress!
+
+- For the tests, we may have to think of the order of these tests so they won't be too much contention

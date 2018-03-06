@@ -217,3 +217,188 @@ root@grisou-3:~# ip a
   #+END_EXAMPLE
   - when using [[https://github.com/BeyondTheClouds/enoslib/blob/978a3431c0d4dbae5621e1de08fc5858720238c8/enoslib/infra/enos_g5k/provider.py#L139][local-kvlan]], I can't access the machines and the deployment, after deploying debian on 4 nodes, only consider the control node which is not on the vlan.
   - will try tomorrow on a routed vlan (kavlan)
+
+
+* Tuesday 6 March [2018-03-06 mar.]
+
+- Trying with kavlan while searching how to configure it
+
+#+BEGIN_EXAMPLE
+DEBUG:root:Running ip link set eth0 up ; dhclient eth0 on ['grisou-47-kavlan-4.nancy.grid5000.fr', 'grisou-48-kavlan-4.nancy.grid5000.fr', 'grisou-26-kavlan-4.nancy.grid5000.fr']
+DEBUG:root:Running ip link set eth0 up ; dhclient eth0 on ['grisou-49.nancy.grid5000.fr']
+DEBUG:root:{'control': [Host(grisou-49.nancy.grid5000.fr, address=grisou-49.nancy.grid5000.fr)], 'database': [Host(grisou-47-kavlan-4.nancy.grid5000.fr, address=grisou-47-kavlan-4.nancy.grid5000.fr), Host(grisou-48-kavlan-4.nancy.grid5000.fr, address=grisou-48-kavlan-4.nancy.grid5000.fr), Host(grisou-26-kavlan-4.nancy.grid5000.fr, address=grisou-26-kavlan-4.nancy.grid5000.fr)], 'chrony': [Host(grisou-47-kavlan-4.nancy.grid5000.fr, address=grisou-47-kavlan-4.nancy.grid5000.fr), Host(grisou-48-kavlan-4.nancy.grid5000.fr, address=grisou-48-kavlan-4.nancy.grid5000.fr), Host(grisou-26-kavlan-4.nancy.grid5000.fr, address=grisou-26-kavlan-4.nancy.grid5000.fr)], 'rally': [Host(grisou-47-kavlan-4.nancy.grid5000.fr, address=grisou-47-kavlan-4.nancy.grid5000.fr), Host(grisou-48-kavlan-4.nancy.grid5000.fr, address=grisou-48-kavlan-4.nancy.grid5000.fr), Host(grisou-26-kavlan-4.nancy.grid5000.fr, address=grisou-26-kavlan-4.nancy.grid5000.fr)], 'openstack': [Host(grisou-47-kavlan-4.nancy.grid5000.fr, address=grisou-47-kavlan-4.nancy.grid5000.fr), Host(grisou-48-kavlan-4.nancy.grid5000.fr, address=grisou-48-kavlan-4.nancy.grid5000.fr), Host(grisou-26-kavlan-4.nancy.grid5000.fr, address=grisou-26-kavlan-4.nancy.grid5000.fr)], 'sysbench': [Host(grisou-47-kavlan-4.nancy.grid5000.fr, address=grisou-47-kavlan-4.nancy.grid5000.fr), Host(grisou-48-kavlan-4.nancy.grid5000.fr, address=grisou-48-kavlan-4.nancy.grid5000.fr), Host(grisou-26-kavlan-4.nancy.grid5000.fr, address=grisou-26-kavlan-4.nancy.grid5000.fr)]}
+DEBUG:root:[{'start': '10.16.26.0', 'end': '10.16.61.255', 'dns': '131.254.203.235', 'roles': ['database_network'], 'cidr': '10.16.0.0/18', 'gateway': '10.16.63.254'}, {'roles': ['control_network'], 'cidr': '172.16.64.0/20', 'gateway': '172.16.79.254', 'dns': '131.254.203.235'}]
+#+END_EXAMPLE
+
+- After deployment and emulate, trying to ping a node in the kavlan:
+#+BEGIN_EXAMPLE
+root@grisou-47-kavlan-4:~# ping grisou-48-kavlan-4
+PING grisou-48-eth0-kavlan-4.nancy.grid5000.fr (10.16.12.48) 56(84) bytes of data.
+64 bytes from grisou-48-eth0-kavlan-4.nancy.grid5000.fr (10.16.12.48): icmp_seq=1 ttl=64 time=40.1 ms
+64 bytes from grisou-48-eth0-kavlan-4.nancy.grid5000.fr (10.16.12.48): icmp_seq=2 ttl=64 time=40.0 ms
+64 bytes from grisou-48-eth0-kavlan-4.nancy.grid5000.fr (10.16.12.48): icmp_seq=3 ttl=64 time=40.0 ms
+64 bytes from grisou-48-eth0-kavlan-4.nancy.grid5000.fr (10.16.12.48): icmp_seq=4 ttl=64 time=40.0 mss
+--- grisou-48-eth0-kavlan-4.nancy.grid5000.fr ping statistics ---
+13 packets transmitted, 13 received, 0% packet loss, time 12012ms
+rtt min/avg/max/mdev = 40.041/40.056/40.135/0.223 ms
+#+END_EXAMPLE
+
+- And control node:
+#+BEGIN_EXAMPLE
+root@grisou-47-kavlan-4:~# ping grisou-49
+PING grisou-49.nancy.grid5000.fr (172.16.72.49) 56(84) bytes of data.
+64 bytes from grisou-49.nancy.grid5000.fr (172.16.72.49): icmp_seq=1 ttl=63 time=40.0 ms
+64 bytes from grisou-49.nancy.grid5000.fr (172.16.72.49): icmp_seq=2 ttl=63 time=40.0 ms
+64 bytes from grisou-49.nancy.grid5000.fr (172.16.72.49): icmp_seq=3 ttl=63 time=40.0 ms
+64 bytes from grisou-49.nancy.grid5000.fr (172.16.72.49): icmp_seq=4 ttl=63 time=40.0 ms
+--- grisou-49.nancy.grid5000.fr ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 3000ms
+rtt min/avg/max/mdev = 40.054/40.062/40.072/0.141 ms
+#+END_EXAMPLE
+
+- Doesn't seem to take my constraint into account, but rather the ~default_delay~
+- Confirmed when changing ~default_delay~ to 200ms:
+
+#+BEGIN_EXAMPLE
+root@grisou-47-kavlan-4:~# ping grisou-48-kavlan-4
+PING grisou-48-eth0-kavlan-4.nancy.grid5000.fr (10.16.12.48) 56(84) bytes of data.
+64 bytes from grisou-48-eth0-kavlan-4.nancy.grid5000.fr (10.16.12.48): icmp_seq=1 ttl=64 time=400 ms
+64 bytes from grisou-48-eth0-kavlan-4.nancy.grid5000.fr (10.16.12.48): icmp_seq=2 ttl=64 time=400 ms
+--- grisou-48-eth0-kavlan-4.nancy.grid5000.fr ping statistics ---
+3 packets transmitted, 2 received, 33% packet loss, time 2002ms
+rtt min/avg/max/mdev = 400.065/400.079/400.093/0.014 ms
+root@grisou-47-kavlan-4:~# ping grisou-49
+PING grisou-49.nancy.grid5000.fr (172.16.72.49) 56(84) bytes of data.
+64 bytes from grisou-49.nancy.grid5000.fr (172.16.72.49): icmp_seq=1 ttl=63 time=400 ms
+64 bytes from grisou-49.nancy.grid5000.fr (172.16.72.49): icmp_seq=2 ttl=63 time=400 ms
+64 bytes from grisou-49.nancy.grid5000.fr (172.16.72.49): icmp_seq=3 ttl=63 time=400 ms
+--- grisou-49.nancy.grid5000.fr ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2001ms
+rtt min/avg/max/mdev = 400.049/400.068/400.095/0.730 ms
+#+END_EXAMPLE
+
+- Moreover, as seen just above, and confirmed below, the delay is the same for every network
+#+BEGIN_EXAMPLE
+root@grisou-49:~# ping grisou-47-kavlan-4
+PING grisou-47-eth0-kavlan-4.nancy.grid5000.fr (10.16.12.47) 56(84) bytes of data.
+64 bytes from grisou-47-eth0-kavlan-4.nancy.grid5000.fr (10.16.12.47): icmp_seq=1 ttl=63 time=400 ms
+64 bytes from grisou-47-eth0-kavlan-4.nancy.grid5000.fr (10.16.12.47): icmp_seq=2 ttl=63 time=400 ms
+64 bytes from grisou-47-eth0-kavlan-4.nancy.grid5000.fr (10.16.12.47): icmp_seq=3 ttl=63 time=400 ms
+--- grisou-47-eth0-kavlan-4.nancy.grid5000.fr ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2001ms
+rtt min/avg/max/mdev = 400.045/400.055/400.068/0.516 ms
+#+END_EXAMPLE
+
+- And even worse, I don't know how could it work since there are no new nic activated:
+#+BEGIN_EXAMPLE
+root@grisou-47-kavlan-4:~# ip addr
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host
+       valid_lft forever preferred_lft forever
+2: eth4: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN group default qlen 1000
+    link/ether 24:6e:96:03:0a:44 brd ff:ff:ff:ff:ff:ff
+3: eth5: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN group default qlen 1000
+    link/ether 24:6e:96:03:0a:45 brd ff:ff:ff:ff:ff:ff
+4: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc htb state UP group default qlen 1000
+    link/ether 24:6e:96:03:0a:40 brd ff:ff:ff:ff:ff:ff
+    inet 10.16.12.47/18 brd 10.16.63.255 scope global eth0
+       valid_lft forever preferred_lft forever
+    inet6 fe80::266e:96ff:fe03:a40/64 scope link
+       valid_lft forever preferred_lft forever
+5: eth1: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN group default qlen 1000
+    link/ether 24:6e:96:03:0a:42 brd ff:ff:ff:ff:ff:ff
+6: eth2: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN group default qlen 1000
+    link/ether a0:36:9f:7e:4a:48 brd ff:ff:ff:ff:ff:ff
+7: eth3: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN group default qlen 1000
+    link/ether a0:36:9f:7e:4a:4a brd ff:ff:ff:ff:ff:ff
+#+END_EXAMPLE
+
+#+BEGIN_EXAMPLE
+root@grisou-49:~# ip addr
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host
+       valid_lft forever preferred_lft forever
+2: eth4: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN group default qlen 1000
+    link/ether 24:6e:96:03:0e:84 brd ff:ff:ff:ff:ff:ff
+3: eth5: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN group default qlen 1000
+    link/ether 24:6e:96:03:0e:85 brd ff:ff:ff:ff:ff:ff
+4: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc htb state UP group default qlen 1000
+    link/ether 24:6e:96:03:0e:80 brd ff:ff:ff:ff:ff:ff
+    inet 172.16.72.49/20 brd 172.16.79.255 scope global eth0
+       valid_lft forever preferred_lft forever
+    inet6 fe80::266e:96ff:fe03:e80/64 scope link
+       valid_lft forever preferred_lft forever
+5: eth1: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN group default qlen 1000
+    link/ether 24:6e:96:03:0e:82 brd ff:ff:ff:ff:ff:ff
+6: eth2: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN group default qlen 1000
+    link/ether a0:36:9f:7e:4d:cc brd ff:ff:ff:ff:ff:ff
+7: eth3: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN group default qlen 1000
+    link/ether a0:36:9f:7e:4d:ce brd ff:ff:ff:ff:ff:ff
+#+END_EXAMPLE
+
+- Digging to see where the constraints make a problem
+  + ediff on constraints before and after merge saying no differences makes me think MAYBE the problem is here
+  + modifying
+    - results, on deployment:
+#+BEGIN_EXAMPLE
+changed: [grisou-26-kavlan-4.nancy.grid5000.fr] => (item=(62, {'loss': 0, 'target': '10.16.12.47', 'delay': '10ms', 'source': 'grisou-26-kavlan-4.nancy.grid5000.fr', 'rate': '1gbit', 'device': 'eth0'}))
+changed: [grisou-47-kavlan-4.nancy.grid5000.fr] => (item=(62, {'loss': 0, 'target': '10.16.12.47', 'delay': '10ms', 'source': 'grisou-47-kavlan-4.nancy.grid5000.fr', 'rate': '1gbit', 'device': 'eth0'}))
+changed: [grisou-48-kavlan-4.nancy.grid5000.fr] => (item=(63, {'loss': 0, 'target': '10.16.12.48', 'delay': '10ms', 'source': 'grisou-48-kavlan-4.nancy.grid5000.fr', 'rate': '1gbit', 'device': 'eth0'}))
+changed: [grisou-26-kavlan-4.nancy.grid5000.fr] => (item=(63, {'loss': 0, 'target': '10.16.12.48', 'delay': '10ms', 'source': 'grisou-26-kavlan-4.nancy.grid5000.fr', 'rate': '1gbit', 'device': 'eth0'}))
+changed: [grisou-47-kavlan-4.nancy.grid5000.fr] => (item=(63, {'loss': 0, 'target': '10.16.12.48', 'delay': '10ms', 'source': 'grisou-47-kavlan-4.nancy.grid5000.fr', 'rate': '1gbit', 'device': 'eth0'}))
+changed: [grisou-48-kavlan-4.nancy.grid5000.fr] => (item=(64, {'loss': 0, 'target': '10.16.12.26', 'delay': '10ms', 'source': 'grisou-48-kavlan-4.nancy.grid5000.fr', 'rate': '1gbit', 'device': 'eth0'}))
+changed: [grisou-26-kavlan-4.nancy.grid5000.fr] => (item=(64, {'loss': 0, 'target': '10.16.12.26', 'delay': '10ms', 'source': 'grisou-26-kavlan-4.nancy.grid5000.fr', 'rate': '1gbit', 'device': 'eth0'}))
+changed: [grisou-47-kavlan-4.nancy.grid5000.fr] => (item=(64, {'loss': 0, 'target': '10.16.12.26', 'delay': '10ms', 'source': 'grisou-47-kavlan-4.nancy.grid5000.fr', 'rate': '1gbit', 'device': 'eth0'}))
+changed: [grisou-48-kavlan-4.nancy.grid5000.fr] => (item=(65, {'loss': '0', 'target': '10.16.12.47', 'delay': '200ms', 'source': 'grisou-48-kavlan-4.nancy.grid5000.fr', 'rate': '1gbit', 'device': 'eth0'}))
+changed: [grisou-26-kavlan-4.nancy.grid5000.fr] => (item=(65, {'loss': '0', 'target': '10.16.12.47', 'delay': '200ms', 'source': 'grisou-26-kavlan-4.nancy.grid5000.fr', 'rate': '1gbit', 'device': 'eth0'}))
+changed: [grisou-47-kavlan-4.nancy.grid5000.fr] => (item=(65, {'loss': '0', 'target': '10.16.12.47', 'delay': '200ms', 'source': 'grisou-47-kavlan-4.nancy.grid5000.fr', 'rate': '1gbit', 'device': 'eth0'}))
+changed: [grisou-48-kavlan-4.nancy.grid5000.fr] => (item=(66, {'loss': '0', 'target': '10.16.12.48', 'delay': '200ms', 'source': 'grisou-48-kavlan-4.nancy.grid5000.fr', 'rate': '1gbit', 'device': 'eth0'}))
+changed: [grisou-26-kavlan-4.nancy.grid5000.fr] => (item=(66, {'loss': '0', 'target': '10.16.12.48', 'delay': '200ms', 'source': 'grisou-26-kavlan-4.nancy.grid5000.fr', 'rate': '1gbit', 'device': 'eth0'}))
+changed: [grisou-47-kavlan-4.nancy.grid5000.fr] => (item=(66, {'loss': '0', 'target': '10.16.12.48', 'delay': '200ms', 'source': 'grisou-47-kavlan-4.nancy.grid5000.fr', 'rate': '1gbit', 'device': 'eth0'}))
+changed: [grisou-48-kavlan-4.nancy.grid5000.fr] => (item=(67, {'loss': '0', 'target': '10.16.12.26', 'delay': '200ms', 'source': 'grisou-48-kavlan-4.nancy.grid5000.fr', 'rate': '1gbit', 'device': 'eth0'}))
+changed: [grisou-26-kavlan-4.nancy.grid5000.fr] => (item=(67, {'loss': '0', 'target': '10.16.12.26', 'delay': '200ms', 'source': 'grisou-26-kavlan-4.nancy.grid5000.fr', 'rate': '1gbit', 'device': 'eth0'}))
+changed: [grisou-47-kavlan-4.nancy.grid5000.fr] => (item=(67, {'loss': '0', 'target': '10.16.12.26', 'delay': '200ms', 'source': 'grisou-47-kavlan-4.nancy.grid5000.fr', 'rate': '1gbit', 'device': 'eth0'}))
+#+END_EXAMPLE
+    - results for ping:
+#+BEGIN_EXAMPLE
+root@grisou-47-kavlan-4:~# ping grisou-48-kavlan-4
+PING grisou-48-eth0-kavlan-4.nancy.grid5000.fr (10.16.12.48) 56(84) bytes of data.
+64 bytes from grisou-48-eth0-kavlan-4.nancy.grid5000.fr (10.16.12.48): icmp_seq=1 ttl=64 time=400 ms
+64 bytes from grisou-48-eth0-kavlan-4.nancy.grid5000.fr (10.16.12.48): icmp_seq=2 ttl=64 time=400 ms
+64 bytes from grisou-48-eth0-kavlan-4.nancy.grid5000.fr (10.16.12.48): icmp_seq=3 ttl=64 time=400 ms
+64 bytes from grisou-48-eth0-kavlan-4.nancy.grid5000.fr (10.16.12.48): icmp_seq=4 ttl=64 time=400 ms
+--- grisou-48-eth0-kavlan-4.nancy.grid5000.fr ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 3002ms
+rtt min/avg/max/mdev = 400.046/400.065/400.095/0.447 ms
+root@grisou-47-kavlan-4:~# ping grisou-49
+PING grisou-49.nancy.grid5000.fr (172.16.72.49) 56(84) bytes of data.
+64 bytes from grisou-49.nancy.grid5000.fr (172.16.72.49): icmp_seq=1 ttl=63 time=20.6 ms
+64 bytes from grisou-49.nancy.grid5000.fr (172.16.72.49): icmp_seq=2 ttl=63 time=20.0 ms
+64 bytes from grisou-49.nancy.grid5000.fr (172.16.72.49): icmp_seq=3 ttl=63 time=20.0 ms
+64 bytes from grisou-49.nancy.grid5000.fr (172.16.72.49): icmp_seq=4 ttl=63 time=20.0 ms
+--- grisou-49.nancy.grid5000.fr ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 3000ms
+rtt min/avg/max/mdev = 20.053/20.215/20.684/0.305 ms
+root@grisou-49:~# ping grisou-47-kavlan-4
+PING grisou-47-eth0-kavlan-4.nancy.grid5000.fr (10.16.12.47) 56(84) bytes of data.
+64 bytes from grisou-47-eth0-kavlan-4.nancy.grid5000.fr (10.16.12.47): icmp_seq=1 ttl=63 time=20.0 ms
+64 bytes from grisou-47-eth0-kavlan-4.nancy.grid5000.fr (10.16.12.47): icmp_seq=2 ttl=63 time=20.0 ms
+64 bytes from grisou-47-eth0-kavlan-4.nancy.grid5000.fr (10.16.12.47): icmp_seq=3 ttl=63 time=20.0 ms
+64 bytes from grisou-47-eth0-kavlan-4.nancy.grid5000.fr (10.16.12.47): icmp_seq=4 ttl=63 time=20.0 ms
+64 bytes from grisou-47-eth0-kavlan-4.nancy.grid5000.fr (10.16.12.47): icmp_seq=5 ttl=63 time=20.0 ms
+--- grisou-47-eth0-kavlan-4.nancy.grid5000.fr ping statistics ---
+5 packets transmitted, 5 received, 0% packet loss, time 4004ms
+rtt min/avg/max/mdev = 20.039/20.056/20.072/0.179 ms
+#+END_EXAMPLE
+
+- Everything seems ok, I switch =control_network= to =database_network= when necessary
+  + tiny mighty problem here, had to add =hostvars[chrony_server]['control_network']= since I didn't have =control_network= on the other network nodes.
+
+
+- Ran cockroachdb and mariadb rally on one node

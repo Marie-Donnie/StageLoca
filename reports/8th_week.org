@@ -402,3 +402,14 @@ rtt min/avg/max/mdev = 20.039/20.056/20.072/0.179 ms
 
 
 - Ran cockroachdb and mariadb rally on one node
+
+
+* Wednesday 7 March [2018-03-07 mer.]
+
+- Doing cockroachDB 5 nodes experiment
+  + After 3 hours, not half of the tasks are finished :(
+  + We looked with Ronan how to put CockroachDB in Snapshot Isolation mode (by befault it is in Serializable, which is the strongest level of isolation)
+    - he found [[https://www.cockroachlabs.com/docs/stable/set-transaction.html#set-sessions-default-isolation][this link]]
+
+- Took almost 8 hours from deploy to backup, but it worked "fine"
+  + will try with MariaDB and then I will retry with SI

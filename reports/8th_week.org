@@ -413,3 +413,257 @@ rtt min/avg/max/mdev = 20.039/20.056/20.072/0.179 ms
 
 - Took almost 8 hours from deploy to backup, but it worked "fine"
   + will try with MariaDB and then I will retry with SI
+
+
+* Friday 9 March [2018-03-09 ven.]
+
+- Deploying and testing on MariaDB
+  - A lot quicker but loads of exit(201)
+#+BEGIN_EXAMPLE
+1f0a52039c09        beyondtheclouds/xrally-openstack   "rally task start /h…"   54 seconds ago           Exited (0) 43 seconds ago                                                                                                     create-and-delete-ec2credential.yaml-10-51-19
+
+5dcb4bda0796        beyondtheclouds/xrally-openstack   "rally task start /h…"   About a minute ago       Exited (0) 55 seconds ago                                                                                                                    create-and-delete-role.yaml-10-50-57
+
+aa5530376ac2        beyondtheclouds/xrally-openstack   "rally task start /h…"   About a minute ago       Exited (0) About a minute ago                                                                                                                create-and-list-tenants.yaml-10-50-36
+
+38d99815c4a1        beyondtheclouds/xrally-openstack   "rally task start /h…"   About a minute ago       Exited (201) About a minute ago                                                                                                              get-entities.yaml-10-50-31
+
+fae82f6e2b2a        beyondtheclouds/xrally-openstack   "rally task start /h…"   About a minute ago       Exited (201) About a minute ago                                                                                                              create-and-get-role.yaml-10-50-26
+
+e997e5f30414        beyondtheclouds/xrally-openstack   "rally task start /h…"   About a minute ago       Exited (201) About a minute ago                                                                                                              create-and-list-services.yaml-10-50-20
+
+62723142f662        beyondtheclouds/xrally-openstack   "rally task start /h…"   About a minute ago       Exited (201) About a minute ago                                                                                                              create-and-delete-service.yaml-10-50-16
+
+a8398eb1eab6        beyondtheclouds/xrally-openstack   "rally task start /h…"   2 minutes ago            Exited (201) About a minute ago                                                                                                              create-add-and-list-user-roles.yaml-10-50-11
+
+41562e719da1        beyondtheclouds/xrally-openstack   "rally task start /h…"   2 minutes ago            Exited (2) 2 minutes ago                                                                                                                     create-user-set-enabled-and-delete.yaml-10-49-38
+
+2e237ca67c4f        beyondtheclouds/xrally-openstack   "rally task start /h…"   2 minutes ago            Exited (201) 2 minutes ago                                                                                                                   create-tenant-with-users.yaml-10-49-34
+
+9becf72fcde8        beyondtheclouds/xrally-openstack   "rally task start /h…"   2 minutes ago            Exited (2) 2 minutes ago                                                                                                                     authenticate-user-and-validate-token.yaml-10-49-25
+
+8a8d2ee1dfe3        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 minutes ago            Exited (0) 2 minutes ago                                                                                                                     create-user.yaml-10-48-46
+
+ae435eb72a41        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 minutes ago            Exited (201) 3 minutes ago                                                                                                                   create-and-list-users.yaml-10-48-42
+
+409d9e75cb41        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 minutes ago            Exited (201) 3 minutes ago                                                                                                                   create-and-update-user.yaml-10-48-37
+
+71649a2b8358        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 minutes ago            Exited (201) 3 minutes ago                                                                                                                   create-and-delete-user.yaml-10-48-32
+
+8bdbd9c7171f        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 minutes ago            Exited (201) 3 minutes ago                                                                                                                   add-and-remove-user-role.yaml-10-48-27
+
+5ac19fe7258e        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 minutes ago            Exited (201) 3 minutes ago                                                                                                                   create-and-list-roles.yaml-10-48-23
+
+2a3ebafd93e3        beyondtheclouds/xrally-openstack   "rally task start /h…"   3 minutes ago            Exited (201) 3 minutes ago                                                                                                                   create-user-update-password.yaml-10-48-17
+
+b9e7c3cdaf4e        beyondtheclouds/xrally-openstack   "rally task start /h…"   4 minutes ago            Exited (201) 3 minutes ago                                                                                                                   create-update-and-delete-tenant.yaml-10-48-12
+
+d1ca9e67530c        beyondtheclouds/xrally-openstack   "rally task start /h…"   4 minutes ago            Exited (201) 4 minutes ago                                                                                                                   create-and-list-ec2credentials.yaml-10-48-07
+
+0a25ae9f0d9b        beyondtheclouds/xrally-openstack   "rally task start /h…"   4 minutes ago            Exited (0) 4 minutes ago                                                                                                                     create-tenant.yaml-10-47-43
+#+END_EXAMPLE
+  + Also, collectd doesn't work anymore
+
+- Inspecting keystone logs to search for the reason to all these exits
+#+BEGIN_EXAMPLE
+[None req-df051494-0e21-40d4-a830-2025bdfdbb94 None None] (_mysql_exceptions.OperationalError) (1213, 'Deadlock: wsrep aborted transaction'): OperationalError: (_mysql_exceptions.OperationalError) (1213
+mon.wsgi Traceback (most recent call last):
+mon.wsgi   File "/opt/stack/keystone/keystone/common/wsgi.py", line 228, in __call__
+mon.wsgi     result = method(req, **params)
+mon.wsgi   File "/opt/stack/keystone/keystone/common/controller.py", line 94, in inner
+mon.wsgi     return f(self, request, *args, **kwargs)
+mon.wsgi   File "/opt/stack/keystone/keystone/resource/controllers.py", line 269, in create_project
+mon.wsgi     initiator=request.audit_initiator)
+mon.wsgi   File "/opt/stack/keystone/keystone/common/manager.py", line 110, in wrapped
+mon.wsgi     __ret_val = __f(*args, **kwargs)
+mon.wsgi   File "/opt/stack/keystone/keystone/resource/core.py", line 208, in create_project
+mon.wsgi     ret = self.driver.create_project(project_id, project)
+mon.wsgi   File "/opt/stack/keystone/keystone/common/sql/core.py", line 505, in wrapper
+mon.wsgi     return method(*args, **kwargs)
+mon.wsgi   File "/opt/stack/oslo.db/oslo_db/api.py", line 150, in wrapper
+mon.wsgi     ectxt.value = e.inner_exc
+mon.wsgi   File "/usr/local/lib/python2.7/dist-packages/oslo_utils/excutils.py", line 220, in __exit__
+mon.wsgi     self.force_reraise()
+mon.wsgi   File "/usr/local/lib/python2.7/dist-packages/oslo_utils/excutils.py", line 196, in force_reraise
+mon.wsgi     six.reraise(self.type_, self.value, self.tb)
+mon.wsgi   File "/opt/stack/oslo.db/oslo_db/api.py", line 138, in wrapper
+mon.wsgi     return f(*args, **kwargs)
+mon.wsgi   File "/opt/stack/keystone/keystone/resource/backends/sql.py", line 183, in create_project
+mon.wsgi     return project_ref.to_dict()
+mon.wsgi   File "/usr/lib/python2.7/contextlib.py", line 24, in __exit__
+mon.wsgi     self.gen.next()
+mon.wsgi   File "/opt/stack/oslo.db/oslo_db/sqlalchemy/enginefacade.py", line 1029, in _transaction_scope
+mon.wsgi     yield resource
+mon.wsgi   File "/usr/lib/python2.7/contextlib.py", line 24, in __exit__
+mon.wsgi     self.gen.next()
+mon.wsgi   File "/opt/stack/oslo.db/oslo_db/sqlalchemy/enginefacade.py", line 641, in _session
+mon.wsgi     self.session.rollback()
+mon.wsgi   File "/usr/local/lib/python2.7/dist-packages/oslo_utils/excutils.py", line 220, in __exit__
+mon.wsgi     self.force_reraise()
+mon.wsgi   File "/usr/local/lib/python2.7/dist-packages/oslo_utils/excutils.py", line 196, in force_reraise
+mon.wsgi     six.reraise(self.type_, self.value, self.tb)
+mon.wsgi   File "/opt/stack/oslo.db/oslo_db/sqlalchemy/enginefacade.py", line 638, in _session
+mon.wsgi     self._end_session_transaction(self.session)
+mon.wsgi   File "/opt/stack/oslo.db/oslo_db/sqlalchemy/enginefacade.py", line 666, in _end_session_transaction
+mon.wsgi     session.commit()
+mon.wsgi   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/orm/session.py", line 906, in commit
+mon.wsgi     self.transaction.commit()
+mon.wsgi   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/orm/session.py", line 465, in commit
+mon.wsgi     t[1].commit()
+mon.wsgi   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/engine/base.py", line 1632, in commit
+mon.wsgi     self._do_commit()
+mon.wsgi   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/engine/base.py", line 1663, in _do_commit
+mon.wsgi     self.connection._commit_impl()
+mon.wsgi   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/engine/base.py", line 723, in _commit_impl
+mon.wsgi     self._handle_dbapi_exception(e, None, None, None, None)
+mon.wsgi   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/engine/base.py", line 1398, in _handle_dbapi_exception
+mon.wsgi     util.raise_from_cause(newraise, exc_info)
+mon.wsgi   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/util/compat.py", line 203, in raise_from_cause
+mon.wsgi     reraise(type(exception), exception, tb=exc_tb, cause=cause)
+mon.wsgi   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/engine/base.py", line 721, in _commit_impl
+mon.wsgi     self.engine.dialect.do_commit(self.connection)
+mon.wsgi   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/dialects/mysql/base.py", line 1586, in do_commit
+mon.wsgi     dbapi_connection.commit()
+mon.wsgi OperationalError: (_mysql_exceptions.OperationalError) (1213, 'Deadlock: wsrep aborted transaction')
+#+END_EXAMPLE
+- Trying to correct that by adding on [[https://github.com/BeyondTheClouds/oslo.db/blob/cockroachdb/pike/oslo_db/sqlalchemy/exc_filters.py#L60][this line]]:
+#+BEGIN_SRC
+@filters("mysql", sqla_exc.OperationalError, r"^.*\b1213\b.*Deadlock*")
+#+END_SRC
+
+
+- Trying to put tc in config
+  + using in conf.yaml (thanks to [[http://pyyaml.org/wiki/PyYAMLDocumentation#YAMLsyntax][yaml documentation]]):
+#+BEGIN_EXAMPLE
+tc:
+  enable: True
+  default_delay: 0ms
+  default_rate: 10gbit
+  constraints:
+    - src: database
+      dst: database
+      delay: 0ms
+      rate: 10gbit
+      loss: 0
+#+END_EXAMPLE
+  + testing syntax using a little function (since I'm not sure how yaml works)
+    #+BEGIN_SRC python
+@doc()
+def test_lol(**kwargs):
+    """
+usage: juice test_lol
+
+Testing yaml config
+    """
+    bidule = {}
+    with open("./conf.yaml") as f:
+        bidule = yaml.load(f)
+    print(bidule)
+    #+END_SRC
+    #+BEGIN_EXAMPLE
+    (venv) madelavergne@frennes:~/juice$ ./juice.py test_lol
+{'g5k': {'dhcp': True, 'walltime': '09:00:00', 'job_name': 'juice-tests', 'resources': {'networks': [{'type': 'kavlan', 'id': 'n1', 'roles': ['database_network'], 'site': 'nancy'}, {'type': 'prod', 'id': 'n2', 'roles': ['control_network'], 'site': 'nancy'}], 'machines': [{'cluster': 'grisou', 'nodes': 5, 'roles': ['chrony', 'database', 'sysbench', 'openstack', 'rally'], 'primary_network': 'n1', 'secondary_networks': ['n2']}, {'cluster': 'grisou', 'nodes': 1, 'roles': ['control'], 'primary_network': 'n2', 'secondary_networks': []}]}, 'env_name': 'debian9-x64-nfs'}, 'registry': {'type': 'none'}, 'tc': {'default_rate': '10gbit', 'enable': True, 'default_delay': '0ms', 'constraints': [{'delay': '0ms', 'src': 'database', 'dst': 'database', 'rate': '10gbit', 'loss': 0}]}}
+    #+END_EXAMPLE
+  + comparing to
+#+BEGIN_EXAMPLE
+INFO:root:Emulates using constraints: {'default_rate': '10gbit', 'enable': True, 'default_delay': '0ms', 'constraints': [{'delay': '0ms', 'src': 'database', 'dst': 'database', 'rate': '10gbit', 'loss': '0'}]}
+#+END_EXAMPLE
+  + seems ok
+
+
+(venv) madelavergne@frennes:~/juice$ ./juice.py emulate
+DEBUG:root:Loaded environment current/env
+INFO:root:- Task emulate started -
+Traceback (most recent call last):
+  File "./juice.py", line 354, in <module>
+    doc_lookup(args['<command>'], argv)
+  File "/home/madelavergne/juice/utils/doc.py", line 29, in doc_lookup
+    return fn(**docopt(fn.__doc__, argv=argv))
+  File "/home/madelavergne/juice/utils/doc.py", line 18, in decorated
+    fn(*args, **kwargs)
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/enoslib/task.py", line 50, in decorated
+    fn(*args, **kwargs)
+  File "./juice.py", line 226, in emulate
+    logging.info("Emulates using constraints: %s" % tc)
+UnboundLocalError: local variable 'tc' referenced before assignment
+
+- Ran keystone/create-and-delete-service.yaml
+  + with delay = 0 ms
+#+BEGIN_EXAMPLE
+--------------------------------------------------------------------------------
+Task 5659b84c-1c94-4c28-9a59-72fa61b3c1f6: finished
+--------------------------------------------------------------------------------
+
+test scenario KeystoneBasic.create_and_delete_service
+args position 0
+args values:
+{
+  "runner": {
+    "times": 100,
+    "concurrency": 10
+  },
+  "contexts": {},
+  "args": {
+    "service_type": "Rally_test_type",
+    "description": "test_description"
+  },
+  "sla": {
+    "failure_rate": {
+      "max": 0
+    }
+  },
+  "hooks": []
+}
+
+--------------------------------------------------------------------------------
+Task 5659b84c-1c94-4c28-9a59-72fa61b3c1f6 has 0 error(s)
+--------------------------------------------------------------------------------
+
++-------------------------------------------------------------------------------------------------------------------------------+
+|                                                     Response Times (sec)                                                      |
++----------------------------+-----------+--------------+--------------+--------------+-----------+-----------+---------+-------+
+| Action                     | Min (sec) | Median (sec) | 90%ile (sec) | 95%ile (sec) | Max (sec) | Avg (sec) | Success | Count |
++----------------------------+-----------+--------------+--------------+--------------+-----------+-----------+---------+-------+
+| keystone_v3.create_service | 0.918     | 5.296        | 8.868        | 9.558        | 13.008    | 5.406     | 100.0%  | 100   |
+| keystone_v3.delete_service | 0.917     | 2.742        | 5.784        | 8.085        | 20.186    | 3.806     | 100.0%  | 100   |
+| total                      | 2.029     | 8.457        | 14.489       | 18.813       | 32.772    | 9.212     | 100.0%  | 100   |
+|  -> duration               | 2.029     | 8.457        | 14.489       | 18.813       | 32.772    | 9.212     | 100.0%  | 100   |
+|  -> idle_duration          | 0.0       | 0.0          | 0.0          | 0.0          | 0.0       | 0.0       | 100.0%  | 100   |
++----------------------------+-----------+--------------+--------------+--------------+-----------+-----------+---------+-------+
+
+Load duration: 185.855062
+Full duration: 198.091952
+
+HINTS:
+ To plot HTML graphics with this data, run:
+	rally task report 5659b84c-1c94-4c28-9a59-72fa61b3c1f6 --out output.html
+
+ To generate a JUnit report, run:
+	rally task export 5659b84c-1c94-4c28-9a59-72fa61b3c1f6 --type junit --to output.xml
+
+ To get raw JSON output of task results, run:
+	rally task report 5659b84c-1c94-4c28-9a59-72fa61b3c1f6 --json --out output.json
+
+#+END_EXAMPLE
++ with delay = 150 ms
+#+BEGIN_EXAMPLE
+--------------------------------------------------------------------------------
+Task de1aeed6-2d28-4cc2-b23c-9389208a39c2 has 0 error(s)
+--------------------------------------------------------------------------------
+
++-------------------------------------------------------------------------------------------------------------------------------+
+|                                                     Response Times (sec)                                                      |
++----------------------------+-----------+--------------+--------------+--------------+-----------+-----------+---------+-------+
+| Action                     | Min (sec) | Median (sec) | 90%ile (sec) | 95%ile (sec) | Max (sec) | Avg (sec) | Success | Count |
++----------------------------+-----------+--------------+--------------+--------------+-----------+-----------+---------+-------+
+| keystone_v3.create_service | 5.52      | 29.325       | 50.627       | 55.908       | 69.456    | 30.975    | 100.0%  | 100   |
+| keystone_v3.delete_service | 2.389     | 18.207       | 32.409       | 42.02        | 84.625    | 19.839    | 100.0%  | 100   |
+| total                      | 14.97     | 51.08        | 70.633       | 79.335       | 144.938   | 50.814    | 100.0%  | 100   |
+|  -> duration               | 14.97     | 51.08        | 70.633       | 79.335       | 144.938   | 50.814    | 100.0%  | 100   |
+|  -> idle_duration          | 0.0       | 0.0          | 0.0          | 0.0          | 0.0       | 0.0       | 100.0%  | 100   |
++----------------------------+-----------+--------------+--------------+--------------+-----------+-----------+---------+-------+
+
+Load duration: 1159.723045
+Full duration: 1444.718275
+
+#+END_EXAMPLE

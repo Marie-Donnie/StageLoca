@@ -1,0 +1,37 @@
+#+TITLE: Report for : Un intergiciel d’une base de données NewSQL qui considère la localité de l’application cliente -- 8th week --
+#+AUTHOR: Marie Delavergne
+
+* Monday 12 March [2018-03-12 lun.]
+
+- Finished late friday, didn't have time to say everything I had to say
+
+- We tried to define important factors that will impact the most the tests:
+  + the number of nodes is clearly important:
+    - we will try with 1, 5, 50, then we will use 'binary search' if need : 25, 12, etc.
+  + delay: LAN, 5, 25, 50
+  + maybe quorum size for CockroachDB
+
+- We defined the scenarios we want to run, removing the ~| shuffle(seed=inventory_hostname)~
+  + authenticate-user-and-validate-token.yaml
+  + create-add-and-list-user-roles.yaml
+  + create-and-list-tenants.yaml
+  + get-entities.yaml
+  + create-and-update-user.yaml
+  + create-user-update-password.yaml
+  + create-user-set-enabled-and-delete.yaml
+  + create-and-list-users.yaml
+
+#+BEGIN_EXAMPLE
+./juice.py rally --files keystone/authenticate-user-and-validate-token.yaml --files keystone/create-add-and-list-user-roles.yaml --files keystone/create-and-list-tenants.yaml --files keystone/get-entities.yaml --files keystone/create-and-update-user.yaml --files keystone/create-user-update-password.yaml --files keystone/create-user-set-enabled-and-delete.yaml --files keystone/create-and-list-users.yaml
+#+END_EXAMPLE
+
+
+- For now, we will get back to only one Rally
+
+- Trying to find the point when MariaDB doesn't cope with latency
+
+- Launching nightly exp with tmux and screen:
+#+BEGIN_EXAMPLE
+Ctrl-a n to switch between jobs
+Ctrl-b d to quit tmux
+#+END_EXAMPLE

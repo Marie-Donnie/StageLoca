@@ -35,3 +35,101 @@
 Ctrl-a n to switch between jobs
 Ctrl-b d to quit tmux
 #+END_EXAMPLE
+
+
+* Tuesday 13 March [2018-03-13 mar.]
+
+- Seems that nothing worked:
+  + only one folder for deployment, with only one file in it, the =env=, which isn't even filled:
+#+BEGIN_EXAMPLE
+config: {}
+config_file: ''
+cwd: /home/madelavergne/juice
+nodes: {}
+phase: ''
+resultdir: /home/madelavergne/juice/enos_2018-03-12T18:55:46.270710
+user: ''
+#+END_EXAMPLE
+
+- I tried to deploy on 10 nodes to test but I got an error on every node
+#+BEGIN_EXAMPLE
+failed: [grisou-39.nancy.grid5000.fr] (item=[u'grisou-35.nancy.grid5000.fr', u'grisou-42.nancy.grid5000.fr', u'grisou-4.nancy.grid5000.fr', u'grisou-1.nancy.grid5000.fr', u'grisou-38.nancy.grid5000.fr', u'grisou-36.nancy.grid5000.fr', u'grisou-37.nancy.grid5000.fr', u'grisou-40.nancy.grid5000.fr', u'grisou-41.nancy.grid5000.fr', u'grisou-39.nancy.grid5000.fr']) => {"failed": true, "item": ["grisou-35.nancy.grid5000.fr", "grisou-42.nancy.grid5000.fr", "grisou-4.nancy.grid5000.fr", "grisou-1.nancy.grid5000.fr", "grisou-38.nancy.grid5000.fr", "grisou-36.nancy.grid5000.fr", "grisou-37.nancy.grid5000.fr", "grisou-40.nancy.grid5000.fr", "grisou-41.nancy.grid5000.fr", "grisou-39.nancy.grid5000.fr"], "msg": "AnsibleUndefinedVariable: 'dict object' has no attribute 'ipv4'"}
+#+END_EXAMPLE
+- Modified conf file to take eth0/1... depending on database network
+
+
+- After testing MariaDB on 10 nodes varying the latency from 0 to 50 and 150 ms, I check the results...
+ And there rougly the same.
+- Checking the pings:
+#+BEGIN_EXAMPLE
+root@grisou-17:~# ping 10.16.76.66
+PING 10.16.76.66 (10.16.76.66) 56(84) bytes of data.
+64 bytes from 10.16.76.66: icmp_seq=1 ttl=64 time=0.085 ms
+64 bytes from 10.16.76.66: icmp_seq=2 ttl=64 time=0.047 ms
+64 bytes from 10.16.76.66: icmp_seq=3 ttl=64 time=0.057 ms
+64 bytes from 10.16.76.66: icmp_seq=4 ttl=64 time=0.061 ms
+64 bytes from 10.16.76.66: icmp_seq=5 ttl=64 time=0.046 ms
+64 bytes from 10.16.76.66: icmp_seq=6 ttl=64 time=0.049 ms
+--- 10.16.76.66 ping statistics ---
+6 packets transmitted, 6 received, 0% packet loss, time 5114ms
+rtt min/avg/max/mdev = 0.046/0.057/0.085/0.015 ms
+root@grisou-17:~# ping 172.16.72.6
+PING 172.16.72.6 (172.16.72.6) 56(84) bytes of data.
+64 bytes from 172.16.72.6: icmp_seq=1 ttl=64 time=300 ms
+64 bytes from 172.16.72.6: icmp_seq=2 ttl=64 time=300 ms
+--- 172.16.72.6 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1000ms
+rtt min/avg/max/mdev = 300.092/300.109/300.126/0.017 ms
+#+END_EXAMPLE
+- There is indeed the latency applied, but it should be the opposite : 10... is the address for the databases and 172... is for control, so of course there is no difference.
+- Trying to debug this
+  + should have paid more attention, it was already visible in emulate:
+#+BEGIN_EXAMPLE
+TASK [utils : Preparing htf for {{ item.device }}] ****************************************************************************************************************************************************************
+changed: [grisou-9.nancy.grid5000.fr] => (item={'macaddress': u'24:6e:96:02:97:a8', 'features': {}, 'type': u'ether', 'pciid': u'0000:01:00.0', 'module': u'ixgbe', 'mtu': 1500, 'device': u'eth0', 'promisc': False, 'ipv4': {'broadcast': u'172.16.79.255', 'netmask': u'255.255.240.0', 'network': u'172.16.64.0', 'address': u'172.16.72.9'}, 'ipv6': [{'scope': u'link', 'prefix': u'64', 'address': u'fe80::266e:96ff:fe02:97a8'}], 'active': True, 'speed': 10000})
+#+END_EXAMPLE
+
+#+BEGIN_EXAMPLE
+
+'grisou-17.nancy.grid5000.fr':
+     {'devices':
+           [{'macaddress': '24:6e:96:02:a1:50',
+		'features': {},
+		'type': 'ether',
+		'pciid': '0000:01:00.0',
+		'module': 'ixgbe',
+		'mtu': 1500,
+		'device': 'eth0',
+		'promisc': False,
+		'ipv4': {'broadcast': '172.16.79.255',
+		         'netmask': '255.255.240.0',
+			 'network': '172.16.64.0',
+			 'address': '172.16.72.17'},
+		'ipv6': [{'scope': 'link',
+		          'prefix': '64',
+			  'address': 'fe80::266e:96ff:fe02:a150'}],
+		'active': True, 'speed': 10000}],
+     'all_ipv4_addresses':
+           ['172.16.72.17', '10.16.76.77', '172.17.0.1'],
+     'tc': [{'loss': '0', 'target': '172.16.72.17', 'delay': '150ms', 'source': 'grisou-17.nancy.grid5000.fr', 'rate': '10gbit', 'device': 'eth0'},
+		{'loss': '0', 'target': '10.16.76.77', 'delay': '150ms', 'source': 'grisou-17.nancy.grid5000.fr', 'rate': '10gbit', 'device': 'eth0'},
+		{'loss': '0', 'target': '10.16.76.104', 'delay': '150ms', 'source': 'grisou-17.nancy.grid5000.fr', 'rate': '10gbit', 'device': 'eth0'},
+		{'loss': '0', 'target': '172.16.72.44', 'delay': '150ms', 'source': 'grisou-17.nancy.grid5000.fr', 'rate': '10gbit', 'device': 'eth0'},
+		{'loss': '0', 'target': '172.16.72.42', 'delay': '150ms', 'source': 'grisou-17.nancy.grid5000.fr', 'rate': '10gbit', 'device': 'eth0'},
+		{'loss': '0', 'target': '10.16.76.102', 'delay': '150ms', 'source': 'grisou-17.nancy.grid5000.fr', 'rate': '10gbit', 'device': 'eth0'},
+		{'loss': '0', 'target': '172.16.72.41', 'delay': '150ms', 'source': 'grisou-17.nancy.grid5000.fr', 'rate': '10gbit', 'device': 'eth0'},
+		{'loss': '0', 'target': '10.16.76.101', 'delay': '150ms', 'source': 'grisou-17.nancy.grid5000.fr', 'rate': '10gbit', 'device': 'eth0'},
+		{'loss': '0', 'target': '10.16.76.62', 'delay': '150ms', 'source': 'grisou-17.nancy.grid5000.fr', 'rate': '10gbit', 'device': 'eth0'},
+		{'loss': '0', 'target': '172.16.72.2', 'delay': '150ms', 'source': 'grisou-17.nancy.grid5000.fr', 'rate': '10gbit', 'device': 'eth0'},
+		{'loss': '0', 'target': '10.16.76.67', 'delay': '150ms', 'source': 'grisou-17.nancy.grid5000.fr', 'rate': '10gbit', 'device': 'eth0'},
+		{'loss': '0', 'target': '172.16.72.7', 'delay': '150ms', 'source': 'grisou-17.nancy.grid5000.fr', 'rate': '10gbit', 'device': 'eth0'},
+		{'loss': '0', 'target': '172.16.72.6', 'delay': '150ms', 'source': 'grisou-17.nancy.grid5000.fr', 'rate': '10gbit', 'device': 'eth0'},
+		{'loss': '0', 'target': '10.16.76.66', 'delay': '150ms', 'source': 'grisou-17.nancy.grid5000.fr', 'rate': '10gbit', 'device': 'eth0'},
+		{'loss': '0', 'target': '172.16.72.37', 'delay': '150ms', 'source': 'grisou-17.nancy.grid5000.fr', 'rate': '10gbit', 'device': 'eth0'},
+		{'loss': '0', 'target': '10.16.76.97', 'delay': '150ms', 'source': 'grisou-17.nancy.grid5000.fr', 'rate': '10gbit', 'device': 'eth0'},
+		{'loss': '0', 'target': '172.16.72.40', 'delay': '150ms', 'source': 'grisou-17.nancy.grid5000.fr', 'rate': '10gbit', 'device': 'eth0'},
+		{'loss': '0', 'target': '10.16.76.100', 'delay': '150ms', 'source': 'grisou-17.nancy.grid5000.fr', 'rate': '10gbit', 'device': 'eth0'},
+		{'loss': '0', 'target': '172.16.72.8', 'delay': '150ms', 'source': 'grisou-17.nancy.grid5000.fr', 'rate': '10gbit', 'device': 'eth0'},
+		{'loss': '0', 'target': '10.16.76.68', 'delay': '150ms', 'source': 'grisou-17.nancy.grid5000.fr', 'rate': '10gbit', 'device': 'eth0'}]
+},
+#+END_EXAMPLE

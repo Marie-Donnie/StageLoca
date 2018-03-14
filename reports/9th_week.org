@@ -133,3 +133,65 @@ changed: [grisou-9.nancy.grid5000.fr] => (item={'macaddress': u'24:6e:96:02:97:a
 		{'loss': '0', 'target': '10.16.76.68', 'delay': '150ms', 'source': 'grisou-17.nancy.grid5000.fr', 'rate': '10gbit', 'device': 'eth0'}]
 },
 #+END_EXAMPLE
+
+* Wedneday 14 March [2018-03-14 mer.]
+
+- Wanted to launch an experiment on 10 nodes but I first cleaned up my processes because there was a lot of running ssh
+  + I will have to figure out why they stayed opened
+
+- We searched yesterday with Jonathan why I need to enter my password when deploying with no luck
+
+- I think I found out why my experiments didn't work monday while trying to do the same thing on the same nodes (the others were taken):
+#+BEGIN_EXAMPLE
+Traceback (most recent call last):
+ File "./juice.py", line 370, in <module>
+   doc_lookup(args['<command>'], argv)
+ File "/home/madelavergne/juice/utils/doc.py", line 29, in doc_lookup
+   return fn(**docopt(fn.__doc__, argv=argv))
+ File "/home/madelavergne/juice/utils/doc.py", line 18, in decorated
+   fn(*args, **kwargs)
+ File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/enoslib/task.py", line 50, in decorated
+   fn(*args, **kwargs)
+ File "./juice.py", line 340, in exp
+   deploy(conf, db, locality)
+ File "/home/madelavergne/juice/utils/doc.py", line 18, in decorated
+   fn(*args, **kwargs)
+ File "./juice.py", line 86, in deploy
+   g5k(config=config)
+ File "/home/madelavergne/juice/utils/doc.py", line 18, in decorated
+   fn(*args, **kwargs)
+ File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/enoslib/task.py", line 50, in decorated
+   fn(*args, **kwargs)
+ File "./juice.py", line 100, in g5k
+   roles, networks = provider.init(force_deploy=force)
+ File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/enoslib/infra/enos_g5k/provider.py", line 161, in init
+   r.launch(**self.provider_conf)
+ File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/enoslib/infra/enos_g5k/api.py", line 83, in launch
+   self.configure_network(**kwargs)
+ File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/enoslib/infra/enos_g5k/api.py", line 140, in configure_network
+   utils.mount_nics(self.c_resources)
+ File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/enoslib/infra/enos_g5k/utils.py", line 81, in mount_nics
+   _mount_secondary_nics(desc, networks)
+ File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/enoslib/infra/enos_g5k/utils.py", line 104, in _mount_secondary_nics
+   nic = nics[idx]
+IndexError: list index out of range
+#+END_EXAMPLE
+- It seems that there are not enough nics on Graphene cluster
+  + after checking, there is actually enough nics BUT it seems that only one interface is configured, the others don't have ips
+
+- Got the same error on Genepi
+
+- MariaDB config bugs every time the first time I deploy. It might be a problem related to what interface is configured for the first run
+
+
+- Trying to match configurations for Galera and Cockroach, looking at:
+  + [[https://www.cockroachlabs.com/docs/stable/frequently-asked-questions.html][Cockroach FAQ]]
+  + [[https://www.cockroachlabs.com/docs/stable/start-a-node.html][Cockroach doc about starting a node]]
+  + [[https://www.cockroachlabs.com/docs/stable/cockroachdb-in-comparison.html][Cockroach comparison to other DB]]
+  + [[https://mariadb.com/kb/en/library/galera-cluster-system-variables/][MariaDB/Galera cluster variables]]
+
+
+- irc meeting (#openstack-meeting)
+  + I will have to make a performance doc like Matthieu made
+
+- My tests didn't work because the latency is still reversed. I will have to work on that.

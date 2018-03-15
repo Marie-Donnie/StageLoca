@@ -134,7 +134,8 @@ changed: [grisou-9.nancy.grid5000.fr] => (item={'macaddress': u'24:6e:96:02:97:a
 },
 #+END_EXAMPLE
 
-* Wedneday 14 March [2018-03-14 mer.]
+
+* Wednesday 14 March [2018-03-14 mer.]
 
 - Wanted to launch an experiment on 10 nodes but I first cleaned up my processes because there was a lot of running ssh
   + I will have to figure out why they stayed opened
@@ -195,3 +196,51 @@ IndexError: list index out of range
   + I will have to make a performance doc like Matthieu made
 
 - My tests didn't work because the latency is still reversed. I will have to work on that.
+
+
+* Thursday 15 March [2018-03-15 jeu.]
+
+- Same problem with cockroachdb
+
+#+BEGIN_EXAMPLE
+fatal: [grisou-37.nancy.grid5000.fr]: FAILED! => {"failed": true, "msg": "The task includes an option with an undefined variable. The error was: 'dict object' has no attribute 'ipv4'\n\nThe error appears to have been in '/home/madelavergne/juice/ansible/roles/cockroachdb/tasks/deploy.yml': line 26, column 3, but may\nbe elsewhere in the file depending on the exact syntax problem.\n\nThe offending line appears to be:\n\n\n- name: Start other cockroachdb nodes\n  ^ here\n"}
+#+END_EXAMPLE
+- Did the same workaround but I may have to find something better
+
+
+- Searching in the enoslib for a solution to the latency not on the right network [[https://github.com/BeyondTheClouds/enoslib/blob/master/enoslib/api.py][enoslib api]]
+  + used it before, so I'm putting this here: [[https://stackoverflow.com/questions/5445970/how-to-properly-print-a-list][how to properly print a list]]
+  + l.774 : select devices, but there is only eth0 in ips.txt
+  + don't know why, ={{ enos_devices}}= in debug is fine but when templated, there is only eth0
+    - replace =enos_devices= in template by =hostvars[host]['enos_devices']=, it seems to have worked at least to consider all devices
+  + first step ok, but it would still add latency on both networks
+    - have to figure out how to do that
+
+- It took some sweet time, BUT: from a node to the dbmasternode:
+#+BEGIN_EXAMPLE
+root@grisou-4:~# ping 172.16.72.43
+PING 172.16.72.43 (172.16.72.43) 56(84) bytes of data.
+64 bytes from 172.16.72.43: icmp_seq=1 ttl=64 time=0.133 ms
+64 bytes from 172.16.72.43: icmp_seq=2 ttl=64 time=0.062 ms
+64 bytes from 172.16.72.43: icmp_seq=3 ttl=64 time=0.053 ms
+--- 172.16.72.43 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2029ms
+rtt min/avg/max/mdev = 0.053/0.082/0.133/0.037 ms
+root@grisou-4:~# ping 10.16.12.103
+PING 10.16.12.103 (10.16.12.103) 56(84) bytes of data.
+64 bytes from 10.16.12.103: icmp_seq=1 ttl=64 time=300 ms
+64 bytes from 10.16.12.103: icmp_seq=2 ttl=64 time=300 ms
+--- 10.16.12.103 ping statistics ---
+3 packets transmitted, 2 received, 33% packet loss, time 1999ms
+rtt min/avg/max/mdev = 300.101/300.115/300.130/0.548 ms
+
+#+END_EXAMPLE
+
+
+- To watch network usage:
+#+BEGIN_SRC
+apt install net-tools
+watch ifconfig
+watch ifconfig eth1
+#+END_SRC
+- Also see =iftop=

@@ -243,4 +243,37 @@ apt install net-tools
 watch ifconfig
 watch ifconfig eth1
 #+END_SRC
-- Also see =iftop=
+- Also see =iftop= and [[https://stackoverflow.com/questions/21849956/how-to-save-output-of-watch-to-file][this link]] to log infos
+
+
+* Friday 16 March [2018-03-16 ven.]
+
+
+- Rennes is totally down today, so I'm running juice on Nancy directly
+  + Had to write down my testing function again since I haven't versioned it yet
+  + Juice is not deploying, I can't make a reservation
+    - Maybe it's because of the changes I've made to try and not type my password for every deployment
+    - It seems that I can't contact the API, so there are some functions missing
+    - Jonathan restarted a downed server, now it's working
+  + Done measurements for 10 nodes with MariaDB
+  + Forgot to add some time to my reservation, it didn't had time to backup CockroachDB over 0ms. Worst thing is it almost finish 50ms tests.
+
+- Looking at the [[https://www.openstack.org/videos/sydney-2017/demystifying-identity-federation][Talk from Colleen Murphy about Identity Federation]]
+
+#+CAPTION: How to set up Keystone federation
+#+NAME: fig:K2K-setup
+[[../images/keystone_federation_setup.png]]
+
+  + in the horizon config file (=/opt/stack/horizon/openstack_dashboard/local/local_settings.py=), she:
+    - turns on websso ~WEBSSO_ENABLED = TRUE~
+    - give choices for the dropdown menu:
+      #+BEGIN_SRC
+      WEBSSO_CHOICES = (
+          ("credentials", _("Keystone Credentials")),
+          #[...]
+          ("sam12", _("Saml IdP")),
+          #[...]
+      )
+      #+END_SRC
+    - says you need some more configurations, but not relevant
+    - she uses [[https://github.com/mcguinness/saml-idp]]

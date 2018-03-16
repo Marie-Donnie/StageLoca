@@ -16,9 +16,10 @@
 ***** TODO For 25 nodes
 
 
+*** Repair collectd
+
 ** Readings
-*** TODO Watch videos
-- [[-https://www.openstack.org/videos/sydney-2017/demystifying-identity-federation][Demystifying Identity Federation]]
+
 
 
 ** Done
@@ -34,3 +35,6 @@ Une expé qui serait cool à faire c'est : Faire varier la latence entre keyston
 
 **** DONE Raft
      CLOSED: [2018-01-18 jeu. 09:47]
+**** DONE Watch videos
+    CLOSED: [2018-03-16 ven. 14:46]
+- [[-https://www.openstack.org/videos/sydney-2017/demystifying-identity-federation][Demystifying Identity Federation]]

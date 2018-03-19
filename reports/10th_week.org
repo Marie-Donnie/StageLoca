@@ -1,0 +1,249 @@
+#+TITLE: Report for : Un intergiciel d’une base de données NewSQL qui considère la localité de l’application cliente -- 10th week --
+#+AUTHOR: Marie Delavergne
+
+
+* Monday 19 March [2018-03-19 lun.]
+
+- Resuming Cockroach tests
+  + got problems with my connection to Nancy
+
+
+- Testing rally with Galera's ~wsrep_sync_wait~ = 15
+
+  + =dbmastet_node=
+#+BEGIN_EXAMPLE
+MariaDB [(none)]> select * from keystone.role;
++----------------------------------+---------------------------+-------+-----------+
+| id                               | name                      | extra | domain_id |
++----------------------------------+---------------------------+-------+-----------+
+| 01b12dd6203445809c0013b5ba2bb044 | anotherrole               | {}    | <<null>>  |
+| 01fff2837eaf481b9c9d671d11452314 | s_rally_bf9a03c6_MTcIxGKa | {}    | <<null>>  |
+| 0252018d81504b5a9460e274b403226c | s_rally_bf9a03c6_QbzoTByI | {}    | <<null>>  |
+| 079041c46a884a14971a637f138b4456 | s_rally_bf9a03c6_n97X0ImE | {}    | <<null>>  |
+| 0866ab340dc2483fab00b60b1caa7d28 | s_rally_bf9a03c6_GycmzSpf | {}    | <<null>>  |
+| 1047d8a2cd424acc8cdde17ddf593d0d | s_rally_bf9a03c6_8oGUgrtv | {}    | <<null>>  |
+| 11d9ed9e897e4b7980721fac485b3193 | s_rally_bf9a03c6_lf3hwrhe | {}    | <<null>>  |
+| 1678eaf40d004ca181daf09492c604f2 | s_rally_bf9a03c6_Wj7jHRlC | {}    | <<null>>  |
+| 16ee8f3781ba419b96b459950e56193d | s_rally_bf9a03c6_VziVK7mW | {}    | <<null>>  |
+| 18042d9c2d554562b8c8b11afdb7f75c | s_rally_bf9a03c6_BXvnnCal | {}    | <<null>>  |
+| 19a7d64faa8a48d8ae18362069fb8800 | s_rally_bf9a03c6_IrxZurR4 | {}    | <<null>>  |
+| 1b0e2b48ea9641c0929a15a1a0e1bede | s_rally_bf9a03c6_7axk87ez | {}    | <<null>>  |
+| 1cf632be75324101b1689bb1d1867875 | s_rally_bf9a03c6_g0RD7cKg | {}    | <<null>>  |
+| 2113fcbb043a405e952235131cad0183 | s_rally_bf9a03c6_ZDKI2TqA | {}    | <<null>>  |
+| 211473490c1f4342bd17bcb7fe385bb5 | s_rally_bf9a03c6_PPgM9imY | {}    | <<null>>  |
+| 212b5484645043bbb74cd83a04748030 | s_rally_bf9a03c6_nKd5gLKP | {}    | <<null>>  |
+| 245e31db2fc943d1beb885c0845bcebd | s_rally_bf9a03c6_sLY5PPcl | {}    | <<null>>  |
+| 2962f584356d4be7bd945dfb9c5b91b8 | s_rally_bf9a03c6_KFoh1F5S | {}    | <<null>>  |
+| 2eb455d4eaf244949f54556fde7197c3 | s_rally_bf9a03c6_EMZp5oMn | {}    | <<null>>  |
+| 2fdc97117ec74b91900fbc980c2de533 | s_rally_bf9a03c6_XJbaRFdO | {}    | <<null>>  |
+| 317371f93b06429c95042db1c7270479 | s_rally_bf9a03c6_9sGYeBFk | {}    | <<null>>  |
+| 3262488edf734337b36abb90c6c87611 | s_rally_bf9a03c6_z5wXi4GU | {}    | <<null>>  |
+| 33907887a2684ae9887042f35792d71d | s_rally_bf9a03c6_Z6h2qsH3 | {}    | <<null>>  |
+| 33959de8df5e427baf12c75247ab8bf1 | s_rally_bf9a03c6_9JGuT7eX | {}    | <<null>>  |
+| 387dfc639206416abeb76e9976a5aa7e | s_rally_bf9a03c6_fjDoOHA8 | {}    | <<null>>  |
+| 3aed5fa190f446a8a2a000a127fca334 | s_rally_bf9a03c6_CgYoW8ie | {}    | <<null>>  |
+| 3cac77f130bd4e08b7d7cc8db6986530 | s_rally_bf9a03c6_SqnQPWhi | {}    | <<null>>  |
+| 404a253b66ad416aa81c613c581b9b9f | s_rally_bf9a03c6_e0TCbSPg | {}    | <<null>>  |
+| 404e09c26ba94bc9b346ae2ddc806a1b | s_rally_bf9a03c6_VMDin3uJ | {}    | <<null>>  |
+| 411d4c3c10f54c36a4957ddca49d9593 | s_rally_bf9a03c6_49Hv1I1v | {}    | <<null>>  |
+| 489b929261ec4aaea14cc6c6e75c9c40 | s_rally_bf9a03c6_rvksESph | {}    | <<null>>  |
+| 4e1060f899c340c0940d54be963a8b02 | s_rally_bf9a03c6_MRZpvqu4 | {}    | <<null>>  |
+| 4f331a713781433c9c237efea00a129f | s_rally_bf9a03c6_1Yh5ycMD | {}    | <<null>>  |
+| 50a0e27ba737443bb0e19dfe23933dc0 | s_rally_bf9a03c6_JyzmUC3M | {}    | <<null>>  |
+| 50eff8b9cecb408db077751e29a1aac1 | s_rally_bf9a03c6_znEjJSCN | {}    | <<null>>  |
+| 52c6c7f5a2a0437bb31c90b882c7c8b2 | s_rally_bf9a03c6_PkmJkMb3 | {}    | <<null>>  |
+| 5a2b515efbdf4690b2efdc575d39c9c7 | s_rally_bf9a03c6_lUYFYxGe | {}    | <<null>>  |
+| 5ae57cf34ce2471196c843c9721c919e | s_rally_bf9a03c6_HTXh6dNt | {}    | <<null>>  |
+| 5d979398a70341cdbff975723a2a7e7f | s_rally_bf9a03c6_n0m9lCMc | {}    | <<null>>  |
+| 61e50c52489e45f1a89700d51e5e8e99 | s_rally_bf9a03c6_sxqHe64d | {}    | <<null>>  |
+| 6204ed98c5f14f5783cdd2f22afb4d4a | s_rally_bf9a03c6_w6eaZnpK | {}    | <<null>>  |
+| 671529a7e7c64edca4a8447fb8d4b28f | Member                    | {}    | <<null>>  |
+| 69266bc36b484c96a65b7f680c6f38f6 | s_rally_bf9a03c6_RWYbIjFU | {}    | <<null>>  |
+| 754fc8dc27ab41aeb2cac0c80acb2f92 | s_rally_bf9a03c6_rwh0fhKe | {}    | <<null>>  |
+| 75754a73801c4e34b7f9273414146b34 | s_rally_bf9a03c6_PWyayHOj | {}    | <<null>>  |
+| 7c4986c0e63b4c1c9fbf1e31dd556268 | s_rally_bf9a03c6_v980wBdY | {}    | <<null>>  |
+| 7de380cd5b55452293b0c4e4556fdf9d | s_rally_bf9a03c6_gcSPynlP | {}    | <<null>>  |
+| 7ec971e373dc4aa2be6d66406547e699 | s_rally_bf9a03c6_nD3oyIEL | {}    | <<null>>  |
+| 805cefab1eb146e0b4e9ce0b3ede360d | s_rally_bf9a03c6_9AHm7dpR | {}    | <<null>>  |
+| 80b8b0b9aea346dab31e0a23e1b7629e | s_rally_bf9a03c6_g9f1vNUe | {}    | <<null>>  |
+| 824a72bb151d42538bf87f73c1a20f19 | s_rally_bf9a03c6_rj1ksZfX | {}    | <<null>>  |
+| 8267d7d601f945789d217a4f8773885d | s_rally_bf9a03c6_RlA2JXXL | {}    | <<null>>  |
+| 82cce6de9f7941f2864ab224036cf14c | s_rally_bf9a03c6_4PROamRd | {}    | <<null>>  |
+| 83cdab4889824ee991d3d0a7c359ccec | s_rally_bf9a03c6_G4RMZEji | {}    | <<null>>  |
+| 861331d457bf47f8943fa9ec3150a997 | s_rally_bf9a03c6_ep4oaxJJ | {}    | <<null>>  |
+| 8b8d31bf35954465b05551e4a7065e6a | s_rally_bf9a03c6_NRWp1ZWn | {}    | <<null>>  |
+| 8d92bc7baf654cddb8e7010c6a5cfd47 | s_rally_bf9a03c6_9o0JSTKA | {}    | <<null>>  |
+| 907cb9f7cd4a4a67bffd8ca79fe44e91 | s_rally_bf9a03c6_hDOfsC7k | {}    | <<null>>  |
+| 9330a5c68342428db96e1b12e48dc790 | s_rally_bf9a03c6_1NqzaBGX | {}    | <<null>>  |
+| 95664fd223cb4586b62b253853371ffc | s_rally_bf9a03c6_dYv6m2Xj | {}    | <<null>>  |
+| 969e816fc41f4c52b2e0bf3523cd12bf | s_rally_bf9a03c6_NFPyNBdV | {}    | <<null>>  |
+| 9b2c9022456b4157b2b69ab456a179f4 | s_rally_bf9a03c6_jhfUBMix | {}    | <<null>>  |
+| 9bf7654ebcc44c2c8345983775c642e0 | s_rally_bf9a03c6_UCEQ72xi | {}    | <<null>>  |
+| 9caa4626d8e3429fbdee9d90fe91de21 | s_rally_bf9a03c6_SaxuJC8v | {}    | <<null>>  |
+| 9d010062e6cc4d08a0bfd6195ec0f66c | s_rally_bf9a03c6_V2XQgUqh | {}    | <<null>>  |
+| 9f688d97d0ed4d63946e53e7c6d93721 | s_rally_bf9a03c6_R0B6afVd | {}    | <<null>>  |
+| 9fe2ff9ee4384b1894a90878d3e92bab | _member_                  | {}    | <<null>>  |
+| a722a38a625f46eba4e2448b4762405e | s_rally_bf9a03c6_R3lyxWML | {}    | <<null>>  |
+| a7443d7dea4e49b3b7c552030cf66b18 | s_rally_bf9a03c6_kUYppJs9 | {}    | <<null>>  |
+| a85d936e9ede452baed77c1eeb3ca472 | s_rally_bf9a03c6_kZqWncsq | {}    | <<null>>  |
+| aa4ab4e0a82f41088439c7c36023d5d3 | s_rally_bf9a03c6_U8GpMd9P | {}    | <<null>>  |
+| ab0d11cc93594c9d99b7a740ed5af3af | s_rally_bf9a03c6_LiNLl3zE | {}    | <<null>>  |
+| adcfcf0f5f6b414ca9a68323c821baf7 | s_rally_bf9a03c6_0jKuCihB | {}    | <<null>>  |
+| b57b269c5ea74455babce5e99affae38 | s_rally_bf9a03c6_ObgNkgBm | {}    | <<null>>  |
+| b67c6d48732e4c7ebd09a5ba99a09065 | s_rally_bf9a03c6_Hy1HngYU | {}    | <<null>>  |
+| b9f12bbc5866467a95d412b981347e89 | s_rally_bf9a03c6_Uf12OKLj | {}    | <<null>>  |
+| bf011f77f5294d759707f02590612965 | s_rally_bf9a03c6_nuJWrMZl | {}    | <<null>>  |
+| bf86cfdff95e4833b6d8930ebdb0bd89 | s_rally_bf9a03c6_LqZlMpPD | {}    | <<null>>  |
+| c08398c63968495789e5dce50b9445ef | s_rally_bf9a03c6_NW9ceVtY | {}    | <<null>>  |
+| c1b2f80311c1453093cbe93045b00f51 | s_rally_bf9a03c6_couFzXpu | {}    | <<null>>  |
+| c617a27dbbd44011a091e2bf838f994c | s_rally_bf9a03c6_kJIPWRox | {}    | <<null>>  |
+| c88015e0fb2349f39657801a6fa93604 | s_rally_bf9a03c6_0eqESr6t | {}    | <<null>>  |
+| cc5a483f288640bc80f79f7f02c0eeb5 | s_rally_bf9a03c6_8TuN2DTa | {}    | <<null>>  |
+| ce353af65b604634bc03912a331df427 | s_rally_bf9a03c6_xDKnPFHp | {}    | <<null>>  |
+| cea9344fa31f4e13a81a21a24476f766 | s_rally_bf9a03c6_VMds18RU | {}    | <<null>>  |
+| cf14da92100547e6bb2ee471c4e136fc | s_rally_bf9a03c6_VCGneRpP | {}    | <<null>>  |
+| d140f52c33b74658bfe6fde1cf21198b | s_rally_bf9a03c6_RlwnBfMX | {}    | <<null>>  |
+| d2a5208cc9cb4a61b11f6480c177e7ed | s_rally_bf9a03c6_jrMqEK1a | {}    | <<null>>  |
+| d5d3c8e1f65443b6bc401c462158c9d7 | s_rally_bf9a03c6_T1SJfW9a | {}    | <<null>>  |
+| d9cdd74e5719414b9c4ca80c7ccd87c3 | s_rally_bf9a03c6_Kb09Zdod | {}    | <<null>>  |
+| df2afaca2d2443d493aaa6948c26ebde | s_rally_bf9a03c6_Qx5BLkiK | {}    | <<null>>  |
+| df9a79ea0c5745a0a3a353c586186c4c | s_rally_bf9a03c6_jV8J3rSg | {}    | <<null>>  |
+| e1605b4cd59244e593b3be0e2dd99bae | s_rally_bf9a03c6_qBX7l6a2 | {}    | <<null>>  |
+| e2e11b4a96804e38a824e3f0f254cdc4 | s_rally_bf9a03c6_03A5FK6e | {}    | <<null>>  |
+| e511434914d948839a2e9b4163f46992 | s_rally_bf9a03c6_BwypbVq9 | {}    | <<null>>  |
+| e8fd2a1b788b42359f196ee6d6fc6fea | s_rally_bf9a03c6_GJ1hDM1u | {}    | <<null>>  |
+| ec00257fe0ff4cd4affaad7ed481bc75 | s_rally_bf9a03c6_kU2xtIUJ | {}    | <<null>>  |
+| ec63ce7a6e89452fb2c9ba1683950d32 | s_rally_bf9a03c6_gMvw2mIQ | {}    | <<null>>  |
+| ecf80d4028c4404f849a8cd820d7eccb | s_rally_bf9a03c6_8kGqZABo | {}    | <<null>>  |
+| ed4291b84a3f4cdcbf056dd890057726 | s_rally_bf9a03c6_xn9xcWar | {}    | <<null>>  |
+| f34454011b5e44c7bf314ad82898a931 | s_rally_bf9a03c6_syY3fF0W | {}    | <<null>>  |
+| f9399df86b9a4cacb325d691cc930a11 | s_rally_bf9a03c6_k9atMLVR | {}    | <<null>>  |
+| f96b09e1a4034e3a991a50ee4dfce2a8 | ResellerAdmin             | {}    | <<null>>  |
+| fa61a7a0064643d7a184f80966a095fb | admin                     | {}    | <<null>>  |
+| fee09a91419d48308dd54820c6cdf893 | service                   | {}    | <<null>>  |
+| fef767ab1c65496594e22f0a8eafb74e | s_rally_bf9a03c6_Dxb87VwJ | {}    | <<null>>  |
++----------------------------------+---------------------------+-------+-----------+
+106 rows in set (0.14 sec)
+#+END_EXAMPLE
+
+  + non-master node
+#+BEGIN_EXAMPLE
+MariaDB [(none)]> select * from keystone.role;
++----------------------------------+---------------------------+-------+-----------+
+| id                               | name                      | extra | domain_id |
++----------------------------------+---------------------------+-------+-----------+
+| 01b12dd6203445809c0013b5ba2bb044 | anotherrole               | {}    | <<null>>  |
+| 01fff2837eaf481b9c9d671d11452314 | s_rally_bf9a03c6_MTcIxGKa | {}    | <<null>>  |
+| 0252018d81504b5a9460e274b403226c | s_rally_bf9a03c6_QbzoTByI | {}    | <<null>>  |
+| 079041c46a884a14971a637f138b4456 | s_rally_bf9a03c6_n97X0ImE | {}    | <<null>>  |
+| 0866ab340dc2483fab00b60b1caa7d28 | s_rally_bf9a03c6_GycmzSpf | {}    | <<null>>  |
+| 1047d8a2cd424acc8cdde17ddf593d0d | s_rally_bf9a03c6_8oGUgrtv | {}    | <<null>>  |
+| 11d9ed9e897e4b7980721fac485b3193 | s_rally_bf9a03c6_lf3hwrhe | {}    | <<null>>  |
+| 1678eaf40d004ca181daf09492c604f2 | s_rally_bf9a03c6_Wj7jHRlC | {}    | <<null>>  |
+| 16ee8f3781ba419b96b459950e56193d | s_rally_bf9a03c6_VziVK7mW | {}    | <<null>>  |
+| 18042d9c2d554562b8c8b11afdb7f75c | s_rally_bf9a03c6_BXvnnCal | {}    | <<null>>  |
+| 19a7d64faa8a48d8ae18362069fb8800 | s_rally_bf9a03c6_IrxZurR4 | {}    | <<null>>  |
+| 1b0e2b48ea9641c0929a15a1a0e1bede | s_rally_bf9a03c6_7axk87ez | {}    | <<null>>  |
+| 1cf632be75324101b1689bb1d1867875 | s_rally_bf9a03c6_g0RD7cKg | {}    | <<null>>  |
+| 2113fcbb043a405e952235131cad0183 | s_rally_bf9a03c6_ZDKI2TqA | {}    | <<null>>  |
+| 211473490c1f4342bd17bcb7fe385bb5 | s_rally_bf9a03c6_PPgM9imY | {}    | <<null>>  |
+| 212b5484645043bbb74cd83a04748030 | s_rally_bf9a03c6_nKd5gLKP | {}    | <<null>>  |
+| 245e31db2fc943d1beb885c0845bcebd | s_rally_bf9a03c6_sLY5PPcl | {}    | <<null>>  |
+| 2962f584356d4be7bd945dfb9c5b91b8 | s_rally_bf9a03c6_KFoh1F5S | {}    | <<null>>  |
+| 2eb455d4eaf244949f54556fde7197c3 | s_rally_bf9a03c6_EMZp5oMn | {}    | <<null>>  |
+| 2fdc97117ec74b91900fbc980c2de533 | s_rally_bf9a03c6_XJbaRFdO | {}    | <<null>>  |
+| 317371f93b06429c95042db1c7270479 | s_rally_bf9a03c6_9sGYeBFk | {}    | <<null>>  |
+| 3262488edf734337b36abb90c6c87611 | s_rally_bf9a03c6_z5wXi4GU | {}    | <<null>>  |
+| 33907887a2684ae9887042f35792d71d | s_rally_bf9a03c6_Z6h2qsH3 | {}    | <<null>>  |
+| 33959de8df5e427baf12c75247ab8bf1 | s_rally_bf9a03c6_9JGuT7eX | {}    | <<null>>  |
+| 387dfc639206416abeb76e9976a5aa7e | s_rally_bf9a03c6_fjDoOHA8 | {}    | <<null>>  |
+| 3aed5fa190f446a8a2a000a127fca334 | s_rally_bf9a03c6_CgYoW8ie | {}    | <<null>>  |
+| 3cac77f130bd4e08b7d7cc8db6986530 | s_rally_bf9a03c6_SqnQPWhi | {}    | <<null>>  |
+| 404a253b66ad416aa81c613c581b9b9f | s_rally_bf9a03c6_e0TCbSPg | {}    | <<null>>  |
+| 404e09c26ba94bc9b346ae2ddc806a1b | s_rally_bf9a03c6_VMDin3uJ | {}    | <<null>>  |
+| 411d4c3c10f54c36a4957ddca49d9593 | s_rally_bf9a03c6_49Hv1I1v | {}    | <<null>>  |
+| 489b929261ec4aaea14cc6c6e75c9c40 | s_rally_bf9a03c6_rvksESph | {}    | <<null>>  |
+| 4e1060f899c340c0940d54be963a8b02 | s_rally_bf9a03c6_MRZpvqu4 | {}    | <<null>>  |
+| 4f331a713781433c9c237efea00a129f | s_rally_bf9a03c6_1Yh5ycMD | {}    | <<null>>  |
+| 50a0e27ba737443bb0e19dfe23933dc0 | s_rally_bf9a03c6_JyzmUC3M | {}    | <<null>>  |
+| 50eff8b9cecb408db077751e29a1aac1 | s_rally_bf9a03c6_znEjJSCN | {}    | <<null>>  |
+| 52c6c7f5a2a0437bb31c90b882c7c8b2 | s_rally_bf9a03c6_PkmJkMb3 | {}    | <<null>>  |
+| 5a2b515efbdf4690b2efdc575d39c9c7 | s_rally_bf9a03c6_lUYFYxGe | {}    | <<null>>  |
+| 5ae57cf34ce2471196c843c9721c919e | s_rally_bf9a03c6_HTXh6dNt | {}    | <<null>>  |
+| 5d979398a70341cdbff975723a2a7e7f | s_rally_bf9a03c6_n0m9lCMc | {}    | <<null>>  |
+| 61e50c52489e45f1a89700d51e5e8e99 | s_rally_bf9a03c6_sxqHe64d | {}    | <<null>>  |
+| 6204ed98c5f14f5783cdd2f22afb4d4a | s_rally_bf9a03c6_w6eaZnpK | {}    | <<null>>  |
+| 671529a7e7c64edca4a8447fb8d4b28f | Member                    | {}    | <<null>>  |
+| 69266bc36b484c96a65b7f680c6f38f6 | s_rally_bf9a03c6_RWYbIjFU | {}    | <<null>>  |
+| 754fc8dc27ab41aeb2cac0c80acb2f92 | s_rally_bf9a03c6_rwh0fhKe | {}    | <<null>>  |
+| 75754a73801c4e34b7f9273414146b34 | s_rally_bf9a03c6_PWyayHOj | {}    | <<null>>  |
+| 7c4986c0e63b4c1c9fbf1e31dd556268 | s_rally_bf9a03c6_v980wBdY | {}    | <<null>>  |
+| 7de380cd5b55452293b0c4e4556fdf9d | s_rally_bf9a03c6_gcSPynlP | {}    | <<null>>  |
+| 7ec971e373dc4aa2be6d66406547e699 | s_rally_bf9a03c6_nD3oyIEL | {}    | <<null>>  |
+| 805cefab1eb146e0b4e9ce0b3ede360d | s_rally_bf9a03c6_9AHm7dpR | {}    | <<null>>  |
+| 80b8b0b9aea346dab31e0a23e1b7629e | s_rally_bf9a03c6_g9f1vNUe | {}    | <<null>>  |
+| 824a72bb151d42538bf87f73c1a20f19 | s_rally_bf9a03c6_rj1ksZfX | {}    | <<null>>  |
+| 8267d7d601f945789d217a4f8773885d | s_rally_bf9a03c6_RlA2JXXL | {}    | <<null>>  |
+| 82cce6de9f7941f2864ab224036cf14c | s_rally_bf9a03c6_4PROamRd | {}    | <<null>>  |
+| 83cdab4889824ee991d3d0a7c359ccec | s_rally_bf9a03c6_G4RMZEji | {}    | <<null>>  |
+| 861331d457bf47f8943fa9ec3150a997 | s_rally_bf9a03c6_ep4oaxJJ | {}    | <<null>>  |
+| 8b8d31bf35954465b05551e4a7065e6a | s_rally_bf9a03c6_NRWp1ZWn | {}    | <<null>>  |
+| 8d92bc7baf654cddb8e7010c6a5cfd47 | s_rally_bf9a03c6_9o0JSTKA | {}    | <<null>>  |
+| 907cb9f7cd4a4a67bffd8ca79fe44e91 | s_rally_bf9a03c6_hDOfsC7k | {}    | <<null>>  |
+| 9330a5c68342428db96e1b12e48dc790 | s_rally_bf9a03c6_1NqzaBGX | {}    | <<null>>  |
+| 95664fd223cb4586b62b253853371ffc | s_rally_bf9a03c6_dYv6m2Xj | {}    | <<null>>  |
+| 969e816fc41f4c52b2e0bf3523cd12bf | s_rally_bf9a03c6_NFPyNBdV | {}    | <<null>>  |
+| 9b2c9022456b4157b2b69ab456a179f4 | s_rally_bf9a03c6_jhfUBMix | {}    | <<null>>  |
+| 9bf7654ebcc44c2c8345983775c642e0 | s_rally_bf9a03c6_UCEQ72xi | {}    | <<null>>  |
+| 9caa4626d8e3429fbdee9d90fe91de21 | s_rally_bf9a03c6_SaxuJC8v | {}    | <<null>>  |
+| 9d010062e6cc4d08a0bfd6195ec0f66c | s_rally_bf9a03c6_V2XQgUqh | {}    | <<null>>  |
+| 9f688d97d0ed4d63946e53e7c6d93721 | s_rally_bf9a03c6_R0B6afVd | {}    | <<null>>  |
+| 9fe2ff9ee4384b1894a90878d3e92bab | _member_                  | {}    | <<null>>  |
+| a722a38a625f46eba4e2448b4762405e | s_rally_bf9a03c6_R3lyxWML | {}    | <<null>>  |
+| a7443d7dea4e49b3b7c552030cf66b18 | s_rally_bf9a03c6_kUYppJs9 | {}    | <<null>>  |
+| a85d936e9ede452baed77c1eeb3ca472 | s_rally_bf9a03c6_kZqWncsq | {}    | <<null>>  |
+| aa4ab4e0a82f41088439c7c36023d5d3 | s_rally_bf9a03c6_U8GpMd9P | {}    | <<null>>  |
+| ab0d11cc93594c9d99b7a740ed5af3af | s_rally_bf9a03c6_LiNLl3zE | {}    | <<null>>  |
+| adcfcf0f5f6b414ca9a68323c821baf7 | s_rally_bf9a03c6_0jKuCihB | {}    | <<null>>  |
+| b57b269c5ea74455babce5e99affae38 | s_rally_bf9a03c6_ObgNkgBm | {}    | <<null>>  |
+| b67c6d48732e4c7ebd09a5ba99a09065 | s_rally_bf9a03c6_Hy1HngYU | {}    | <<null>>  |
+| b9f12bbc5866467a95d412b981347e89 | s_rally_bf9a03c6_Uf12OKLj | {}    | <<null>>  |
+| bf011f77f5294d759707f02590612965 | s_rally_bf9a03c6_nuJWrMZl | {}    | <<null>>  |
+| bf86cfdff95e4833b6d8930ebdb0bd89 | s_rally_bf9a03c6_LqZlMpPD | {}    | <<null>>  |
+| c08398c63968495789e5dce50b9445ef | s_rally_bf9a03c6_NW9ceVtY | {}    | <<null>>  |
+| c1b2f80311c1453093cbe93045b00f51 | s_rally_bf9a03c6_couFzXpu | {}    | <<null>>  |
+| c617a27dbbd44011a091e2bf838f994c | s_rally_bf9a03c6_kJIPWRox | {}    | <<null>>  |
+| c88015e0fb2349f39657801a6fa93604 | s_rally_bf9a03c6_0eqESr6t | {}    | <<null>>  |
+| cc5a483f288640bc80f79f7f02c0eeb5 | s_rally_bf9a03c6_8TuN2DTa | {}    | <<null>>  |
+| ce353af65b604634bc03912a331df427 | s_rally_bf9a03c6_xDKnPFHp | {}    | <<null>>  |
+| cea9344fa31f4e13a81a21a24476f766 | s_rally_bf9a03c6_VMds18RU | {}    | <<null>>  |
+| cf14da92100547e6bb2ee471c4e136fc | s_rally_bf9a03c6_VCGneRpP | {}    | <<null>>  |
+| d140f52c33b74658bfe6fde1cf21198b | s_rally_bf9a03c6_RlwnBfMX | {}    | <<null>>  |
+| d2a5208cc9cb4a61b11f6480c177e7ed | s_rally_bf9a03c6_jrMqEK1a | {}    | <<null>>  |
+| d5d3c8e1f65443b6bc401c462158c9d7 | s_rally_bf9a03c6_T1SJfW9a | {}    | <<null>>  |
+| d9cdd74e5719414b9c4ca80c7ccd87c3 | s_rally_bf9a03c6_Kb09Zdod | {}    | <<null>>  |
+| df2afaca2d2443d493aaa6948c26ebde | s_rally_bf9a03c6_Qx5BLkiK | {}    | <<null>>  |
+| df9a79ea0c5745a0a3a353c586186c4c | s_rally_bf9a03c6_jV8J3rSg | {}    | <<null>>  |
+| e1605b4cd59244e593b3be0e2dd99bae | s_rally_bf9a03c6_qBX7l6a2 | {}    | <<null>>  |
+| e2e11b4a96804e38a824e3f0f254cdc4 | s_rally_bf9a03c6_03A5FK6e | {}    | <<null>>  |
+| e511434914d948839a2e9b4163f46992 | s_rally_bf9a03c6_BwypbVq9 | {}    | <<null>>  |
+| e8fd2a1b788b42359f196ee6d6fc6fea | s_rally_bf9a03c6_GJ1hDM1u | {}    | <<null>>  |
+| ec00257fe0ff4cd4affaad7ed481bc75 | s_rally_bf9a03c6_kU2xtIUJ | {}    | <<null>>  |
+| ec63ce7a6e89452fb2c9ba1683950d32 | s_rally_bf9a03c6_gMvw2mIQ | {}    | <<null>>  |
+| ecf80d4028c4404f849a8cd820d7eccb | s_rally_bf9a03c6_8kGqZABo | {}    | <<null>>  |
+| ed4291b84a3f4cdcbf056dd890057726 | s_rally_bf9a03c6_xn9xcWar | {}    | <<null>>  |
+| f34454011b5e44c7bf314ad82898a931 | s_rally_bf9a03c6_syY3fF0W | {}    | <<null>>  |
+| f9399df86b9a4cacb325d691cc930a11 | s_rally_bf9a03c6_k9atMLVR | {}    | <<null>>  |
+| f96b09e1a4034e3a991a50ee4dfce2a8 | ResellerAdmin             | {}    | <<null>>  |
+| fa61a7a0064643d7a184f80966a095fb | admin                     | {}    | <<null>>  |
+| fee09a91419d48308dd54820c6cdf893 | service                   | {}    | <<null>>  |
+| fef767ab1c65496594e22f0a8eafb74e | s_rally_bf9a03c6_Dxb87VwJ | {}    | <<null>>  |
++----------------------------------+---------------------------+-------+-----------+
+106 rows in set (0.37 sec)
+#+END_EXAMPLE
+
+
+- Reading [[https://www.cockroachlabs.com/blog/geo-partitioning-one/][Cockroach geo partinioning]]
+
+
+- Trying to change where Ck and Mariadb will write their data

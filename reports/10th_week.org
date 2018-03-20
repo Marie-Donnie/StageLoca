@@ -247,3 +247,13 @@ MariaDB [(none)]> select * from keystone.role;
 
 
 - Trying to change where Ck and Mariadb will write their data
+
+
+
+* Tuesday 20 March [2018-03-20 mar.]
+
+- Rennes frontend is back online \o/
+  + But Nancy is totally down :-/
+  + Deploying on Sagittaire(Lyon) using a hardcoded ~database_network~ value in =group_vars/all.yaml=
+    - Had difficulties to make it work until I realized on Sagittaire the control network was on eth1 and not eth0...
+    - Ronan made a PR so deploy can take a dict instead of a file in order to allow us to make clean experiments with exp without using ~conf-25/50.yaml~ since they differ only from one parameter

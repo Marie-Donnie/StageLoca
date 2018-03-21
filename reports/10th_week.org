@@ -256,4 +256,214 @@ MariaDB [(none)]> select * from keystone.role;
   + But Nancy is totally down :-/
   + Deploying on Sagittaire(Lyon) using a hardcoded ~database_network~ value in =group_vars/all.yaml=
     - Had difficulties to make it work until I realized on Sagittaire the control network was on eth1 and not eth0...
-    - Ronan made a PR so deploy can take a dict instead of a file in order to allow us to make clean experiments with exp without using ~conf-25/50.yaml~ since they differ only from one parameter
+
+- Ronan [[https://github.com/Marie-Donnie/juice/pull/7][made a PR]] so deploy can take a dict instead of a file in order to allow us to make clean experiments with exp without using ~conf-25/50.yaml~ since they differ only from one parameter
+- He made [[https://github.com/Marie-Donnie/juice/pull/8][another PR]] to make the monitoring optional
+
+
+* Wednesday 21 March [2018-03-21 mer.]
+
+- Ronan showed me yesterday [[https://github.com/rcherrueau/juice/blob/keystone-experiments/experiments.py][the file he made]] to launch the tests using execo's paramsweeper
+
+
+- Trying to see if the results are different for MariaDB if I put Rally on a non master node
+- Since we removed every .execo, I can't launch the deployment anymore, this is getting old.
+
+#+BEGIN_EXAMPLE
+DEBUG:urllib3.connectionpool:https://api.grid5000.fr:443 "GET /3.0/sites/rennes/clusters/paravance/nodes HTTP/1.1" 200 16949
+DEBUG:urllib3.connectionpool:https://api.grid5000.fr:443 "GET /3.0/sites/nantes/clusters/ecotype/nodes HTTP/1.1" 200 12022
+Exception in thread Thread-16:
+Traceback (most recent call last):
+  File "/usr/lib/python2.7/threading.py", line 801, in __bootstrap_inner
+    self.run()
+  File "/usr/lib/python2.7/threading.py", line 754, in run
+    self.__target(*self.__args, **self.__kwargs)
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/execo_g5k/api_utils.py", line 349, in __get_site
+    threading.currentThread().cluster_data[cluster] = cluster_attrs_th[cluster].cluster_data
+AttributeError: 'Thread' object has no attribute 'cluster_data'
+
+DEBUG:urllib3.connectionpool:https://api.grid5000.fr:443 "GET /3.0/sites/nancy/clusters/graphene/nodes HTTP/1.1" 200 25601
+Exception in thread Thread-12:
+Traceback (most recent call last):
+  File "/usr/lib/python2.7/threading.py", line 801, in __bootstrap_inner
+    self.run()
+  File "/usr/lib/python2.7/threading.py", line 754, in run
+    self.__target(*self.__args, **self.__kwargs)
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/execo_g5k/api_utils.py", line 349, in __get_site
+    threading.currentThread().cluster_data[cluster] = cluster_attrs_th[cluster].cluster_data
+AttributeError: 'Thread' object has no attribute 'cluster_data'
+
+Traceback (most recent call last):
+  File "./juice.py", line 373, in <module>
+    doc_lookup(args['<command>'], argv)
+  File "/home/madelavergne/juice/utils/doc.py", line 29, in doc_lookup
+    return fn(**docopt(fn.__doc__, argv=argv))
+  File "/home/madelavergne/juice/utils/doc.py", line 18, in decorated
+    fn(*args, **kwargs)
+  File "./juice.py", line 98, in deploy
+    g5k(config=config)
+  File "/home/madelavergne/juice/utils/doc.py", line 18, in decorated
+    fn(*args, **kwargs)
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/enoslib/task.py", line 50, in decorated
+    fn(*args, **kwargs)
+  File "./juice.py", line 112, in g5k
+    roles, networks = provider.init(force_deploy=force)
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/enoslib/infra/enos_g5k/provider.py", line 161, in init
+    r.launch(**self.provider_conf)
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/enoslib/infra/enos_g5k/api.py", line 81, in launch
+    self.reserve(**kwargs)
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/enoslib/infra/enos_g5k/api.py", line 98, in reserve
+    queue)
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/enoslib/infra/enos_g5k/utils.py", line 42, in get_or_create_job
+    gridjob, _ = ex5.planning.get_job_by_name(job_name)
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/execo_g5k/planning.py", line 61, in get_job_by_name
+    sites = get_g5k_sites()
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/execo_g5k/api_utils.py", line 459, in get_g5k_sites
+    return list(get_api_data()['hierarchy'])
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/execo_g5k/api_utils.py", line 270, in get_api_data
+    _data = _get_api()
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/execo_g5k/api_utils.py", line 375, in _get_api
+    data['network'][site] = site_th[site].network_data
+AttributeError: 'Thread' object has no attribute 'network_data'
+#+END_EXAMPLE
+  + I've put back .execo (not the conf), it works but it detected the reservation I made for next monday (I didn't have the problem yesterday since Nancy was down)
+  + I changed the name of the job, but I still have this, which explains why it kind of work when I put back the cache (.execo)
+#+BEGIN_EXAMPLE
+INFO:root:- Task g5k started -
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): api.grid5000.fr
+DEBUG:urllib3.connectionpool:https://api.grid5000.fr:443 "GET /3.0/ HTTP/1.1" 503 399
+2018-03-21 10:22:16,120 WARNING: Unable to check API, reverting to cache
+WARNING:execo:Unable to check API, reverting to cache
+INFO:root:Waiting for oargridjob 60946 to start
+#+END_EXAMPLE
+  + And then:
+#+BEGIN_EXAMPLE
+INFO:root:Waiting for oargridjob 60946 to start
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): api.grid5000.fr
+DEBUG:urllib3.connectionpool:https://api.grid5000.fr:443 "GET /3.0/sites/lyon HTTP/1.1" 503 397
+Traceback (most recent call last):
+  File "./juice.py", line 373, in <module>
+    doc_lookup(args['<command>'], argv)
+  File "/home/madelavergne/juice/utils/doc.py", line 29, in doc_lookup
+    return fn(**docopt(fn.__doc__, argv=argv))
+  File "/home/madelavergne/juice/utils/doc.py", line 18, in decorated
+    fn(*args, **kwargs)
+  File "./juice.py", line 98, in deploy
+    g5k(config=config)
+  File "/home/madelavergne/juice/utils/doc.py", line 18, in decorated
+    fn(*args, **kwargs)
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/enoslib/task.py", line 50, in decorated
+    fn(*args, **kwargs)
+  File "./juice.py", line 112, in g5k
+    roles, networks = provider.init(force_deploy=force)
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/enoslib/infra/enos_g5k/provider.py", line 161, in init
+    r.launch(**self.provider_conf)
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/enoslib/infra/enos_g5k/api.py", line 81, in launch
+    self.reserve(**kwargs)
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/enoslib/infra/enos_g5k/api.py", line 99, in reserve
+    utils.concretize_resources(self.c_resources, gridjob)
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/enoslib/infra/enos_g5k/utils.py", line 63, in concretize_resources
+    concretize_networks(resources, vlans)
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/enoslib/infra/enos_g5k/utils.py", line 171, in concretize_networks
+    site_info = ex5.get_resource_attributes('/sites/%s' % site)
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/execo_g5k/api_utils.py", line 252, in get_resource_attributes
+    response = _get_g5k_api().get(path)
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/execo_g5k/api_utils.py", line 209, in get
+    raise APIException(uri, 'GET', response=response)
+execo_g5k.api_utils.APIException: <APIException uri='https://api.grid5000.fr/3.0/sites/lyon' method=GET status=503/"Service Unavailable" content="<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>503 Service Unavailable</title>
+</head><body>
+<h1>Service Unavailable</h1>
+<p>The server is temporarily unable to service your
+request due to maintenance downtime or capacity
+problems. Please try again later.</p>
+<hr>
+<address>Apache/2.4.10 (Debian) Server at api-server-v3.lyon.grid5000.fr Port 4444</address>
+</body></html>
+">
+#+END_EXAMPLE
+
+  + when I put my name in =~/.execo.conf.py=, I get:
+#+BEGIN_EXAMPLE
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): api.grid5000.fr
+Traceback (most recent call last):
+  File "./juice.py", line 373, in <module>
+    doc_lookup(args['<command>'], argv)
+  File "/home/madelavergne/juice/utils/doc.py", line 29, in doc_lookup
+    return fn(**docopt(fn.__doc__, argv=argv))
+  File "/home/madelavergne/juice/utils/doc.py", line 18, in decorated
+    fn(*args, **kwargs)
+  File "./juice.py", line 98, in deploy
+    g5k(config=config)
+  File "/home/madelavergne/juice/utils/doc.py", line 18, in decorated
+    fn(*args, **kwargs)
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/enoslib/task.py", line 50, in decorated
+    fn(*args, **kwargs)
+  File "./juice.py", line 112, in g5k
+    roles, networks = provider.init(force_deploy=force)
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/enoslib/infra/enos_g5k/provider.py", line 161, in init
+    r.launch(**self.provider_conf)
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/enoslib/infra/enos_g5k/api.py", line 81, in launch
+    self.reserve(**kwargs)
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/enoslib/infra/enos_g5k/api.py", line 99, in reserve
+    utils.concretize_resources(self.c_resources, gridjob)
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/enoslib/infra/enos_g5k/utils.py", line 63, in concretize_resources
+    concretize_networks(resources, vlans)
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/enoslib/infra/enos_g5k/utils.py", line 171, in concretize_networks
+    site_info = ex5.get_resource_attributes('/sites/%s' % site)
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/execo_g5k/api_utils.py", line 252, in get_resource_attributes
+    response = _get_g5k_api().get(path)
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/execo_g5k/api_utils.py", line 420, in _get_g5k_api
+    _g5k_api = APIConnection()
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/execo_g5k/api_utils.py", line 192, in __init__
+    self.password = _get_api_password(self.username, self.base_uri)
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/execo_g5k/api_utils.py", line 108, in _get_api_password
+    _get_api_password_check_func)
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/execo_g5k/api_utils.py", line 78, in _ask_password
+    if password_check_func(username, uri, password):
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/execo_g5k/api_utils.py", line 91, in _get_api_password_check_func
+    timeout=g5k_configuration.get('api_timeout'))
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/requests/api.py", line 72, in get
+    return request('get', url, params=params, **kwargs)
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/requests/api.py", line 58, in request
+    return session.request(method=method, url=url, **kwargs)
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/requests/sessions.py", line 508, in request
+    resp = self.send(prep, **send_kwargs)
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/requests/sessions.py", line 618, in send
+    r = adapter.send(request, **kwargs)
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/requests/adapters.py", line 506, in send
+    raise SSLError(e, request=request)
+requests.exceptions.SSLError: HTTPSConnectionPool(host='api.grid5000.fr', port=443): Max retries exceeded with url: /3.0 (Caused by SSLError(SSLError("bad handshake: Error([('SSL routines', 'tls_process_server_certificate', 'certificate verify failed')],)",),))
+#+END_EXAMPLE
+  + I had to re-add the uri using api ext to make it work, but then again I had another connection problem before it finally worked after a simple relaunch
+
+- Made the PR for enoslib. Had to edit one commit and push force because there was an awful misused work in the comment of the code.
+
+- trying to see why I can't get a galera cluster up and running, since I either get on the master node:
+#+BEGIN_EXAMPLE
+2018-03-21 13:54:23 140022303119232 [Note] InnoDB: 5.7.21 started; log sequence number 1603465
+2018-03-21 13:54:23 140020732114688 [Note] InnoDB: Loading buffer pool(s) from /var/lib/mysql/ib_buffer_pool
+2018-03-21 13:54:23 140020732114688 [Note] InnoDB: Cannot open '/var/lib/mysql/ib_buffer_pool' for reading: No such file or directory
+2018-03-21 13:54:23 140022303119232 [Note] Plugin 'FEEDBACK' is disabled.
+2018-03-21 13:54:23 140022303119232 [ERROR] Could not open mysql.plugin table. Some plugins may be not loaded
+2018-03-21 13:54:23 140022303119232 [Note] Recovering after a crash using tc.log
+2018-03-21 13:54:23 140022303119232 [Note] Starting crash recovery...
+2018-03-21 13:54:23 140022303119232 [Note] Crash recovery finished.
+2018-03-21 13:54:23 140022303119232 [ERROR] Can't open and lock privilege tables: Table 'mysql.servers' doesn't exist
+2018-03-21 13:54:23 140022303119232 [Note] Server socket created on IP: '0.0.0.0'.
+2018-03-21 13:54:23 140022303119232 [ERROR] Fatal error: Can't open and lock privilege tables: Table 'mysql.user' doesn't exist
+#+END_EXAMPLE
+- or on a non master node:
+#+BEGIN_EXAMPLE
+error: database is uninitialized and password option is not specified
+  You need to specify one of MYSQL_ROOT_PASSWORD, MYSQL_ALLOW_EMPTY_PASSWORD and MYSQL_RANDOM_ROOT_PASSWORD
+#+END_EXAMPLE
+
+#+BEGIN_EXAMPLE
+# # Used when only one network is available on the reservation cluster
+# database_network: "eth1"
+#+END_EXAMPLE
+
+
+- Seems that we lose a few seconds when I put Rally on a non master node for Galera, but not much (from 100 to 122s for get-entities and 4 to 5 for authenticate-user-and-validate-token)

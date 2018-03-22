@@ -467,3 +467,16 @@ error: database is uninitialized and password option is not specified
 
 
 - Seems that we lose a few seconds when I put Rally on a non master node for Galera, but not much (from 100 to 122s for get-entities and 4 to 5 for authenticate-user-and-validate-token)
+
+
+* Thursday 22 March [2018-03-22 jeu.]
+
+- Testing Cockroach on 10 nodes with 50 and 150 ms
+  + still got the bug when deploying first time :/
+  + I really have to check on this tomorrow
+
+- Talk from Dimitri called 'Toward a Generic, Flexible and Efficient Deployment Model: An OpenStack Case Study' (cf deployment.org)
+
+- Went to see Ronan about the experiments he ran yesterday
+
+- Began to work on federation

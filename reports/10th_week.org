@@ -480,3 +480,64 @@ error: database is uninitialized and password option is not specified
 - Went to see Ronan about the experiments he ran yesterday
 
 - Began to work on federation
+
+* Friday 23 March [2018-03-23 ven.]
+
+- Removed the sleep part from openstack/cockroach template since we're doing a two phases deployment
+- Removed tc from the conf since we're not using it
+
+- Removed cockroach occurences from Federation branch
+
+- Had a bug where there was no facts.yml in tmp enos. After investigating a bit, it seems that juice wasn't doing much on any node. Turned out there was a problem with kadeploy. Worked better afterwards
+
+
+- Working on finding why the first run never works:
+ + from the first deployment, I have in ~hostvars[inventory_hostname]~:
+#+BEGIN_EXAMPLE
+        "ansible_eth0": {
+            "active": true,
+            "device": "eth0",
+            "features": {},
+            "ipv4": {
+                "address": "172.16.72.32",
+                "broadcast": "172.16.79.255",
+                "netmask": "255.255.240.0",
+                "network": "172.16.64.0"
+            },
+            "ipv6": [
+                {
+                    "address": "fe80::266e:96ff:fe03:11d0",
+                    "prefix": "64",
+                    "scope": "link"
+                }
+            ],
+            "macaddress": "24:6e:96:03:11:d0",
+            "module": "ixgbe",
+            "mtu": 1500,
+            "pciid": "0000:01:00.0",
+            "promisc": false,
+            "speed": 10000,
+            "type": "ether"
+        },
+        "ansible_eth1": {
+            "active": false,
+            "device": "eth1",
+            "features": {},
+            "ipv6": [
+                {
+                    "address": "fe80::266e:96ff:fe03:11d2",
+                    "prefix": "64",
+                    "scope": "link"
+                }
+            ],
+            "macaddress": "24:6e:96:03:11:d2",
+            "module": "ixgbe",
+            "mtu": 1500,
+            "pciid": "0000:01:00.1",
+            "promisc": false,
+            "speed": -1,
+            "type": "ether"
+        },
+#+END_EXAMPLE
+
+  + I don't know why eth1 has an ipv4 only after the first deployment, though.

@@ -1,0 +1,11 @@
+#+TITLE: Report for : Un intergiciel d’une base de données NewSQL qui considère la localité de l’application cliente -- 11th week --
+#+AUTHOR: Marie Delavergne
+
+* Monday 26 March [2018-03-26 lun.]
+
+- Matthieu answered once more to my pull request [[https://github.com/BeyondTheClouds/enoslib/pull/18#issuecomment-376072658][here]] so I'm going to work on that first
+  + using PyCharm to make the tests
+  + took some time to figure out I needed a venv and how to use it in PyCharm ( [[http://exponential.io/blog/2015/02/10/configure-pycharm-to-use-virtualenv/][help here]] )
+  + finally got a good way to add constraints like ~src==dst~ because they were removed from the ~generate_default_grp_constraints~ with ~grp1 != grp2~. I couldn't change this since this would mean I would have a lot more constraints everywhere (doing the product from src and dst). So I checked if there was a constraint where the src and dst were equals and added them here so the default treatment would take care of them
+
+- Tried to help Jonathan with his tests on tidb using juice, it seems that there is a bug when using a comma

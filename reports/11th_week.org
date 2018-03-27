@@ -9,3 +9,76 @@
   + finally got a good way to add constraints like ~src==dst~ because they were removed from the ~generate_default_grp_constraints~ with ~grp1 != grp2~. I couldn't change this since this would mean I would have a lot more constraints everywhere (doing the product from src and dst). So I checked if there was a constraint where the src and dst were equals and added them here so the default treatment would take care of them
 
 - Tried to help Jonathan with his tests on tidb using juice, it seems that there is a bug when using a comma
+
+
+* Thursday 27 March [2018-03-27 mar.]
+
+- Finished my Pull Request (I didn't see yesterday that Matthieu wanted me to check if there was one and only one dict with ~src == dst == grp1~ )
+  + Discovered by the way that I can test this withou using ~src == dst and src == dst~
+  + Also, sum([True, False, True]) returns the number of True.
+
+- Working on federation
+  + Corrected some errors. Actually, while deploying, there are a lot of errors from little things I didn't see.
+  + Deploy worked with MariaDB not used with Galera
+    - Reminder : to connect to MariaDB on node grisou-x: ~ docker run --rm -it mariadb mysql -h 172.16.72.x -u root -p ~
+    - I can create databases and they are not replicated to other nodes
+  + Openstack ok on each separate nodes
+#+BEGIN_EXAMPLE
+root@grisou-42:~# su stack
+stack@grisou-42:/root$ source ~/devstack/openrc admin admin
+WARNING: setting legacy OS_TENANT_NAME to support cli tools.
+stack@grisou-42:/root$ openstack endpoint list
++----------------------------------+-----------+--------------+--------------+---------+-----------+------------------------------+
+| ID                               | Region    | Service Name | Service Type | Enabled | Interface | URL                          |
++----------------------------------+-----------+--------------+--------------+---------+-----------+------------------------------+
+| 11f4af9aa44d497796a32b9a175d883c | grisou-42 | keystone     | identity     | True    | public    | http://10.16.12.102/identity |
+| 23ac2358c8de4f55be45a4d6c99261a5 | grisou-42 | keystone     | identity     | True    | admin     | http://10.16.12.102/identity |
++----------------------------------+-----------+--------------+--------------+---------+-----------+------------------------------+
+#+END_EXAMPLE
+  + Using [[https://docs.openstack.org/keystone/ocata/apache-httpd.html][this tuto]] to have a keystone running in httpd
+    - ~cp /opt/stack/keystone/httpd/uwsgi-keystone.conf /etc/apache2/sites-available/~
+    - ~ln -s /etc/apache2/sites-available/uwsgi-keystone.conf /etc/apache2/sites-enabled/~
+    - ~systemctl restart apache2~
+#+BEGIN_EXAMPLE
+root@grisou-25:~# cp /opt/stack/keystone/httpd/keystone-uwsgi-admin.ini /etc/keystone/
+root@grisou-25:~# ls /etc/keystone/
+credential-keys  keystone.conf	     keystone-uwsgi-admin.ini
+fernet-keys	 keystone-paste.ini  keystone-uwsgi-public.ini
+root@grisou-25:~# cp /opt/stack/keystone/httpd/keystone-uwsgi-public.ini /etc/keystone/
+#+END_EXAMPLE
+  + Setting Shibboleth up (from [[https://docs.openstack.org/keystone/pike/advanced-topics/federation/shibboleth.html][here]])
+    - ~apt install libapache2-mod-shib2~
+    - ~vim /etc/apache2/sites-available/uwsgi-keystone.conf~ + ~WSGIScriptAliasMatch ^(/v3/OS-FEDERATION/identity_providers/.*?/protocols/.*?/auth)$ /usr/local/bin/keystone-wsgi-public/$1~
+    - got an 'Invalid command 'WSGIScriptAliasMatch'' error, solved it with ~apt install libapache2-mod-wsgi~ (cf [[https://stackoverflow.com/questions/9947497/i-am-getting-invalid-command-wsgiscriptalias-error-while-starting-apache][stack overflow]])
+    - ~shib-keygen -y 2018~
+  + ok, a lot happened without me doing some feedback
+    - main thing I finally understand that I can use keystone either as a SP or an IdP, not both for the same keystone
+    - that means I have to decide if I'm using as a SP on every nodes with a common IdP, vice-versa, or using a keystone as IdP and others as SP or vice-versa
+    - still feels like I don't know what I'm talking about
+
+- Getting some documentation about Keystone Federation:
+  + [[https://developer.rackspace.com/blog/keystone-to-keystone-federation-with-openstack-ansible/][with openstack ansible]] a bit old and using "openstack-ansible"
+  + [[https://docs.openstack.org/keystone/pike/admin/federated-identity.html][openstack doc]] seems well documented ( also [[https://docs.openstack.org/keystone/pike/advanced-topics/federation/federated_identity.html][this link]]  and [[http://specs.openstack.org/openstack/keystone-specs/specs/juno/keystone-to-keystone-federation.html][some documentation about the federations, how they work]] )
+  + [[https://platform9.com/blog/openstack-keystone-federation/][how to setup keystone federation]] from platform9
+  + [[http://blog.rodrigods.com/it-is-time-to-play-with-keystone-to-keystone-federation-in-kilo/][how to play with keystone federation]] in kilo
+
+- Just realized I didn't talk about my experiments last night.
+  + First, I thought I would be able to use deploy one hour before the reservation but all I got was
+#+BEGIN_EXAMPLE
+  File "/home/madelavergne/juice/venv/local/lib/python2.7/site-packages/execo_g5k/oargrid.py", line 323, in wait_oargrid_job_start
+    sleep(until = get_oargrid_job_info(oargrid_job_id, frontend_connection_params, timeout)['start_date'])
+KeyError: 'start_date'
+#+END_EXAMPLE
+  + So I tried after the beginning of the reservation (19:00:01) with the same results.
+  + I resigned and deleted my reservation before making another, but from my conf, I only took 9 hours
+  + Don't know why, but even if I launched my experiments in a tmux, each time I left I got a broken pipe or something like that.
+  + I decided to let my computer run all night...
+#+CAPTION: Tests results
+#+NAME: fig:tests_results
+[[../images/results-from-monday.png]]
+  + Good news is it made me find out why Jonathan's backup didn't work either, there was a missing
+#+BEGIN_SRC python
+# Set monitoring to True by default
+"enable_monitoring": env['config'].get('enable_monitoring', True)
+#+END_SRC
+  here https://github.com/Marie-Donnie/juice/blob/master/juice.py#L306

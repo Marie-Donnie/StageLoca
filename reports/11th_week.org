@@ -82,3 +82,13 @@ KeyError: 'start_date'
 "enable_monitoring": env['config'].get('enable_monitoring', True)
 #+END_SRC
   here https://github.com/Marie-Donnie/juice/blob/master/juice.py#L306
+
+
+* Wednesday 28 March [2018-03-28 mer.]
+
+- Ronan told me to focus on analyzing the results
+  + got the 'ipv4' undefined variable again, so I'm trying to see where this comes from.
+    - in =no_push/hostvars-2=, I can see that indeed, there are no ipv4 adress on =ansible_eth1= (barely an ipv6 on themselves)
+  + worked on analysis but I'm totally rusty for os stuff on python
+
+- Adrien asked me to make a clean test plan

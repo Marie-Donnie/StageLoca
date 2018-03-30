@@ -156,3 +156,20 @@ Initializing random number generator from current timeInitializing worker thread
    events (avg/stddev):           243.0000/0.00
    execution time (avg/stddev):   10.0217/0.00
 #+END_EXAMPLE
+
+
+* Friday 30 March [2018-03-30 ven.]
+
+- Before getting to work, I thought about emulate and the time it takes on an experiment and I realized that we don't need the teardown since the setup reset everything at the beginning.
+
+- Working on analysis
+
+- Meeting with Adrien
+  + test Nova using MariaDB/Galera
+    - see if/why it would broke at 45+ nodes
+  + send a mail to the OpenStack mailing list to understand and know if the protocol is correct
+  + check the three different types of [[https://mariadb.com/kb/en/library/galera-cluster-system-variables/#wsrep_sst_method][sst methods]]
+    - prepare to explain them and the differences
+    - Cockroach / Maria DB (galera) au dessus de DevStack
+  + read state of the art on active/active replication and different solutions like the three techniques in Galera are used, why they are pertinent and what are their weaknesses
+    - why Cockroach has so low perf

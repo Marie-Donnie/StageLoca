@@ -1,0 +1,63 @@
+#+TITLE: Report for : Un intergiciel d’une base de données NewSQL qui considère la localité de l’application cliente -- 12th week --
+#+AUTHOR: Marie Delavergne
+
+
+* Tuesday 2 April [2018-04-03 mar.]
+
+- Readings and testings around mysqldump/rsync sst methods
+  + can't seem to figure out how to use mysqldump
+    - added to the config file:
+#+BEGIN_EXAMPLE
+wsrep-sst-method=mysqldump
+wsrep_sst_auth=sst_user:my-secret-pwd
+#+END_EXAMPLE
+    - trying to match the instructions [[http://galeracluster.com/documentation-webpages/mysqldump.html][to enable mysqldump]]
+    - maybe that was they meant by "These transfers are available on live servers. In fact, only a fully initialized server can receive a Logical State Snapshot."; you might have to configure it with rsync first.
+    - on other tutorials, they use rsync:
+      + [[https://www.cyberciti.biz/faq/howto-install-configure-mariadb-galera-master-cluster-ubuntulinux/][cybercity.biz]]
+      + [[https://www.digitalocean.com/community/tutorials/how-to-configure-a-galera-cluster-with-mariadb-10-1-on-ubuntu-16-04-servers][digital ocean]] "because it's commonly available and does what we need for now"
+    - when I try to follow the tutorial for mysqldump I get (master node here, but similar for all the nodes)
+#+BEGIN_EXAMPLE
+2018-04-03 13:32:06 140032930314112 [Note] mysqld (mysqld 10.2.14-MariaDB-10.2.14+maria~jessie) starting as process 1 ...
+2018-04-03 13:32:06 140032930314112 [Note] InnoDB: For Galera, using innodb_lock_schedule_algorithm=fcfs
+2018-04-03 13:32:06 140032930314112 [Warning] InnoDB: Using innodb_locks_unsafe_for_binlog is DEPRECATED. This option may be removed in future releases. Please use READ COMMITTED transaction isolation level instead; Please refer to https://mariadb.com/kb/en/library/set-transaction/
+2018-04-03 13:32:06 140032930314112 [Note] InnoDB: Mutexes and rw_locks use GCC atomic builtins
+2018-04-03 13:32:06 140032930314112 [Note] InnoDB: Uses event mutexes
+2018-04-03 13:32:06 140032930314112 [Note] InnoDB: Compressed tables use zlib 1.2.8
+2018-04-03 13:32:06 140032930314112 [Note] InnoDB: Using Linux native AIO
+2018-04-03 13:32:06 140032930314112 [Note] InnoDB: Number of pools: 1
+2018-04-03 13:32:06 140032930314112 [Note] InnoDB: Using SSE2 crc32 instructions
+2018-04-03 13:32:06 140032930314112 [Note] InnoDB: Initializing buffer pool, total size = 256M, instances = 1, chunk size = 128M
+2018-04-03 13:32:06 140032930314112 [Note] InnoDB: Completed initialization of buffer pool
+2018-04-03 13:32:06 140032261691136 [Note] InnoDB: If the mysqld execution user is authorized, page cleaner thread priority can be changed. See the man page of setpriority().
+2018-04-03 13:32:06 140032930314112 [Note] InnoDB: The first innodb_system data file 'ibdata1' did not exist. A new tablespace will be created!
+2018-04-03 13:32:06 140032930314112 [Note] InnoDB: Setting file './ibdata1' size to 12 MB. Physically writing the file full; Please wait ...
+2018-04-03 13:32:06 140032930314112 [Note] InnoDB: File './ibdata1' size is now 12 MB.
+2018-04-03 13:32:06 140032930314112 [Note] InnoDB: Setting log file ./ib_logfile101 size to 50331648 bytes
+2018-04-03 13:32:06 140032930314112 [Note] InnoDB: Setting log file ./ib_logfile1 size to 50331648 bytes
+2018-04-03 13:32:06 140032930314112 [Note] InnoDB: Renaming log file ./ib_logfile101 to ./ib_logfile0
+2018-04-03 13:32:06 140032930314112 [Note] InnoDB: New log files created, LSN=45790
+2018-04-03 13:32:06 140032930314112 [Note] InnoDB: Doublewrite buffer not found: creating new
+2018-04-03 13:32:06 140032930314112 [Note] InnoDB: Doublewrite buffer created
+2018-04-03 13:32:06 140032930314112 [Note] InnoDB: 128 out of 128 rollback segments are active.
+2018-04-03 13:32:06 140032930314112 [Note] InnoDB: Creating foreign key constraint system tables.
+2018-04-03 13:32:06 140032930314112 [Note] InnoDB: Creating tablespace and datafile system tables.
+2018-04-03 13:32:06 140032930314112 [Note] InnoDB: Creating sys_virtual system tables.
+2018-04-03 13:32:06 140032930314112 [Note] InnoDB: Creating shared tablespace for temporary tables
+2018-04-03 13:32:06 140032930314112 [Note] InnoDB: Setting file './ibtmp1' size to 12 MB. Physically writing the file full; Please wait ...
+2018-04-03 13:32:06 140032930314112 [Note] InnoDB: File './ibtmp1' size is now 12 MB.
+2018-04-03 13:32:06 140032930314112 [Note] InnoDB: Waiting for purge to start
+2018-04-03 13:32:06 140032930314112 [Note] InnoDB: 5.7.21 started; log sequence number 0
+2018-04-03 13:32:06 140032930314112 [Note] Plugin 'FEEDBACK' is disabled.
+2018-04-03 13:32:06 140032930314112 [ERROR] Could not open mysql.plugin table. Some plugins may be not loaded
+2018-04-03 13:32:06 140032930314112 [ERROR] Can't open and lock privilege tables: Table 'mysql.servers' doesn't exist
+2018-04-03 13:32:06 140032930314112 [Note] Server socket created on IP: '0.0.0.0'.
+2018-04-03 13:32:06 140032930314112 [ERROR] Fatal error: Can't open and lock privilege tables: Table 'mysql.user' doesn't exist
+	#+END_EXAMPLE
+  - I think I've figured it out, but I may still be missing the point: SST is used only when deploying the cluster or if a node doesn't have a donor available; else it uses IST
+    + readings:
+      - [[http://www.clusterdb.com/mysql-cluster/active-active-replication-performance-improvements-operational-enhancements-some-of-whats-available-in-the-new-mysql-cluster-7-4-2-dmr][MySQL cluster]]
+      - [[https://dba.stackexchange.com/questions/91287/is-possible-to-backup-database-online-using-rsync][Pictorial Representation of InnoDB]]
+      - [[https://dba.stackexchange.com/questions/199120/can-sst-state-transfer-be-set-to-rsync-with-innodb-as-storage-engine-in-galera-c][rsync has SST method]]
+      - [[https://www.percona.com/files/presentations/percona-live/nyc-2012/PLNY12-galera-cluster-best-practices.pdf][nice slides about galera cluster]]
+      - [[http://galeracluster.com/documentation-webpages/statetransfer.html#ist][ist doc on galeracluster]]

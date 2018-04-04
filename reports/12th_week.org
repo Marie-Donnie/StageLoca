@@ -61,3 +61,185 @@ wsrep_sst_auth=sst_user:my-secret-pwd
       - [[https://dba.stackexchange.com/questions/199120/can-sst-state-transfer-be-set-to-rsync-with-innodb-as-storage-engine-in-galera-c][rsync has SST method]]
       - [[https://www.percona.com/files/presentations/percona-live/nyc-2012/PLNY12-galera-cluster-best-practices.pdf][nice slides about galera cluster]]
       - [[http://galeracluster.com/documentation-webpages/statetransfer.html#ist][ist doc on galeracluster]]
+
+
+* Wednesday 3 April [2018-04-04 mer.]
+
+- Redoing the missing tests
+#+BEGIN_EXAMPLE
+WARNING:root:No backup folder in mariadb-3-0-nonlocal
+WARNING:root:No backup folder in cockroachdb-3-150-nonlocal
+WARNING:root:No backup folder in cockroachdb-3-0-local
+WARNING:root:No backup folder in cockroachdb-25-50-local
+WARNING:root:No backup folder in cockroachdb-25-0-nonlocal
+WARNING:root:No backup folder in cockroachdb-3-0-nonlocal
+WARNING:root:No backup folder in cockroachdb-45-0-nonlocal
+#+END_EXAMPLE
+  + Tried to deploy on 25 nodes, but devstack doesn't recognize pip version 10
+#+BEGIN_EXAMPLE
+[ERROR] /opt/stack/devstack/inc/python:338 Currently installed pip version 1 does not meet minimum requirements (>=6).
+#+END_EXAMPLE
+  + with
+#+BEGIN_EXAMPLE
+root@ecotype-18:~# pip --version
+pip 10.0.0b2 from /usr/local/lib/python2.7/dist-packages/pip-10.0.0b2-py2.7.egg/pip (python 2.7)
+#+END_EXAMPLE
+  + so I downgraded pip using [[https://stackoverflow.com/questions/24773109/how-to-downgrade-the-installed-version-of-pip-on-windows][how to degrade the installed version of pip]] (thanks to Jonathan)
+  + but then I was sure that with the length of my reservation (3h30 because I had 25 nodes) I wouldn't be able to complete CockroachDB tests.
+  + took 3 nodes but then I got
+    #+BEGIN_EXAMPLE
+TASK [openstack : Removes Cockroach keystone database if present] *************************************************************************************************************************************************
+skipping: [ecotype-27.nantes.grid5000.fr]
+skipping: [ecotype-29.nantes.grid5000.fr]
+An exception occurred during task execution. To see the full traceback, use -vvv. The error was: ProgrammingError: database "postgres" does not exist
+fatal: [ecotype-26.nantes.grid5000.fr]: FAILED! => {"changed": false, "msg": "Database query failed: database \"postgres\" does not exist\n"}
+    #+END_EXAMPLE
+    - trying to search if there was a change because I'm not searching for postgres database
+    - cheated by adding it manually, but I don't know if this will persist
+#+BEGIN_EXAMPLE
+ERROR oslo_db.sqlalchemy.exc_filters [-] DBAPIError exception wrapped from (psycopg2.ProgrammingError) syntax error at or near "role"
+DETAIL:  source SQL:
+
+CREATE TABLE role (
+             ^
+HINT:  try \h CREATE TABLE
+ [SQL: '\nCREATE TABLE role (\n\tid VARCHAR(64) NOT NULL, \n\tname VARCHAR(255) NOT NULL, \n\textra TEXT, \n\tPRIMARY KEY (id)\n)\n\n']: ProgrammingError: syntax error at or near "role"
+DETAIL:  source SQL:
+
+CREATE TABLE role (
+             ^
+HINT:  try \h CREATE TABLE
+ERROR oslo_db.sqlalchemy.exc_filters Traceback (most recent call last):
+ERROR oslo_db.sqlalchemy.exc_filters   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/engine/base.py", line 1182, in _execute_context
+ERROR oslo_db.sqlalchemy.exc_filters     context)
+ERROR oslo_db.sqlalchemy.exc_filters   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/engine/default.py", line 470, in do_execute
+ERROR oslo_db.sqlalchemy.exc_filters     cursor.execute(statement, parameters)
+ERROR oslo_db.sqlalchemy.exc_filters ProgrammingError: syntax error at or near "role"
+ERROR oslo_db.sqlalchemy.exc_filters DETAIL:  source SQL:
+ERROR oslo_db.sqlalchemy.exc_filters
+ERROR oslo_db.sqlalchemy.exc_filters CREATE TABLE role (
+ERROR oslo_db.sqlalchemy.exc_filters              ^
+ERROR oslo_db.sqlalchemy.exc_filters HINT:  try \h CREATE TABLE
+ERROR oslo_db.sqlalchemy.exc_filters
+ERROR oslo_db.sqlalchemy.exc_filters
+ERROR 067_kilo [-] Exception while creating table: Table('role', MetaData(bind=Engine(cockroachdb://root:***@10.44.65.74:26257/keystone?client_encoding=utf8)), Column('id', String(length=64), table=<role>, primary_key=True, nullable=False), Column('name', String(length=255), table=<role>, nullable=False), Column('extra', Text(), table=<role>), schema=None): DBError: (psycopg2.ProgrammingError) syntax error at or near "role"
+DETAIL:  source SQL:
+
+CREATE TABLE role (
+             ^
+HINT:  try \h CREATE TABLE
+ [SQL: '\nCREATE TABLE role (\n\tid VARCHAR(64) NOT NULL, \n\tname VARCHAR(255) NOT NULL, \n\textra TEXT, \n\tPRIMARY KEY (id)\n)\n\n']
+ERROR 067_kilo Traceback (most recent call last):
+ERROR 067_kilo   File "/opt/stack/keystone/keystone/common/sql/migrate_repo/versions/067_kilo.py", line 245, in upgrade
+ERROR 067_kilo     table.create()
+ERROR 067_kilo   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/sql/schema.py", line 756, in create
+ERROR 067_kilo     checkfirst=checkfirst)
+ERROR 067_kilo   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/engine/base.py", line 1929, in _run_visitor
+ERROR 067_kilo     conn._run_visitor(visitorcallable, element, **kwargs)
+ERROR 067_kilo   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/engine/base.py", line 1538, in _run_visitor
+ERROR 067_kilo     **kwargs).traverse_single(element)
+ERROR 067_kilo   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/sql/visitors.py", line 121, in traverse_single
+ERROR 067_kilo     return meth(obj, **kw)
+ERROR 067_kilo   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/sql/ddl.py", line 767, in visit_table
+ERROR 067_kilo     include_foreign_key_constraints=include_foreign_key_constraints
+ERROR 067_kilo   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/engine/base.py", line 945, in execute
+ERROR 067_kilo     return meth(self, multiparams, params)
+ERROR 067_kilo   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/sql/ddl.py", line 68, in _execute_on_connection
+ERROR 067_kilo     return connection._execute_ddl(self, multiparams, params)
+ERROR 067_kilo   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/engine/base.py", line 1002, in _execute_ddl
+ERROR 067_kilo     compiled
+ERROR 067_kilo   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/engine/base.py", line 1189, in _execute_context
+ERROR 067_kilo     context)
+ERROR 067_kilo   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/engine/base.py", line 1398, in _handle_dbapi_exception
+ERROR 067_kilo     util.raise_from_cause(newraise, exc_info)
+ERROR 067_kilo   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/util/compat.py", line 203, in raise_from_cause
+ERROR 067_kilo     reraise(type(exception), exception, tb=exc_tb, cause=cause)
+ERROR 067_kilo   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/engine/base.py", line 1182, in _execute_context
+ERROR 067_kilo     context)
+ERROR 067_kilo   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/engine/default.py", line 470, in do_execute
+ERROR 067_kilo     cursor.execute(statement, parameters)
+ERROR 067_kilo DBError: (psycopg2.ProgrammingError) syntax error at or near "role"
+ERROR 067_kilo DETAIL:  source SQL:
+ERROR 067_kilo
+ERROR 067_kilo CREATE TABLE role (
+ERROR 067_kilo              ^
+ERROR 067_kilo HINT:  try \h CREATE TABLE
+ERROR 067_kilo  [SQL: '\nCREATE TABLE role (\n\tid VARCHAR(64) NOT NULL, \n\tname VARCHAR(255) NOT NULL, \n\textra TEXT, \n\tPRIMARY KEY (id)\n)\n\n']
+ERROR 067_kilo
+CRITICAL keystone [-] Unhandled error: DbMigrationError: (psycopg2.ProgrammingError) syntax error at or near "role"
+DETAIL:  source SQL:
+
+CREATE TABLE role (
+             ^
+HINT:  try \h CREATE TABLE
+ [SQL: '\nCREATE TABLE role (\n\tid VARCHAR(64) NOT NULL, \n\tname VARCHAR(255) NOT NULL, \n\textra TEXT, \n\tPRIMARY KEY (id)\n)\n\n']
+ERROR keystone Traceback (most recent call last):
+ERROR keystone   File "/usr/local/bin/keystone-manage", line 10, in <module>
+ERROR keystone     sys.exit(main())
+ERROR keystone   File "/opt/stack/keystone/keystone/cmd/manage.py", line 45, in main
+ERROR keystone     cli.main(argv=sys.argv, config_files=config_files)
+ERROR keystone   File "/opt/stack/keystone/keystone/cmd/cli.py", line 1337, in main
+ERROR keystone     CONF.command.cmd_class.main()
+ERROR keystone   File "/opt/stack/keystone/keystone/cmd/cli.py", line 531, in main
+ERROR keystone     CONF.command.version)
+ERROR keystone   File "/opt/stack/keystone/keystone/common/sql/upgrades.py", line 250, in offline_sync_database_to_version
+ERROR keystone     expand_schema()
+ERROR keystone   File "/opt/stack/keystone/keystone/common/sql/upgrades.py", line 321, in expand_schema
+ERROR keystone     _sync_common_repo(version=None)
+ERROR keystone   File "/opt/stack/keystone/keystone/common/sql/upgrades.py", line 170, in _sync_common_repo
+ERROR keystone     init_version=init_version, sanity_check=False)
+ERROR keystone   File "/opt/stack/oslo.db/oslo_db/sqlalchemy/migration.py", line 81, in db_sync
+ERROR keystone     raise exception.DbMigrationError(ex)
+ERROR keystone DbMigrationError: (psycopg2.ProgrammingError) syntax error at or near "role"
+ERROR keystone DETAIL:  source SQL:
+ERROR keystone
+ERROR keystone CREATE TABLE role (
+ERROR keystone              ^
+ERROR keystone HINT:  try \h CREATE TABLE
+ERROR keystone  [SQL: '\nCREATE TABLE role (\n\tid VARCHAR(64) NOT NULL, \n\tname VARCHAR(255) NOT NULL, \n\textra TEXT, \n\tPRIMARY KEY (id)\n)\n\n']
+ERROR keystone
+#+END_EXAMPLE
+  + did the test for mariadb/3nodes/0ms
+
+
+- Meanwhile, working on making analysis do its job
+#+BEGIN_EXAMPLE
+Traceback (most recent call last):
+  File "./analysis.py", line 164, in <module>
+    doc_lookup(args['<command>'], argv)
+  File "/home/moi/Documents/Travail/BTC/tools/juice/utils/doc.py", line 29, in doc_lookup
+    return fn(**docopt(fn.__doc__, argv=argv))
+  File "/home/moi/Documents/Travail/BTC/tools/juice/utils/doc.py", line 18, in decorated
+    fn(*args, **kwargs)
+  File "./analysis.py", line 44, in full_run
+    add_results(result_dir)
+  File "./analysis.py", line 80, in add_results
+    json_file = json.loads(fileopen)
+  File "/usr/lib/python2.7/json/__init__.py", line 339, in loads
+    return _default_decoder.decode(s)
+  File "/usr/lib/python2.7/json/decoder.py", line 364, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+TypeError: expected string or buffer
+#+END_EXAMPLE
+  + seems that I just added a "s" to load for nothing: [[https://stackoverflow.com/questions/33336160/python-typeerror-expected-string-or-buffer][load/loads]]
+  + reading [[http://www.gregreda.com/2013/10/26/working-with-pandas-dataframes/][working with pandas dataframes]] to help me
+  + df.info()
+#+BEGIN_EXAMPLE
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 1 entries, 0 to 0
+Data columns (total 9 columns):
+created_at     1 non-null object
+description    1 non-null object
+pass_sla       1 non-null bool
+status         1 non-null object
+subtasks       1 non-null object
+tags           1 non-null object
+title          1 non-null object
+updated_at     1 non-null object
+uuid           1 non-null object
+dtypes: bool(1), object(8)
+memory usage: 137.0+ bytes
+None
+#+END_EXAMPLE
+  + trying to work with [[https://stackoverflow.com/questions/21494030/create-a-pandas-dataframe-from-deeply-nested-json][nested json]]
+  + managed to make it work using the dict

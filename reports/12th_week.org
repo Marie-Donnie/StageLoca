@@ -243,3 +243,80 @@ None
 #+END_EXAMPLE
   + trying to work with [[https://stackoverflow.com/questions/21494030/create-a-pandas-dataframe-from-deeply-nested-json][nested json]]
   + managed to make it work using the dict
+
+
+* Thursday 5 april [2018-04-05 jeu.]
+
+- Experiments from last night didn't work, maybe because of Cockroach, but not sure
+
+- CockroachDB 2.0 is available on docker hub, will test if I have time (all the machines are taken for G5k school)
+  + seems that the bug I had yesterday was related to Cockroach 2.0 (I probably used it yesterday; I didn't check if there was a docker release in the afternoon but I used the latest and today it said that it had been released yesterday)
+  #+BEGIN_EXAMPLE
+  ERROR 067_kilo Traceback (most recent call last):
+ERROR 067_kilo   File "/opt/stack/keystone/keystone/common/sql/migrate_repo/versions/067_kilo.py", line 245, in upgrade
+ERROR 067_kilo     table.create()
+ERROR 067_kilo   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/sql/schema.py", line 756, in create
+ERROR 067_kilo     checkfirst=checkfirst)
+ERROR 067_kilo   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/engine/base.py", line 1929, in _run_visitor
+ERROR 067_kilo     conn._run_visitor(visitorcallable, element, **kwargs)
+ERROR 067_kilo   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/engine/base.py", line 1538, in _run_visitor
+ERROR 067_kilo     **kwargs).traverse_single(element)
+ERROR 067_kilo   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/sql/visitors.py", line 121, in traverse_single
+ERROR 067_kilo     return meth(obj, **kw)
+ERROR 067_kilo   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/sql/ddl.py", line 767, in visit_table
+ERROR 067_kilo     include_foreign_key_constraints=include_foreign_key_constraints
+ERROR 067_kilo   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/engine/base.py", line 945, in execute
+ERROR 067_kilo     return meth(self, multiparams, params)
+ERROR 067_kilo   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/sql/ddl.py", line 68, in _execute_on_connection
+ERROR 067_kilo     return connection._execute_ddl(self, multiparams, params)
+ERROR 067_kilo   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/engine/base.py", line 1002, in _execute_ddl
+ERROR 067_kilo     compiled
+ERROR 067_kilo   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/engine/base.py", line 1189, in _execute_context
+ERROR 067_kilo     context)
+ERROR 067_kilo   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/engine/base.py", line 1398, in _handle_dbapi_exception
+ERROR 067_kilo     util.raise_from_cause(newraise, exc_info)
+ERROR 067_kilo   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/util/compat.py", line 203, in raise_from_cause
+ERROR 067_kilo     reraise(type(exception), exception, tb=exc_tb, cause=cause)
+ERROR 067_kilo   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/engine/base.py", line 1182, in _execute_context
+ERROR 067_kilo     context)
+ERROR 067_kilo   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/engine/default.py", line 470, in do_execute
+ERROR 067_kilo     cursor.execute(statement, parameters)
+ERROR 067_kilo DBError: (psycopg2.ProgrammingError) syntax error at or near "role"
+ERROR 067_kilo DETAIL:  source SQL:
+ERROR 067_kilo
+ERROR 067_kilo CREATE TABLE role (
+ERROR 067_kilo              ^
+ERROR 067_kilo HINT:  try \h CREATE TABLE
+ERROR 067_kilo  [SQL: '\nCREATE TABLE role (\n\tid VARCHAR(64) NOT NULL, \n\tname VARCHAR(255) NOT NULL, \n\textra TEXT, \n\tPRIMARY KEY (id)\n)\n\n']
+ERROR 067_kilo
+CRITICAL keystone [-] Unhandled error: DbMigrationError: (psycopg2.ProgrammingError) syntax error at or near "role"
+  #+END_EXAMPLE
+  - When using specifically the v1.1.7 I didn't have the bug from [[https://github.com/marie-donnie/juice/blob/master/ansible/roles/openstack/tasks/deploy.yml#L3]['removes Cockroach keystone database if present']] and it seems that it was working (seems because the migrations didn't return an error but they were kind of stuck before the reservation ended)
+  - I can't test more for now since g5k school uses all the cluster
+  - ~image: "cockroachdb/cockroach:v1.1.7"~ to use the 1.1.7 version
+  - The reservation has been canceled, I use some nodes to test
+    + it works with 1.1.7
+    + reading the [[https://www.cockroachlabs.com/docs/releases/v2.0.0.html#backward-incompatible-changes][backward incompatibilites]]:
+#+BEGIN_QUOTE
+ROLE, VIRTUAL, and WORK have been added as reserved keywords and are no longer allowed as identifiers.
+#+END_QUOTE
+    + Ronan makes me try to add quotes in 2.0.0, after checking the creation of a role table:
+#+BEGIN_EXAMPLE
+root@:26257/database-test> CREATE TABLE role();
+invalid syntax: statement ignored: syntax error at or near "role"
+DETAIL: source SQL:
+CREATE TABLE role();
+             ^
+HINT: try \h CREATE TABLE
+root@:26257/database-test> CREATE TABLE "role"();
+CREATE TABLE
+
+Time: 13.42213ms
+#+END_EXAMPLE
+    + so we might be able to change only the name in sqlalchemy-migrate
+
+
+- Worked on analysis
+  + began to have good results and 'playable' data
+  + not sure what I need exactly though
+    - thinking about boxes display, but I'm not sure: cf [[https://en.wikipedia.org/wiki/Box_plot][wikipedia article]]

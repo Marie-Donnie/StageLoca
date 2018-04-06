@@ -245,7 +245,7 @@ None
   + managed to make it work using the dict
 
 
-* Thursday 5 april [2018-04-05 jeu.]
+* Thursday 5 April [2018-04-05 jeu.]
 
 - Experiments from last night didn't work, maybe because of Cockroach, but not sure
 
@@ -320,3 +320,91 @@ Time: 13.42213ms
   + began to have good results and 'playable' data
   + not sure what I need exactly though
     - thinking about boxes display, but I'm not sure: cf [[https://en.wikipedia.org/wiki/Box_plot][wikipedia article]]
+
+
+* Friday 6 April [2018-04-06 ven.]
+
+
+- The experiments still didn't work, I think it's because of the "ipv4 not in dict" error, I'll probably use 2 deploy to be sure...
+
+- Working on making Cockroach 2.0 ok
+  + made a snippet to execute on a node (after partially deployed openstack to have the requirements and create the =test_migrate= database)
+#+BEGIN_EXAMPLE
+import sqlalchemy as sql
+
+engine = sql.create_engine("cockroachdb://root:root@10.44.1.94:26257/test_migrate", echo=True)
+meta = sql.MetaData()
+meta.bind = engine
+
+role = sql.Table(
+    'role', meta,
+    sql.Column('id', sql.String(length=64), primary_key=True),
+    sql.Column('user_id', sql.String(length=64), nullable=False),
+    sql.Column('project_id', sql.String(length=64)),
+    sql.Column('type', sql.String(length=255), nullable=False))
+role.create()
+#+END_EXAMPLE
+  + got:
+#+BEGIN_EXAMPLE
+root@ecotype-46:~# python test-sql.py
+2018-04-06 10:51:58,317 INFO sqlalchemy.engine.base.Engine select current_schema()
+2018-04-06 10:51:58,317 INFO sqlalchemy.engine.base.Engine {}
+2018-04-06 10:51:58,319 INFO sqlalchemy.engine.base.Engine SELECT CAST('test plain returns' AS VARCHAR(60)) AS anon_1
+2018-04-06 10:51:58,319 INFO sqlalchemy.engine.base.Engine {}
+2018-04-06 10:51:58,319 INFO sqlalchemy.engine.base.Engine SELECT CAST('test unicode returns' AS VARCHAR(60)) AS anon_1
+2018-04-06 10:51:58,319 INFO sqlalchemy.engine.base.Engine {}
+2018-04-06 10:51:58,321 INFO sqlalchemy.engine.base.Engine
+CREATE TABLE role (
+	id VARCHAR(64) NOT NULL,
+	user_id VARCHAR(64) NOT NULL,
+	project_id VARCHAR(64),
+	type VARCHAR(255) NOT NULL,
+	PRIMARY KEY (id)
+)
+
+2018-04-06 10:51:58,321 INFO sqlalchemy.engine.base.Engine {}
+2018-04-06 10:51:58,322 INFO sqlalchemy.engine.base.Engine ROLLBACK
+Traceback (most recent call last):
+  File "test-sql.py", line 13, in <module>
+    role.create()
+  File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/sql/schema.py", line 756, in create
+    checkfirst=checkfirst)
+  File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/engine/base.py", line 1929, in _run_visitor
+    conn._run_visitor(visitorcallable, element, **kwargs)
+  File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/engine/base.py", line 1538, in _run_visitor
+    **kwargs).traverse_single(element)
+  File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/sql/visitors.py", line 121, in traverse_single
+    return meth(obj, **kw)
+  File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/sql/ddl.py", line 767, in visit_table
+    include_foreign_key_constraints=include_foreign_key_constraints
+  File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/engine/base.py", line 945, in execute
+    return meth(self, multiparams, params)
+  File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/sql/ddl.py", line 68, in _execute_on_connection
+    return connection._execute_ddl(self, multiparams, params)
+  File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/engine/base.py", line 1002, in _execute_ddl
+    compiled
+  File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/engine/base.py", line 1189, in _execute_context
+    context)
+  File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/engine/base.py", line 1402, in _handle_dbapi_exception
+    exc_info
+  File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/util/compat.py", line 203, in raise_from_cause
+    reraise(type(exception), exception, tb=exc_tb, cause=cause)
+  File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/engine/base.py", line 1182, in _execute_context
+    context)
+  File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/engine/default.py", line 470, in do_execute
+    cursor.execute(statement, parameters)
+sqlalchemy.exc.ProgrammingError: (psycopg2.ProgrammingError) syntax error at or near "role"
+DETAIL:  source SQL:
+
+CREATE TABLE role (
+             ^
+HINT:  try \h CREATE TABLE
+ [SQL: '\nCREATE TABLE role (\n\tid VARCHAR(64) NOT NULL, \n\tuser_id VARCHAR(64) NOT NULL, \n\tproject_id VARCHAR(64), \n\ttype VARCHAR(255) NOT NULL, \n\tPRIMARY KEY (id)\n)\n\n']
+#+END_EXAMPLE
+
+- Made an issue for CockroachDB-python [[https://github.com/cockroachdb/cockroachdb-python/issues/50][here]]
+
+- Working on plotting the right thing...
+  + seems I can't figure out how to do it correctly
+  + when I don't use ~groupby_name = df['duration'].groupby(df['name']).describe()~ I can't have a correct description, even when using ~describe(include='all')~
+  + might be working on that this week-end because it pisses me off

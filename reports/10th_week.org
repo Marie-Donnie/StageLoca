@@ -481,6 +481,8 @@ error: database is uninitialized and password option is not specified
 
 - Began to work on federation
 
+
+
 * Friday 23 March [2018-03-23 ven.]
 
 - Removed the sleep part from openstack/cockroach template since we're doing a two phases deployment

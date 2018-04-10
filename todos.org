@@ -5,21 +5,33 @@
 **** With MariaDB
 ***** DONE Make it work
       CLOSED: [2018-02-06 mar. 13:48]
-***** TODO For 1 node
-***** TODO For 5 nodes
-***** TODO For 25 nodes
+***** DONE For 1 node
+      CLOSED: [2018-04-10 mar. 18:12]
+***** DONE For 5 nodes
+      CLOSED: [2018-04-10 mar. 18:12]
+***** DONE For 25 nodes
+      CLOSED: [2018-04-10 mar. 18:12]
 **** With CockroachDB
 ***** DONE Make it work
       CLOSED: [2018-02-06 mar. 13:49]
-***** TODO For 1 node
-***** TODO For 5 nodes
-***** TODO For 25 nodes
+***** DONE For 1 node
+      CLOSED: [2018-04-10 mar. 18:12]
+***** DONE For 5 nodes
+      CLOSED: [2018-04-10 mar. 18:12]
+***** DONE For 25 nodes
+      CLOSED: [2018-04-10 mar. 18:12]
 
 
 *** Repair collectd
 
 ** Readings
-
+- [[http://sites.computer.org/debull/a13june/voltdb1.pdf][VoltDB Main Memory DBMS]]
+- [[https://link.springer.com/article/10.1186/2192-113X-2-22][Data management in cloud environments: NoSQL and NewSQL data stores]]
+- [[https://dl.acm.org/citation.cfm?id=2536232][F1: a distributed SQL database that scales]]
+- [[https://dl.acm.org/citation.cfm?id=2465363][MDCC: multi-data center consistency]]
+- [[https://ieeexplore.ieee.org/abstract/document/1401893/][Comparison of database replication techniques based on total order broadcast]]
+- [[https://ieeexplore.ieee.org/abstract/document/840959/][Understanding replication in databases and distributed systems]]
+- [[https://dl.acm.org/citation.cfm?id=2213838][Calvin: fast distributed transactions for partitioned database systems]]
 
 
 ** Done

@@ -1,0 +1,173 @@
+#+TITLE: Report for : Un intergiciel d’une base de données NewSQL qui considère la localité de l’application cliente -- 13th week --
+#+AUTHOR: Marie Delavergne
+
+
+* Monday 9 April [2018-04-09 lun.]
+
+- The experiments from the week-end didn't work because of the dict problem... it goes directly to the 'finally' part
+  + it's only one or two nodes for these tests
+  + trying to use a loop
+  + not sure about the loop, but using ~.ipv4.address~ seems to work
+#+BEGIN_EXAMPLE
+TASK [cockroachdb : Start other cockroachdb nodes] ****************************************************************************************************************************************************************
+skipping: [grisou-48.nancy.grid5000.fr] => (item=[{u'macaddress': u'24:6e:96:03:0d:52', u'speed': 10000, u'pciid': u'0000:01:00.1', u'module': u'ixgbe', u'mtu': 1500, u'active': True, u'promisc': False, u'ipv4': {u'broadcast': u'10.16.63.255', u'netmask': u'255.255.192.0', u'network': u'10.16.0.0', u'address': u'10.16.12.108'}, u'ipv6': [{u'scope': u'link', u'prefix': u'64', u'address': u'fe80::266e:96ff:fe03:d52'}], u'device': u'eth1', u'type': u'ether'}])
+changed: [grisou-6.nancy.grid5000.fr] => (item=[{u'macaddress': u'24:6e:96:03:0a:32', u'speed': 10000, u'pciid': u'0000:01:00.1', u'module': u'ixgbe', u'mtu': 1500, u'active': True, u'promisc': False, u'ipv4': {u'broadcast': u'10.16.63.255', u'netmask': u'255.255.192.0', u'network': u'10.16.0.0', u'address': u'10.16.12.66'}, u'ipv6': [{u'scope': u'link', u'prefix': u'64', u'address': u'fe80::266e:96ff:fe03:a32'}], u'device': u'eth1', u'type': u'ether'}])
+changed: [grisou-40.nancy.grid5000.fr] => (item=[{u'macaddress': u'24:6e:96:03:21:5a', u'speed': 10000, u'pciid': u'0000:01:00.1', u'module': u'ixgbe', u'mtu': 1500, u'active': True, u'promisc': False, u'ipv4': {u'broadcast': u'10.16.63.255', u'netmask': u'255.255.192.0', u'network': u'10.16.0.0', u'address': u'10.16.12.100'}, u'ipv6': [{u'scope': u'link', u'prefix': u'64', u'address': u'fe80::266e:96ff:fe03:215a'}], u'device': u'eth1', u'type': u'ether'}])
+changed: [grisou-42.nancy.grid5000.fr] => (item=[{u'macaddress': u'24:6e:96:03:0b:ba', u'speed': 10000, u'pciid': u'0000:01:00.1', u'module': u'ixgbe', u'mtu': 1500, u'active': True, u'promisc': False, u'ipv4': {u'broadcast': u'10.16.63.255', u'netmask': u'255.255.192.0', u'network': u'10.16.0.0', u'address': u'10.16.12.102'}, u'ipv6': [{u'scope': u'link', u'prefix': u'64', u'address': u'fe80::266e:96ff:fe03:bba'}], u'device': u'eth1', u'type': u'ether'}])
+changed: [grisou-36.nancy.grid5000.fr] => (item=[{u'macaddress': u'24:6e:96:03:11:72', u'speed': 10000, u'pciid': u'0000:01:00.1', u'module': u'ixgbe', u'mtu': 1500, u'active': True, u'promisc': False, u'ipv4': {u'broadcast': u'10.16.63.255', u'netmask': u'255.255.192.0', u'network': u'10.16.0.0', u'address': u'10.16.12.96'}, u'ipv6': [{u'scope': u'link', u'prefix': u'64', u'address': u'fe80::266e:96ff:fe03:1172'}], u'device': u'eth1', u'type': u'ether'}])
+changed: [grisou-41.nancy.grid5000.fr] => (item=[{u'macaddress': u'24:6e:96:03:11:fa', u'speed': 10000, u'pciid': u'0000:01:00.1', u'module': u'ixgbe', u'mtu': 1500, u'active': True, u'promisc': False, u'ipv4': {u'broadcast': u'10.16.63.255', u'netmask': u'255.255.192.0', u'network': u'10.16.0.0', u'address': u'10.16.12.101'}, u'ipv6': [{u'scope': u'link', u'prefix': u'64', u'address': u'fe80::266e:96ff:fe03:11fa'}], u'device': u'eth1', u'type': u'ether'}])
+changed: [grisou-5.nancy.grid5000.fr] => (item=[{u'macaddress': u'24:6e:96:02:a0:aa', u'speed': 10000, u'pciid': u'0000:01:00.1', u'module': u'ixgbe', u'mtu': 1500, u'active': True, u'promisc': False, u'ipv4': {u'broadcast': u'10.16.63.255', u'netmask': u'255.255.192.0', u'network': u'10.16.0.0', u'address': u'10.16.12.65'}, u'ipv6': [{u'scope': u'link', u'prefix': u'64', u'address': u'fe80::266e:96ff:fe02:a0aa'}], u'device': u'eth1', u'type': u'ether'}])
+changed: [grisou-43.nancy.grid5000.fr] => (item=[{u'macaddress': u'24:6e:96:03:09:e2', u'speed': 10000, u'pciid': u'0000:01:00.1', u'module': u'ixgbe', u'mtu': 1500, u'active': True, u'promisc': False, u'ipv4': {u'broadcast': u'10.16.63.255', u'netmask': u'255.255.192.0', u'network': u'10.16.0.0', u'address': u'10.16.12.103'}, u'ipv6': [{u'scope': u'link', u'prefix': u'64', u'address': u'fe80::266e:96ff:fe03:9e2'}], u'device': u'eth1', u'type': u'ether'}])
+changed: [grisou-38.nancy.grid5000.fr] => (item=[{u'macaddress': u'24:6e:96:03:0c:02', u'speed': 10000, u'pciid': u'0000:01:00.1', u'module': u'ixgbe', u'mtu': 1500, u'active': True, u'promisc': False, u'ipv4': {u'broadcast': u'10.16.63.255', u'netmask': u'255.255.192.0', u'network': u'10.16.0.0', u'address': u'10.16.12.98'}, u'ipv6': [{u'scope': u'link', u'prefix': u'64', u'address': u'fe80::266e:96ff:fe03:c02'}], u'device': u'eth1', u'type': u'ether'}])
+changed: [grisou-4.nancy.grid5000.fr] => (item=[{u'macaddress': u'24:6e:96:03:0d:42', u'speed': 10000, u'pciid': u'0000:01:00.1', u'module': u'ixgbe', u'mtu': 1500, u'active': True, u'promisc': False, u'ipv4': {u'broadcast': u'10.16.63.255', u'netmask': u'255.255.192.0', u'network': u'10.16.0.0', u'address': u'10.16.12.64'}, u'ipv6': [{u'scope': u'link', u'prefix': u'64', u'address': u'fe80::266e:96ff:fe03:d42'}], u'device': u'eth1', u'type': u'ether'}])
+#+END_EXAMPLE
+  + launching again to be sure, I had several random execution where all nodes worked/one or two nodes didn't work/no nodes worked with the same code
+  + seemed good on grisou but when trying on ecotype no node were working... and they indeed don't have an ipv4 in the dict
+#+BEGIN_EXAMPLE
+TASK [cockroachdb : Start the first cockroachdb node] *************************************************************************************************************************************************************
+fatal: [ecotype-33.nantes.grid5000.fr]: FAILED! => {"msg": "The task includes an option with an undefined variable. The error was: 'dict object' has no attribute 'ipv4'\n\nThe error appears to have been in '/home/madelavergne/juice/ansible/roles/cockroachdb/tasks/deploy.yml': line 11, column 3, but may\nbe elsewhere in the file depending on the exact syntax problem.\n\nThe offending line appears to be:\n\n\n- name: Start the first cockroachdb node\n  ^ here\n"}
+skipping: [ecotype-21.nantes.grid5000.fr] => (item=[{u'macaddress': u'24:6e:96:6a:c9:e2', u'type': u'ether', u'pciid': u'0000:01:00.1', u'module': u'ixgbe', u'mtu': 1500, u'device': u'eth1', u'promisc': False, u'ipv6': [{u'scope': u'link', u'prefix': u'64', u'address': u'fe80::266e:96ff:fe6a:c9e2'}], u'active': True, u'speed': 10000}])
+skipping: [ecotype-16.nantes.grid5000.fr] => (item=[{u'macaddress': u'24:6e:96:6a:46:c2', u'type': u'ether', u'pciid': u'0000:01:00.1', u'module': u'ixgbe', u'mtu': 1500, u'device': u'eth1', u'promisc': False, u'ipv6': [{u'scope': u'link', u'prefix': u'64', u'address': u'fe80::266e:96ff:fe6a:46c2'}], u'active': True, u'speed': 10000}])
+skipping: [ecotype-46.nantes.grid5000.fr] => (item=[{u'macaddress': u'24:6e:96:6a:c9:aa', u'speed': 10000, u'pciid': u'0000:01:00.1', u'module': u'ixgbe', u'mtu': 1500, u'active': True, u'promisc': False, u'ipv4': {u'broadcast': u'10.44.63.255', u'netmask': u'255.255.192.0', u'network': u'10.44.0.0', u'address': u'10.44.1.94'}, u'ipv6': [{u'scope': u'link', u'prefix': u'64', u'address': u'fe80::266e:96ff:fe6a:c9aa'}], u'device': u'eth1', u'type': u'ether'}])
+skipping: [ecotype-42.nantes.grid5000.fr] => (item=[{u'macaddress': u'24:6e:96:6a:4c:ea', u'type': u'ether', u'pciid': u'0000:01:00.1', u'module': u'ixgbe', u'mtu': 1500, u'device': u'eth1', u'promisc': False, u'ipv6': [{u'scope': u'link', u'prefix': u'64', u'address': u'fe80::266e:96ff:fe6a:4cea'}], u'active': True, u'speed': 10000}])
+skipping: [ecotype-22.nantes.grid5000.fr] => (item=[{u'macaddress': u'24:6e:96:6a:d3:22', u'speed': 10000, u'pciid': u'0000:01:00.1', u'module': u'ixgbe', u'mtu': 1500, u'active': True, u'promisc': False, u'ipv4': {u'broadcast': u'10.44.63.255', u'netmask': u'255.255.192.0', u'network': u'10.44.0.0', u'address': u'10.44.1.70'}, u'ipv6': [{u'scope': u'link', u'prefix': u'64', u'address': u'fe80::266e:96ff:fe6a:d322'}], u'device': u'eth1', u'type': u'ether'}])
+skipping: [ecotype-11.nantes.grid5000.fr] => (item=[{u'macaddress': u'24:6e:96:6a:4f:02', u'speed': 10000, u'pciid': u'0000:01:00.1', u'module': u'ixgbe', u'mtu': 1500, u'active': True, u'promisc': False, u'ipv4': {u'broadcast': u'10.44.63.255', u'netmask': u'255.255.192.0', u'network': u'10.44.0.0', u'address': u'10.44.1.59'}, u'ipv6': [{u'scope': u'link', u'prefix': u'64', u'address': u'fe80::266e:96ff:fe6a:4f02'}], u'device': u'eth1', u'type': u'ether'}])
+skipping: [ecotype-25.nantes.grid5000.fr] => (item=[{u'macaddress': u'24:6e:96:6a:48:ba', u'speed': 10000, u'pciid': u'0000:01:00.1', u'module': u'ixgbe', u'mtu': 1500, u'active': True, u'promisc': False, u'ipv4': {u'broadcast': u'10.44.63.255', u'netmask': u'255.255.192.0', u'network': u'10.44.0.0', u'address': u'10.44.1.73'}, u'ipv6': [{u'scope': u'link', u'prefix': u'64', u'address': u'fe80::266e:96ff:fe6a:48ba'}], u'device': u'eth1', u'type': u'ether'}])
+skipping: [ecotype-39.nantes.grid5000.fr] => (item=[{u'macaddress': u'24:6e:96:6a:d1:1a', u'speed': 10000, u'pciid': u'0000:01:00.1', u'module': u'ixgbe', u'mtu': 1500, u'active': True, u'promisc': False, u'ipv4': {u'broadcast': u'10.44.63.255', u'netmask': u'255.255.192.0', u'network': u'10.44.0.0', u'address': u'10.44.1.87'}, u'ipv6': [{u'scope': u'link', u'prefix': u'64', u'address': u'fe80::266e:96ff:fe6a:d11a'}], u'device': u'eth1', u'type': u'ether'}])
+skipping: [ecotype-32.nantes.grid5000.fr] => (item=[{u'macaddress': u'24:6e:96:6a:d6:0a', u'type': u'ether', u'pciid': u'0000:01:00.1', u'module': u'ixgbe', u'mtu': 1500, u'device': u'eth1', u'promisc': False, u'ipv6': [{u'scope': u'link', u'prefix': u'64', u'address': u'fe80::266e:96ff:fe6a:d60a'}], u'active': True, u'speed': 10000}])
+#+END_EXAMPLE
+  + I still don't have any clue where this is coming from...
+
+
+- Still working on analysis, since I didn't get anything better this week end
+  + asked Adrien about the graphs, he told me to do something like a histogram graph with different heights if necessary
+#+BEGIN_EXAMPLE
+['cockroachdb-25-150-nonlocal', u'KeystoneBasic.authenticate_user_and_validate_token',                             name                                               \
+                           count unique                         top freq mean
+name
+keystone_v3.fetch_token       20      1     keystone_v3.fetch_token   20  NaN
+keystone_v3.validate_token    20      1  keystone_v3.validate_token   20  NaN
+
+                                                            ...           \
+                            std  min  25%  50%  75%         ...
+name                                                        ...
+keystone_v3.fetch_token     NaN  NaN  NaN  NaN  NaN         ...
+keystone_v3.validate_token  NaN  NaN  NaN  NaN  NaN         ...
+
+                                       duration                       \
+                                         unique                  top
+name
+keystone_v3.fetch_token                     nan                  nan
+keystone_v3.validate_token                  nan                  nan
+
+                                                                      \
+                                           freq                 mean
+name
+keystone_v3.fetch_token                     nan             8.155176
+keystone_v3.validate_token                  nan             9.089932
+
+                                                                      \
+                                            std                  min
+name
+keystone_v3.fetch_token                2.747895             3.806605
+keystone_v3.validate_token             2.871400             4.649497
+
+                                                                      \
+                                            25%                  50%
+name
+keystone_v3.fetch_token                6.243163             8.109782
+keystone_v3.validate_token             7.368479             9.119116
+
+
+                                            75%                  max
+name
+keystone_v3.fetch_token                9.459485            13.591633
+keystone_v3.validate_token             9.839515            16.548472
+
+[2 rows x 22 columns]]]
+
+#+END_EXAMPLE
+#+BEGIN_EXAMPLE
+['cockroachdb-25-150-nonlocal', u'KeystoneBasic.authenticate_user_and_validate_token',                          name             duration
+0     keystone_v3.fetch_token             5.508438
+1  keystone_v3.validate_token            11.155604
+2     keystone_v3.fetch_token             3.806605
+3  keystone_v3.validate_token            11.926249
+4     keystone_v3.fetch_token             6.551990
+5  keystone_v3.validate_token            16.548472
+6     keystone_v3.fetch_token            13.591633
+7  keystone_v3.validate_token             9.399033
+8     keystone_v3.fetch_token             9.291396
+9  keystone_v3.validate_token             9.055140]]
+#+END_EXAMPLE
+
+
+* Tuesday 10 April [2018-04-10 mar.]
+
+- Working on my protocol, trying to see the larger picture around the work I'm doing because it feels like I'm riding a bike without really knowing why and where I'm going
+  + Thought about the split brain problem, but after reflexions, I think I finally understand why the rewritting of the logs isn't a problem:
+    - it's mainly about the fact that an action isn't committed until approved by the consensus.
+    - if the node is separated from the other nodes and some actions come into the log, they won't be committed, and so acted until he joins again with the cluster to have a consensus.
+    - Jonathan tells me to check if it works even if it's supposed to work, I'll ask Adrien about this (I have a meeting at 5 pm)
+  + see handwritten notes for more detail
+
+
+- Working on my graphs, since I think I know what I want exactly
+  + still have to figure out how to display them :D
+  + this is what I get now:
+    #+BEGIN_EXAMPLE
+'cockroachdb-25-150-nonlocal', u'KeystoneBasic.authenticate_user_and_validate_token',
+duration                     count      mean      std       min
+name
+keystone_v3.fetch_token      20.000000  8.155176  2.747895  3.806605
+keystone_v3.validate_token   20.000000  9.089932  2.747895  4.649497
+                                                                      \
+                                            25%                  50%
+name
+keystone_v3.fetch_token                6.243163             8.109782
+keystone_v3.validate_token             7.368479             9.119116
+
+
+                                            75%                  max
+name
+keystone_v3.fetch_token                9.459485            13.591633
+keystone_v3.validate_token             9.839515            16.548472
+    #+END_EXAMPLE
+  + to compare:
+#+CAPTION: Rally generated html for KeystoneBasic.authenticate_user_and_validate_token
+#+NAME: fig:rally_auth_comparison
+[[file:../images/rally_auth_user_validate_token.png]]
+  + checking if matplotlib is working using this snippet:
+#+BEGIN_EXAMPLE
+import matplotlib.pyplot as plt
+plt.plot(range(10))
+plt.show()
+#+END_EXAMPLE
+  + it works fine when I use python (not ipython, it probably doesn't take the venv into account, but no matter)
+  + just needed to use plt.show() :-/
+  + checking how to [[https://stackoverflow.com/questions/29355307/plot-bar-graph-using-multiple-groupby-count-in-panda][group]]
+
+- A side notes on my pip 10 bug :
+#+BEGIN_EXAMPLE python
+In [1]: a = 10
+
+In [2]: b = 6
+
+In [3]: b > a
+Out[3]: False
+
+In [4]: b = '6'
+
+In [5]: a = '10'
+
+In [6]: b > a
+Out[6]: True
+#+END_EXAMPLE
+
+- Added some readings to the todo list following the meeting with Adrien
+
+** Todos :
+- soon:
+  + finish (or at least go further) into the test protocol for FEMDC tomorrow
+  + write a mail to Achour/Ronan/Adrien to have a meeting as requested by the university
+- refer to the pad for further work (state of the art -a lot of readings-, splitbrain, etc.)

@@ -168,6 +168,32 @@ Out[6]: True
 
 ** Todos :
 - soon:
-  + finish (or at least go further) into the test protocol for FEMDC tomorrow
-  + write a mail to Achour/Ronan/Adrien to have a meeting as requested by the university
+  - [X] finish (or at least go further) into the test protocol for FEMDC tomorrow
+  - [X] write a mail to Achour/Ronan/Adrien to have a meeting as requested by the university
 - refer to the pad for further work (state of the art -a lot of readings-, splitbrain, etc.)
+
+
+* Wednesday 11 April [2018-04-11 mer.]
+
+- Working on my protocol for the performance doc
+
+- Reading F1 article
+  + newSQL DB built on top of Spanner
+  + goals:
+    - scalability :: system has to scale up transparently
+    - availability :: impacts the revenue for Google, so maximum availibility
+    - consistency :: ACID properties to avoid problems with the design of applications
+    - usability :: full SQL query support
+  + with some sacrifices to deal with all these requirements
+  + what's new from spanner:
+    - distributed queries
+    - transactionally consistent secondary indexes
+    - asynchronous schema changes
+    - optimistic transactions
+    - logging of changes
+  + architecture
+#+CAPTION: Basic architecture of the F1 system with servers in two datacenters
+#+NAME: f1_archi
+[[file:../images/f1_archi.png]]
+
+- irc meeting for FEMDC

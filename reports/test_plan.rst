@@ -20,10 +20,12 @@ Test Plan
 Test Environment
 ----------------
 
+We perform operational testing on Keystone using Rally to evaluate its behaviour on different database backends and configurations.
+
 Preparation
 ^^^^^^^^^^^
 
-This test plan is performed using Rally on a deployed Keystone. We emulate different latencies using `tc`_.
+This test plan is performed using Rally on Keystone. We emulate different latencies using `tc`_.
 
 
 Environment description
@@ -49,8 +51,7 @@ Network
 ~~~~~~~
 
 This section contains list of interfaces and network parameters.
-For complicated cases this section may include topology diagram and switch
-parameters.
+Since we are testing the behaviour of the databases depending on the latency, it will be detailed for every plans.
 
 +------------------+-------+-------------------------+
 | Parameter        | Value | Comments                |
@@ -67,11 +68,13 @@ Software
 
 This section describes installed software.
 
-+-----------------+--------+---------------------------+
-| Parameter       | Value  | Comments                  |
-+-----------------+--------+---------------------------+
-| OS              |        | e.g. Ubuntu 14.04.3       |
-+-----------------+--------+---------------------------+
++-------------------+--------+---------------------------+
+| Parameter         | Value  | Comments                  |
++-------------------+--------+---------------------------+
+| OS                |        | e.g. Ubuntu 14.04.3       |
++-------------------+--------+---------------------------+
+| OpenStack release |        | Pike                      |
++-------------------+--------+---------------------------+
 
 * Keystone DB
 
@@ -80,7 +83,7 @@ This section describes installed software.
 +-----------------+--------+---------------------------+
 | Galera          | on/off | e.g. MariaDB 10.2         |
 +-----------------+--------+---------------------------+
-| CockroachDB     | on/off | e.g. CockroachDB 1.16     |
+| CockroachDB     | on/off | e.g. CockroachDB 1.17     |
 +-----------------+--------+---------------------------+
 
 Test Case 1: One centralized Keystone handling requests of all regions
@@ -89,7 +92,10 @@ Test Case 1: One centralized Keystone handling requests of all regions
 Description
 ^^^^^^^^^^^
 
-Only one Keystone is used to handle all regions
+Only one Keystone is used to handle all regions and the other OpenStack systems use it.
+
+.. image:: ../images/centralized_keystone.png
+   :width: 40pt
 
 Parameters
 ^^^^^^^^^^
@@ -97,7 +103,6 @@ Parameters
 =========================== ====================================================
 Parameter name              Value
 =========================== ====================================================
-OpenStack release           Pike
 Number of regions           3 nodes, 25 nodes, 45 nodes
 Latency between regions     0ms, 50ms, 150ms
 =========================== ====================================================
@@ -129,13 +134,15 @@ Description
 
 Keystone on each regions using a Galera Cluster
 
+.. image:: ../images/replicated_keystone.png
+   :width: 40pt
+
 Parameters
 ^^^^^^^^^^
 
 =========================== ====================================================
 Parameter name              Value
 =========================== ====================================================
-OpenStack release           Pike
 Number of regions           3 nodes, 25 nodes, 45 nodes
 Latency between regions     0ms, 50ms, 150ms
 =========================== ====================================================
@@ -161,7 +168,10 @@ Test Case 3: A replicated Keystone leveraging the NewSQL CockroachDB database
 Description
 ^^^^^^^^^^^
 
-Keystone on each regions using Cockroach
+Keystone on each regions using CockroachDB
+
+.. image:: ../images/replicated_keystone.png
+   :width: 40pt
 
 Parameters
 ^^^^^^^^^^
@@ -169,7 +179,6 @@ Parameters
 =========================== ====================================================
 Parameter name              Value
 =========================== ====================================================
-OpenStack release           Pike
 Number of regions           3 nodes, 25 nodes, 45 nodes
 Latency between regions     0ms, 50ms, 150ms
 Locality                    On/Off
@@ -204,7 +213,6 @@ Parameters
 =========================== ====================================================
 Parameter name              Value
 =========================== ====================================================
-OpenStack release           Pike
 Number of regions           3 nodes, 25 nodes, 45 nodes
 Latency between regions     0ms, 50ms, 150ms
 Locality                    On/Off

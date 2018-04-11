@@ -109,21 +109,12 @@ Latency between regions     0ms, 50ms, 150ms
 List of performance metrics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Mandatory section. Defines what measurements are in fact done during the test.
-To be a good citizen in case of multiple metrics collection, it will be nice to
-list the metrics ordered starting with the most important one.
-
 ========  ==============  =================  =============================
 Priority  Value           Measurement Units  Description
 ========  ==============  =================  =============================
-1         Operation time  milliseconds       Time spent on each operation
+1         Operation time  seconds            Time spent on each operation
 ========  ==============  =================  =============================
 
-Some additional section
-^^^^^^^^^^^^^^^^^^^^^^^
-
-Depending on the test case nature, something else may need to be defined.
-If so, additional sections with free form titles should be added.
 
 Test Case 2: A replicated Keystone using Galera Cluster
 -------------------------------------------------------
@@ -151,14 +142,9 @@ List of performance metrics
 ========  ==============  =================  =============================
 Priority  Value           Measurement Units  Description
 ========  ==============  =================  =============================
-1         Operation time  milliseconds       Time spent on each operation
+1         Operation time  seconds            Time spent on each operation
 ========  ==============  =================  =============================
 
-Some additional section
-^^^^^^^^^^^^^^^^^^^^^^^
-
-Depending on the test case nature, something else may need to be defined.
-If so, additional sections with free form titles should be added.
 
 Test Case 3: A replicated Keystone leveraging the NewSQL CockroachDB database
 -----------------------------------------------------------------------------
@@ -187,14 +173,9 @@ List of performance metrics
 ========  ==============  =================  =============================
 Priority  Value           Measurement Units  Description
 ========  ==============  =================  =============================
-1         Operation time  milliseconds       Time spent on each operation
+1         Operation time  seconds            Time spent on each operation
 ========  ==============  =================  =============================
 
-Some additional section
-^^^^^^^^^^^^^^^^^^^^^^^
-
-Depending on the test case nature, something else may need to be defined.
-If so, additional sections with free form titles should be added.
 
 Test Case 4: A federated Keystone
 ---------------------------------
@@ -221,27 +202,10 @@ List of performance metrics
 ========  ==============  =================  =============================
 Priority  Value           Measurement Units  Description
 ========  ==============  =================  =============================
-1         Operation time  milliseconds       Time spent on each operation
+1         Operation time  seconds            Time spent on each operation
 ========  ==============  =================  =============================
 
-Some additional section
-^^^^^^^^^^^^^^^^^^^^^^^
 
-Depending on the test case nature, something else may need to be defined.
-If so, additional sections with free form titles should be added.
-
-Some additional section
------------------------
-
-If there are common details for all test cases, that need to be covered
-separately, they can be encapsulated in additional free form sections.
-
-Upper level additional section
-==============================
-
-If there are additional notes, small pieces of code and configurations, etc.,
-they can be defined in additional paragraphs. Huge pieces and large chunks of
-configs should be stored in separated files.
 
 
 .. references:

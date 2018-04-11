@@ -95,7 +95,6 @@ Description
 Only one Keystone is used to handle all regions and the other OpenStack systems use it.
 
 .. image:: ../images/centralized_keystone.png
-   :width: 40pt
 
 Parameters
 ^^^^^^^^^^
@@ -135,7 +134,6 @@ Description
 Keystone on each regions using a Galera Cluster
 
 .. image:: ../images/replicated_keystone.png
-   :width: 40pt
 
 Parameters
 ^^^^^^^^^^
@@ -171,7 +169,6 @@ Description
 Keystone on each regions using CockroachDB
 
 .. image:: ../images/replicated_keystone.png
-   :width: 40pt
 
 Parameters
 ^^^^^^^^^^

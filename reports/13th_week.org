@@ -177,8 +177,8 @@ Out[6]: True
 
 - Working on my protocol for the performance doc
 
-- Reading F1 article
-  + newSQL DB built on top of Spanner
+- Reading [[https://dl.acm.org/citation.cfm?id=2536232][F1 article]]
+  + newSQL DBMS built on top of Spanner
   + goals:
     - scalability :: system has to scale up transparently
     - availability :: impacts the revenue for Google, so maximum availibility
@@ -195,5 +195,110 @@ Out[6]: True
 #+CAPTION: Basic architecture of the F1 system with servers in two datacenters
 #+NAME: f1_archi
 [[file:../images/f1_archi.png]]
+    - the F1 servers are at the same place as the spanners
+    - CFS is the file system from which spanner retrieve the data
+    - F1 servers stateless unless a cleint needs to be lock to one (for pessimistic transactions)
+    - F1 servers do not store any data, so adding one doesn't require data redistribution; for Spanner it does but the process is transparent to F1 clients/servers
+    - high commit latencies due to the wide distribution of the datacenters and the synchronous replications across those datacenters
+    - Spanner
+      + Spanner and F1 were developed simultaneously and in close collaboration
+      + handles persistence, caching, replication, fault tolerance, data sharding and movements, location lookups and transactions
+      + uses Paxos
+      + the data rows are partitioned into directories
+      + each of those directories have at least one fragment
+      + the fragments are regrouped into a group that has one replica tablet per datacenter
+      + all tablets for a group have the same data (with one acting as leader)
+      + serializable pessimistic transactions using strict two phase locking
+#+CAPTION: A quick reminder of two phase locks
+#+NAME: fig:2pl_lock
+[[file:../images/2pl_lock.png]]
+      + quick transactions when updating data in a single group. Across mutliple groups, uses a 2PC that doubles commit latencies (scales up to 10s participants)
+      + very strong consistency + timestamps (used to provide multi-versioned consistent reads)
+  + data model
+    - works hierarchically to avoid unnecessary steps in retrieving the data
+#+CAPTION: The logical and physical properties of data storage in a traditional normalized relational schema compared with a clustered hierarchical schema used in an F1 database
+#+NAME: fig:f1_data_model
+[[file:../images/f1_dm.png]]
 
 - irc meeting for FEMDC
+
+
+* Thursday 12 April [2018-04-12 jeu.]
+
+- Have to make my mission for the OpenStack Summit
+
+- Resumed the reading of the article
+
+- Worked on the ipv4 address not in dict bug with Jonathan since he had it while trying to use tidb
+  + it seems the use of this snippet in the deploy from =juice.py= make things work:
+#+BEGIN_SRC
+    g5k(env=xp_name, config=config)
+    time.sleep(30)
+    inventory()
+#+END_SRC
+  + we did this because I thought the fact were made to quickly for the hosts to have a correct ipv4 configuration
+  + worked 5 times and then I had the error again when I commented the sleep
+  + so I'm pushing this as a fix
+  + will still need to see for the pip fix maybe and have to go a bit deeper into this bug
+
+- Adrien wants me to have the results for wednesday 5 pm and explanations for the results
+  + getting a reservation to finish the missing experiments
+
+- Working on analysis:
+  + have to figure out how to make the global dataframe and add the data into it
+    - my indexes are varyied so it might prove difficult, but then again maybe I'm doing it wrong
+#+BEGIN_EXAMPLE
+[u'keystone_v3.create_project', u'keystone_v3.delete_project', u'keystone_v3.update_project']
+[u'keystone_v3.add_role', u'keystone_v3.create_role', u'keystone_v3.revoke_role']
+[u'keystone_v3.create_role', u'keystone_v3.get_role']
+[u'keystone_v3.create_user', u'keystone_v3.update_user']
+[u'keystone_v3.create_project']
+[u'keystone_v3.create_service', u'keystone_v3.list_services']
+[u'keystone_v3.create_user']
+[u'keystone_v3.add_role', u'keystone_v3.create_project', u'keystone_v3.create_user', u'keystone_v3.create_users', u'keystone_v3.list_roles']
+[u'keystone_v3.create_user', u'keystone_v3.list_users']
+[u'keystone_v3.create_service', u'keystone_v3.delete_service']
+[u'keystone_v3.create_ec2creds', u'keystone_v3.delete_ec2creds']
+[u'keystone_v3.create_user', u'keystone_v3.delete_user']
+[u'keystone_v3.add_role', u'keystone_v3.create_role', u'keystone_v3.list_roles']
+[u'keystone_v3.add_role', u'keystone_v3.create_project', u'keystone_v3.create_role', u'keystone_v3.create_user', u'keystone_v3.get_project', u'keystone_v3.get_role', u'keystone_v3.get_services', u'keystone_v3.get_user', u'keystone_v3.list_roles', u'keystone_v3.list_services']
+[u'keystone_v3.create_user', u'keystone_v3.update_user']
+[u'keystone_v3.fetch_token', u'keystone_v3.validate_token']
+[u'keystone_v3.create_role', u'keystone_v3.delete_role']
+[u'keystone_v3.create_project', u'keystone_v3.list_projects']
+[u'keystone_v3.create_role', u'keystone_v3.list_roles']
+[u'keystone_v3.create_user', u'keystone_v3.delete_user', u'keystone_v3.update_user']
+[u'keystone_v3.create_ec2creds', u'keystone_v3.list_ec2creds']
+[u'keystone_v3.add_role', u'keystone_v3.create_project', u'keystone_v3.create_role', u'keystone_v3.create_user', u'keystone_v3.get_project', u'keystone_v3.get_role', u'keystone_v3.get_services', u'keystone_v3.get_user', u'keystone_v3.list_roles', u'keystone_v3.list_services']
+[u'keystone_v3.create_user', u'keystone_v3.list_users']
+[u'keystone_v3.create_user', u'keystone_v3.update_user']
+[u'keystone_v3.create_user', u'keystone_v3.update_user']
+[u'keystone_v3.add_role', u'keystone_v3.create_role', u'keystone_v3.list_roles']
+[u'keystone_v3.create_project', u'keystone_v3.list_projects']
+[u'keystone_v3.create_user', u'keystone_v3.delete_user', u'keystone_v3.update_user']
+[u'keystone_v3.fetch_token', u'keystone_v3.validate_token']
+[u'keystone_v3.create_user', u'keystone_v3.delete_user', u'keystone_v3.update_user']
+[u'keystone_v3.create_project', u'keystone_v3.list_projects']
+[u'keystone_v3.create_user', u'keystone_v3.list_users']
+[u'keystone_v3.create_user', u'keystone_v3.update_user']
+[u'keystone_v3.add_role', u'keystone_v3.create_project', u'keystone_v3.create_role', u'keystone_v3.create_user', u'keystone_v3.get_project', u'keystone_v3.get_role', u'keystone_v3.get_services', u'keystone_v3.get_user', u'keystone_v3.list_roles', u'keystone_v3.list_services']
+[u'keystone_v3.create_user', u'keystone_v3.update_user']
+[u'keystone_v3.add_role', u'keystone_v3.create_role', u'keystone_v3.list_roles']
+[u'keystone_v3.fetch_token', u'keystone_v3.validate_token']
+[u'keystone_v3.fetch_token', u'keystone_v3.validate_token']
+[u'keystone_v3.create_user', u'keystone_v3.update_user']
+[u'keystone_v3.create_user', u'keystone_v3.delete_user', u'keystone_v3.update_user']
+[u'keystone_v3.create_user', u'keystone_v3.list_users']
+[u'keystone_v3.add_role', u'keystone_v3.create_project', u'keystone_v3.create_role', u'keystone_v3.create_user', u'keystone_v3.get_project', u'keystone_v3.get_role', u'keystone_v3.get_services', u'keystone_v3.get_user', u'keystone_v3.list_roles', u'keystone_v3.list_services']
+[u'keystone_v3.add_role', u'keystone_v3.create_role', u'keystone_v3.list_roles']
+[u'keystone_v3.create_user', u'keystone_v3.update_user']
+[u'keystone_v3.create_project', u'keystone_v3.list_projects']
+[u'keystone_v3.create_user', u'keystone_v3.update_user']
+[u'keystone_v3.create_user', u'keystone_v3.update_user']
+[u'keystone_v3.add_role', u'keystone_v3.create_project', u'keystone_v3.create_role', u'keystone_v3.create_user', u'keystone_v3.get_project', u'keystone_v3.get_role', u'keystone_v3.get_services', u'keystone_v3.get_user', u'keystone_v3.list_roles', u'keystone_v3.list_services']
+[u'keystone_v3.create_user', u'keystone_v3.list_users']
+[u'keystone_v3.fetch_token', u'keystone_v3.validate_token']
+[u'keystone_v3.create_project', u'keystone_v3.list_projects']
+[u'keystone_v3.create_user', u'keystone_v3.delete_user', u'keystone_v3.update_user']
+[u'keystone_v3.add_role', u'keystone_v3.create_role', u'keystone_v3.list_roles']
+#+END_EXAMPLE

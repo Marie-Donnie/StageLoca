@@ -32,7 +32,7 @@
 - [[https://ieeexplore.ieee.org/abstract/document/1401893/][Comparison of database replication techniques based on total order broadcast]]
 - [[https://ieeexplore.ieee.org/abstract/document/840959/][Understanding replication in databases and distributed systems]]
 - [[https://dl.acm.org/citation.cfm?id=2213838][Calvin: fast distributed transactions for partitioned database systems]]
-
+- [[https://dl.acm.org/citation.cfm?id=1559917][Keyword search in databases: the power of RDBMS]]
 
 ** Done
 **** DONE Experience

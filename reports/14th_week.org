@@ -1,0 +1,69 @@
+#+TITLE: Report for : Un intergiciel d’une base de données NewSQL qui considère la localité de l’application cliente -- 14th week --
+#+AUTHOR: Marie Delavergne
+
+
+Trying to change the way I'm writing what I'm doing, by task, not by day. Keeping the weeks hierarchy for now, though.
+
+* Analysis of the results
+
+** Getting all results
+
+- Launching tests on 3 nodes
+
+- Trying to make cockroach 2.0.0 work using the hack given in the answer to my issue
+  - the 'role' as reserved keyword has been fixed, but it will be released in 2.0.1
+#+BEGIN_EXAMPLE
+ERROR oslo_db.sqlalchemy.exc_filters [-] DBAPIError exception wrapped from (psycopg2.InternalError) index "ixu_role_name" is in use as unique constraint (use CASCADE if you really want to drop it)
+ [SQL: '\nDROP INDEX ixu_role_name']: InternalError: index "ixu_role_name" is in use as unique constraint (use CASCADE if you really want to drop it)
+ERROR oslo_db.sqlalchemy.exc_filters Traceback (most recent call last):
+ERROR oslo_db.sqlalchemy.exc_filters   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/engine/base.py", line 1182, in _execute_context
+ERROR oslo_db.sqlalchemy.exc_filters     context)
+ERROR oslo_db.sqlalchemy.exc_filters   File "/usr/local/lib/python2.7/dist-packages/sqlalchemy/engine/default.py", line 470, in do_execute
+ERROR oslo_db.sqlalchemy.exc_filters     cursor.execute(statement, parameters)
+ERROR oslo_db.sqlalchemy.exc_filters InternalError: index "ixu_role_name" is in use as unique constraint (use CASCADE if you really want to drop it)
+ERROR oslo_db.sqlalchemy.exc_filters
+ERROR oslo_db.sqlalchemy.exc_filters
+CRITICAL keystone [-] Unhandled error: DbMigrationError: (psycopg2.InternalError) index "ixu_role_name" is in use as unique constraint (use CASCADE if you really want to drop it)
+ [SQL: '\nDROP INDEX ixu_role_name']
+ERROR keystone Traceback (most recent call last):
+ERROR keystone   File "/usr/local/bin/keystone-manage", line 10, in <module>
+ERROR keystone     sys.exit(main())
+ERROR keystone   File "/opt/stack/keystone/keystone/cmd/manage.py", line 45, in main
+ERROR keystone     cli.main(argv=sys.argv, config_files=config_files)
+ERROR keystone   File "/opt/stack/keystone/keystone/cmd/cli.py", line 1337, in main
+ERROR keystone     CONF.command.cmd_class.main()
+ERROR keystone   File "/opt/stack/keystone/keystone/cmd/cli.py", line 531, in main
+ERROR keystone     CONF.command.version)
+ERROR keystone   File "/opt/stack/keystone/keystone/common/sql/upgrades.py", line 250, in offline_sync_database_to_version
+ERROR keystone     expand_schema()
+ERROR keystone   File "/opt/stack/keystone/keystone/common/sql/upgrades.py", line 321, in expand_schema
+ERROR keystone     _sync_common_repo(version=None)
+ERROR keystone   File "/opt/stack/keystone/keystone/common/sql/upgrades.py", line 170, in _sync_common_repo
+ERROR keystone     init_version=init_version, sanity_check=False)
+ERROR keystone   File "/opt/stack/oslo.db/oslo_db/sqlalchemy/migration.py", line 81, in db_sync
+ERROR keystone     raise exception.DbMigrationError(ex)
+ERROR keystone DbMigrationError: (psycopg2.InternalError) index "ixu_role_name" is in use as unique constraint (use CASCADE if you really want to drop it)
+ERROR keystone  [SQL: '\nDROP INDEX ixu_role_name']
+#+END_EXAMPLE
+  - fix:
+#+BEGIN_EXAMPLE
+root@ecotype-23:~# docker exec -i cockroachdb-ecotype-23 ./cockroach sql --insecure --execute "DROP DATABASE IF EXISTS keystone CASCADE"
+DROP DATABASE
+root@ecotype-23:~# docker exec -i cockroachdb-ecotype-23 ./cockroach sql --insecure --execute "CREATE DATABASE keystone"
+CREATE DATABASE
+root@ecotype-23:~# vim /tmp/src/sqlalchemy-migrate/migrate/changeset/databases/cockroach.py
+#+END_EXAMPLE
+l.352
+#+BEGIN_EXAMPLE
+if indexes:
+   for i in indexes:
+       self.append("DROP INDEX %s CASCADE" % self._prepared_index_name(i))
+       self.execute()
+#+END_EXAMPLE
+
+- Done with cockroach 0ms 3 nodes and half of cockroach 150ms 3 nodes (didn't have enough time to complete all tasks)
+
+** Analysis
+
+- Not sure if I had better results here, but I can use [[altair trellis]]
+  + pip requirements were not available for some time though

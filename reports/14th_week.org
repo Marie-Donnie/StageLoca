@@ -63,7 +63,11 @@ if indexes:
 
 - Done with cockroach 0ms 3 nodes and half of cockroach 150ms 3 nodes (didn't have enough time to complete all tasks)
 
+- Made cockroach 50ms 25 nodes locality and cockroach 0ms 25 nodes with no locality during the night
+
 ** Analysis
 
 - Not sure if I had better results here, but I can use [[altair trellis]]
   + pip requirements were not available for some time though
+
+- Still absolutely blocked with getting the results as wanted

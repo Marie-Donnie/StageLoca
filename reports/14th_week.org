@@ -71,3 +71,7 @@ if indexes:
   + pip requirements were not available for some time though
 
 - Still absolutely blocked with getting the results as wanted
+  + got it working with Florent
+#+CAPTION: Results analysis for 0ms latency
+#+NAME: fig:results_0ms_analysis
+[[../images/df_0ms.png]]

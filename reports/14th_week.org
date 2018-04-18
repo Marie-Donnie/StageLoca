@@ -75,3 +75,14 @@ if indexes:
 #+CAPTION: Results analysis for 0ms latency
 #+NAME: fig:results_0ms_analysis
 [[../images/df_0ms.png]]
+  + and with the missing Cockroachdb 45 nodes 0 ms:
+#+CAPTION: Results analysis for 0ms latency with the missing results
+#+NAME: fig:results_0ms_analysis_full
+[[../images/full.png]]
+
+
+
+* Juice
+
+- Pip bug has been fixed, so I removed the fixes
+- Made a workflow for cockroach 2.0.0

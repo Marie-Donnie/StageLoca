@@ -194,7 +194,7 @@ Out[6]: True
   + architecture
 #+CAPTION: Basic architecture of the F1 system with servers in two datacenters
 #+NAME: f1_archi
-[[file:../images/f1_archi.png]]
+[[../images/f1_archi.png]]
     - the F1 servers are at the same place as the spanners
     - CFS is the file system from which spanner retrieve the data
     - F1 servers stateless unless a cleint needs to be lock to one (for pessimistic transactions)
@@ -211,14 +211,38 @@ Out[6]: True
       + serializable pessimistic transactions using strict two phase locking
 #+CAPTION: A quick reminder of two phase locks
 #+NAME: fig:2pl_lock
-[[file:../images/2pl_lock.png]]
+    [[../images/2pl_lock.png]]
       + quick transactions when updating data in a single group. Across mutliple groups, uses a 2PC that doubles commit latencies (scales up to 10s participants)
       + very strong consistency + timestamps (used to provide multi-versioned consistent reads)
-  + data model
-    - works hierarchically to avoid unnecessary steps in retrieving the data
+      + end of architecture
+      + data model
+	- works hierarchically to avoid unnecessary steps in retrieving the data (the search can be done in parallel since the low levels contain the key from above)
+	- they use protocol buffers for data storage and they can interchange between applications
+	  + treated effectively as blobs by Spanner
+	- two different types of indexes :
+	  + local :: containing the root row primary key as a prefix, they are stored in the same spanner directory as the root row (and so in the same server as the row they index)
+	  + global :: don't include the root row primary key as a prefix, are not co-located with the row they index, not really scalable for bulk insert. Megastore makes them scalable by giving up consistency (but they probably have a better solution by now)
+  + schema changes
+     - schema changes daily, but requires high availability -> downtime for this unacceptable
+     - schema changes are applied asynchronously on different servers at different times
+	  + at most two different schemas at the same time
+	  + the change is split into multiple phases that goes 2 by 2 (probably similar to raft updates)
+  + transactions
+     - three types:
+       + snapshot (read only transactions, for SQL queries or map-reduces)
+       + pessimistic (from Spanner transactions, use a stateful communications protocol requiring holding locks)
+       + optimistic (short-lived spanner pessimistic transaction committed or aborted)
+	  - reads never hold locks and never conflict with writes
+          - transactions can last longer because they are not locking
+          - retriability transparently in the F1 server
+          - allowing server failover
+          - enable to have writes that happens only if no other writes happened after a specific read
+          - can generate insertion phantoms
+          -
 #+CAPTION: The logical and physical properties of data storage in a traditional normalized relational schema compared with a clustered hierarchical schema used in an F1 database
 #+NAME: fig:f1_data_model
-[[file:../images/f1_dm.png]]
+[[../images/f1_dm.png]]
+
 
 - irc meeting for FEMDC
 

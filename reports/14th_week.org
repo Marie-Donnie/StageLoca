@@ -86,3 +86,13 @@ if indexes:
 
 - Pip bug has been fixed, so I removed the fixes
 - Made a workflow for cockroach 2.0.0
+
+* Working on the split brain theory for Cockroach and Galera
+
+See notes
+
+* Emile's talk
+
+"Multi-objective workflow scheduling in a private Cloud"
+
+see the corresponding file

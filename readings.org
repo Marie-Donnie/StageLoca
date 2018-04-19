@@ -3,7 +3,7 @@
 
 ** Preliminary
 - [[https://static.googleusercontent.com/media/research.google.com/en//archive/spanner-osdi2012.pdf][Spanner: Google’s Globally-Distributed Database]]
-- [[https://www.usenix.org/system/files/conference/atc14/atc14-paper-ongaro.pdf][In Search of an Understandable Consensus Algorithm]]
+- [[https://www.usenix.org/system/files/conference/atc14/atc14-paper-ongaro.pdf][In Search of an Understandable Consensus Algorithm]] (Raft)
 - [[https://github.com/cockroachdb/cockroach/blob/master/docs/design.md][CockroachDB doc]]
 - [[https://www.youtube.com/watch?v=6OFeuNy39Qg][The hows and whys of a distributed SQL database]] by Alex Robinson
 - [[http://vitess.io/][Vitess site]]
@@ -16,6 +16,8 @@
 ** And then some more
 - [[https://www.cockroachlabs.com/blog/scaling-raft/][Multiraft]]
 - [[https://www.cockroachlabs.com/blog/serializable-lockless-distributed-isolation-cockroachdb/][Serializable, Lockless, Distributed: Isolation in CockroachDB]]
+- [[http://www.scs.stanford.edu/14au-cs244b/labs/projects/rygaard.pdf][Split-brain consensus]] (related work : [[https://github.com/rasmusrygaard/timber][timber]] to test the correctness of raft implementation)
+- [[http://jepsen.io/analyses/cockroachdb-beta-20160829][CockroachDB beta-20160829]]
 
 ** Others
 - [[https://en.wikipedia.org/wiki/Paxos_(computer_science)][Paxos]]

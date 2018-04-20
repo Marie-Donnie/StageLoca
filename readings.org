@@ -17,7 +17,7 @@
 - [[https://www.cockroachlabs.com/blog/scaling-raft/][Multiraft]]
 - [[https://www.cockroachlabs.com/blog/serializable-lockless-distributed-isolation-cockroachdb/][Serializable, Lockless, Distributed: Isolation in CockroachDB]]
 - [[http://www.scs.stanford.edu/14au-cs244b/labs/projects/rygaard.pdf][Split-brain consensus]] (related work : [[https://github.com/rasmusrygaard/timber][timber]] to test the correctness of raft implementation)
-- [[http://jepsen.io/analyses/cockroachdb-beta-20160829][CockroachDB beta-20160829]]
+- [[http://jepsen.io/analyses/cockroachdb-beta-20160829][CockroachDB beta-20160829 analysis from Jepsen]]
 
 ** Others
 - [[https://en.wikipedia.org/wiki/Paxos_(computer_science)][Paxos]]

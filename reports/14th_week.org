@@ -81,18 +81,44 @@ if indexes:
 [[../images/full.png]]
 
 
+- Have to make modifications :
+  + still sorting by scenario, but stacking actions in stead of nodes and group bar by database and scenario, like that:
+#+CAPTION: Example of graph I should get
+#+NAME: fig:graph_mock
+[[../images/graph.png]]
+
 
 * Juice
 
 - Pip bug has been fixed, so I removed the fixes
 - Made a workflow for cockroach 2.0.0
 
+
 * Working on the split brain theory for Cockroach and Galera
 
 See notes
+
+
 
 * Emile's talk
 
 "Multi-objective workflow scheduling in a private Cloud"
 
 see the corresponding file
+
+
+* Reworking the experiments
+
+3 cases:
+|-----------------+---------------------+--------------------|
+| Number of nodes | rally configuration | latency            |
+|-----------------+---------------------+--------------------|
+| 3/25/45         | 1 rally             | none               |
+|-----------------+---------------------+--------------------|
+| 3/25/45         | 1 rally             | uniform (50/150)   |
+|-----------------+---------------------+--------------------|
+| 3/25/45         | 1/5/9 rally         | intra-group: 0ms   |
+| (1*3, 5*5, 5*9) | (one per group)     | inter-group: 50ms  |
+|-----------------+---------------------+--------------------|
+
+The goal is to have a "control" experiment (which is the first line, but is the same as the second with 0 latency) and to test the database on several points, one per group

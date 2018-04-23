@@ -227,21 +227,35 @@ Out[6]: True
      - schema changes are applied asynchronously on different servers at different times
 	  + at most two different schemas at the same time
 	  + the change is split into multiple phases that goes 2 by 2 (probably similar to raft updates)
-  + transactions
-     - three types:
-       + snapshot (read only transactions, for SQL queries or map-reduces)
-       + pessimistic (from Spanner transactions, use a stateful communications protocol requiring holding locks)
-       + optimistic (short-lived spanner pessimistic transaction committed or aborted)
-	  - reads never hold locks and never conflict with writes
-          - transactions can last longer because they are not locking
-          - retriability transparently in the F1 server
-          - allowing server failover
-          - enable to have writes that happens only if no other writes happened after a specific read
-          - can generate insertion phantoms
-          -
 #+CAPTION: The logical and physical properties of data storage in a traditional normalized relational schema compared with a clustered hierarchical schema used in an F1 database
 #+NAME: fig:f1_data_model
 [[../images/f1_dm.png]]
+  + transactions
+    - three types:
+      + snapshot (read only transactions, for SQL queries or map-reduces)
+      + pessimistic (from Spanner transactions, use a stateful communications protocol requiring holding locks)
+      + optimistic (short-lived spanner pessimistic transaction committed or aborted)
+	- reads never hold locks and never conflict with writes
+	- transactions can last longer because they are not locking
+	- retriability transparently in the F1 server
+	- allowing server failover
+	- enable to have writes that happens only if no other writes happened after a specific read
+	- can generate insertion phantoms
+	- has a low throughput when highly contended
+    - F1 uses row-level locking by defaut
+    - each row contains a default lock column to lock all its columns
+  + change history
+    - uses specific tables as children of each table
+    - use a publish-and-subscribe system (e.g. incremental processing)
+  + client design
+    - simplified ORM
+    - both NoSQL and SQL interfaces
+#+CAPTION: A distributed query plan.  Rounded boxes represent processes running on separate machines. Arrows show data flow within a process or over the network in the form of RPCs
+#+NAME: fig:dist_query_plan
+[[../images/dqp.png]]
+
+
+
 
 
 - irc meeting for FEMDC

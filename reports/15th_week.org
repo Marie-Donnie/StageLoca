@@ -1,0 +1,32 @@
+#+TITLE: Report for : Un intergiciel d’une base de données NewSQL qui considère la localité de l’application cliente -- 15th week --
+#+AUTHOR: Marie Delavergne
+
+
+* Analysis
+
+- Thought I had it covered, but I figured out only the labels are changed, not the values
+  + I was using ~df.index.set_levels(['3','25','45'], 2, inplace=True)~
+#+CAPTION: Graph I had friday
+#+NAME: fig:no_good
+[[../images/full_analysis_with_ck2_for_3nodes.png]]
+
+
+- Found out how to fix this, but in any case I didn't push what I've done friday
+#+CAPTION: Seems to work now
+#+NAME: fig:graph_sorted_nodes
+[[../images/graph_sorted_nodes_ok.png]]
+
+- Also removed ~keystone_v3.~ from the name of the actions
+
+
+* Readings
+
+- Putting that somewhere: [[https://www.cockroachlabs.com/docs/stable/partitioning.html#define-table-partitions-by-list][define table partitions by list for cockroachdb]]
+  + the scenario is similar to what we want:
+#+BEGIN_EXAMPLE
+Consider a global online learning portal, RoachLearn, that has a database containing a table of students across the world. Suppose we have two datacenters: one in the United States and another in Australia. To reduce latency, we want to keep the students' data closer to their locations:
+
+    We want to keep the data of the students located in the United States and Canada in the United States datacenter.
+    We want to keep the data of students located in Australia and New Zealand in the Australian datacenter.
+#+END_EXAMPLE
+  + BUT it required an enterprise version

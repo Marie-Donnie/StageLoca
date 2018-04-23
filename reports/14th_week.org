@@ -87,6 +87,7 @@ if indexes:
 #+NAME: fig:graph_mock
 [[../images/graph.png]]
 
+- It's now working but it seems stranger than usual
 
 * Juice
 

@@ -1,6 +1,6 @@
 #+TITLE: Report for : Un intergiciel d’une base de données NewSQL qui considère la localité de l’application cliente -- 15th week --
 #+AUTHOR: Marie Delavergne
-
+#+BIBLIOGRAPHY: ../misc/biblio plain
 
 * Analysis
 
@@ -29,4 +29,81 @@ Consider a global online learning portal, RoachLearn, that has a database contai
     We want to keep the data of the students located in the United States and Canada in the United States datacenter.
     We want to keep the data of students located in Australia and New Zealand in the Australian datacenter.
 #+END_EXAMPLE
-  + BUT it required an enterprise version
+  + BUT it requires an enterprise version
+
+* MDCC : Multi-Data Center Consistency ( DBLP:conf/eurosys/KraskaPFMF13 )
+
+- Replication across diverse data centers across the globe is different from replication within a cluster since the delays are significantly higher
+- Transactions are really important for database-backed applications
+  + traditional 2PC has serious drawbacks in a geo-replicated system (requires a coordinator that can fail)
+- asynchronous replications often used in highly-available DB
+- systems using Paxos
+  + these protocols rely on 2PC and a single master, requiring 2 RTT for clients that are not local not the master
+- MDCC is an optimistic commit protocol for transactions with a cost similar to eventually consistent protocols
+  + uses a single wide-area message RT in most cases
+  + does not require a master
+  + has a defaut "read-committed" isolation:
+    - atomic durability :: all updates in a transaction eventually persist or none
+    - read-committed :: updates form uncommitted transactions are never visible to other transactions
+    - no lost updates :: concurrent updates of the same record are resolved if commutative or prevented
+    - no atomic visibility :: some updates from successful committed transactions might be visible before all updates become visible
+
+* Juice
+
+Ronan nicely made a PR to merge Cockroach2 branch into the master
+
+
+* Make the PR for Rally
+
+** Gerrit (notes from Ronan)
+Slides of the summit:
+[[http://docs.openstack.org/upstream-training/workflow-gerrit.html]]
+
+And the sandbox tutorial:
+http://docs.openstack.org/infra/manual/sandbox.html
+
+The =git-review= command submits a git branch to gerrit for review.
+The =git-review= command has to be installed on top of git. See
+https://git.openstack.org/cgit/openstack-infra/git-review.
+
+Commit messages:
+[[https://docs.openstack.org/upstream-training/workflow-commit-message.html]]
+[[https://wiki.openstack.org/wiki/GitCommitMessages]]
+
+My general workflow is:
+1. Fork the repository from github
+2. Add the official OpenStack git repository as one of your remote
+  : git remote add os git://git.openstack.org/openstack/kolla-ansible
+3. Synchronise yourself with the OpenStack Gerrit
+  : git review -s
+4. Make changes in a dedicated branch and push into rcherrueau
+  github...
+5. When it's time to push to Gerrit, update author name and email of
+  the commit to match these of the Gerrit account
+  #+BEGIN_SRC bash
+  git config user.name rcherrueau; git config user.email Ronan-Alexandre.Cherrueau@inria.fr
+  git commit --amend --reset-author
+  #+END_SRC
+6. Finally, push to Gerrit
+  : git review
+
+Then, for each patch repeat 4 to 6.
+
+If someone does some comments, you should reply /Done/ to each of his
+comments:
+1. Open the Gerrit diff page of your commit with comment of the
+  reviewer.
+2. Click on each of it's comment (the yellow bubble) and click the
+  /Done/ blue button. The word /Draft/ should come before your
+  comment.
+3. Go to the Gerrit commit page and be sure to select the patch
+  (/Patch Sets/) where you make some comment. A red bubble should
+  appears in the /Patch Sets/ menu to notify you that you have
+  pending comments. Then, click the /Reply.../ button to summit all
+  your /Done/.
+
+** My work
+
+- Fastidious to make everything work!
+
+- After managing to create an account (yep, needed another one) and make the tutorial for the sandbox (yep, I am THAT bad), I finally made [[https://review.openstack.org/#/c/563949/][my commit]]

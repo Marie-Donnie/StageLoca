@@ -31,7 +31,7 @@ Consider a global online learning portal, RoachLearn, that has a database contai
 #+END_EXAMPLE
   + BUT it requires an enterprise version
 
-* MDCC : Multi-Data Center Consistency ( DBLP:conf/eurosys/KraskaPFMF13 )
+** MDCC : Multi-Data Center Consistency ( DBLP:conf/eurosys/KraskaPFMF13 )
 
 - Replication across diverse data centers across the globe is different from replication within a cluster since the delays are significantly higher
 - Transactions are really important for database-backed applications
@@ -48,9 +48,12 @@ Consider a global online learning portal, RoachLearn, that has a database contai
     - no lost updates :: concurrent updates of the same record are resolved if commutative or prevented
     - no atomic visibility :: some updates from successful committed transactions might be visible before all updates become visible
 
+
 * Juice
 
-Ronan nicely made a PR to merge Cockroach2 branch into the master
+- Ronan nicely made a PR to merge Cockroach2 branch into the master
+
+- Changed juice.py to get a default db if none
 
 
 * Make the PR for Rally
@@ -107,3 +110,11 @@ comments:
 - Fastidious to make everything work!
 
 - After managing to create an account (yep, needed another one) and make the tutorial for the sandbox (yep, I am THAT bad), I finally made [[https://review.openstack.org/#/c/563949/][my commit]]
+
+- Ok, some build failed, but even worse, I didn't push it to the right repository. It seems that they have forked rally: one for Openstack specifically and one to use as a framework for different platforms and environments. Info is [[http://lists.openstack.org/pipermail/openstack-dev/2018-April/129284.html][here]]
+
+- Seems it will not impact our work, but I still have to check for my PR
+
+* Test plan
+
+- Have to work on that, too. Modified 14th week accordingly

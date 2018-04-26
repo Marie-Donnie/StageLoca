@@ -55,6 +55,17 @@ Consider a global online learning portal, RoachLearn, that has a database contai
 
 - Changed juice.py to get a default db if none
 
+- Making juice work with a rally burst or normally (and with one rally per group if needed)
+
+- Thinking how I'm going to put a list in the prepare.yml with 'database0', etc.
+  + Ronan gave me [[https://docs.ansible.com/ansible/latest/user_guide/intro_patterns.html][the link to patterns]] so I'm trying ~hosts : database*~
+
+- Have to leave but got
+#+BEGIN_EXAMPLE
+fatal: [paravance-27.rennes.grid5000.fr]: FAILED! => {"msg": "The conditional check 'inventory_hostname == dbmaster_node' failed. The error was: error while evaluating conditional (inventory_hostname == dbmaster_node): 'dict object' has no attribute 'database'\n\nThe error appears to have been in '/home/madelavergne/juice-2/ansible/roles/cockroachdb/tasks/deploy.yml': line 11, column 3, but may\nbe elsewhere in the file depending on the exact syntax problem.\n\nThe offending line appears to be:\n\n\n- name: Start the first cockroachdb node\n  ^ here\n"}
+#+END_EXAMPLE
+(working on juice-2)
+
 
 * Make the PR for Rally
 
@@ -114,6 +125,7 @@ comments:
 - Ok, some build failed, but even worse, I didn't push it to the right repository. It seems that they have forked rally: one for Openstack specifically and one to use as a framework for different platforms and environments. Info is [[http://lists.openstack.org/pipermail/openstack-dev/2018-April/129284.html][here]]
 
 - Seems it will not impact our work, but I still have to check for my PR
+
 
 * Test plan
 

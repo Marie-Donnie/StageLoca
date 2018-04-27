@@ -66,6 +66,83 @@ fatal: [paravance-27.rennes.grid5000.fr]: FAILED! => {"msg": "The conditional ch
 #+END_EXAMPLE
 (working on juice-2)
 
+- Fixed this and other stuff to make it work
+  + everything seems ok, checking network
+  + 2 groups (10 nodes)
+#+BEGIN_EXAMPLE
+        "database0": [
+            "ecotype-16.nantes.grid5000.fr",
+            "ecotype-10.nantes.grid5000.fr",
+            "ecotype-13.nantes.grid5000.fr",
+            "ecotype-18.nantes.grid5000.fr",
+            "ecotype-14.nantes.grid5000.fr"
+        ],
+        "database1": [
+            "ecotype-2.nantes.grid5000.fr",
+            "ecotype-22.nantes.grid5000.fr",
+            "ecotype-20.nantes.grid5000.fr",
+            "ecotype-9.nantes.grid5000.fr",
+            "ecotype-7.nantes.grid5000.fr"
+        ],
+#+END_EXAMPLE
+  + on database0:
+    #+BEGIN_EXAMPLE
+    root@ecotype-10:~# ip addr
+[...]
+5: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc htb state UP group default qlen 1000
+    link/ether 24:6e:96:6a:d1:fa brd ff:ff:ff:ff:ff:ff
+    inet 10.44.1.58/18 brd 10.44.63.255 scope global eth1
+       valid_lft forever preferred_lft forever
+    inet6 fe80::266e:96ff:fe6a:d1fa/64 scope link
+       valid_lft forever preferred_lft forever
+    #+END_EXAMPLE
+    #+BEGIN_EXAMPLE
+    root@ecotype-16:~# ip addr
+[...]
+5: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc htb state UP group default qlen 1000
+    link/ether 24:6e:96:6a:46:c2 brd ff:ff:ff:ff:ff:ff
+    inet 10.44.1.64/18 brd 10.44.63.255 scope global eth1
+       valid_lft forever preferred_lft forever
+    inet6 fe80::266e:96ff:fe6a:46c2/64 scope link
+       valid_lft forever preferred_lft forever
+    #+END_EXAMPLE
+  + on database1:
+#+BEGIN_EXAMPLE
+root@ecotype-2:~# ip addr
+[...]
+5: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc htb state UP group default qlen 1000
+    link/ether 24:6e:96:6a:d0:4a brd ff:ff:ff:ff:ff:ff
+    inet 10.44.1.50/18 brd 10.44.63.255 scope global eth1
+       valid_lft forever preferred_lft forever
+    inet6 fe80::266e:96ff:fe6a:d04a/64 scope link
+       valid_lft forever preferred_lft forever
+#+END_EXAMPLE
+#+BEGIN_EXAMPLE
+root@ecotype-16:~# ping 172.16.193.10
+PING 172.16.193.10 (172.16.193.10) 56(84) bytes of data.
+64 bytes from 172.16.193.10: icmp_seq=1 ttl=64 time=0.124 ms
+64 bytes from 172.16.193.10: icmp_seq=2 ttl=64 time=0.085 ms
+64 bytes from 172.16.193.10: icmp_seq=3 ttl=64 time=0.083 ms
+64 bytes from 172.16.193.10: icmp_seq=4 ttl=64 time=0.082 ms
+--- 172.16.193.10 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 3070ms
+rtt min/avg/max/mdev = 0.082/0.093/0.124/0.020 ms
+root@ecotype-16:~# ping 10.44.1.50
+PING 10.44.1.50 (10.44.1.50) 56(84) bytes of data.
+64 bytes from 10.44.1.50: icmp_seq=1 ttl=64 time=320 ms
+64 bytes from 10.44.1.50: icmp_seq=2 ttl=64 time=320 ms
+--- 10.44.1.50 ping statistics ---
+3 packets transmitted, 2 received, 33% packet loss, time 1999ms
+rtt min/avg/max/mdev = 320.124/320.135/320.146/0.011 ms
+root@ecotype-16:~# ping 10.44.1.64
+PING 10.44.1.64 (10.44.1.64) 56(84) bytes of data.
+64 bytes from 10.44.1.64: icmp_seq=1 ttl=64 time=0.039 ms
+64 bytes from 10.44.1.64: icmp_seq=2 ttl=64 time=0.025 ms
+--- 10.44.1.64 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1009ms
+rtt min/avg/max/mdev = 0.025/0.032/0.039/0.007 ms
+#+END_EXAMPLE
+
 
 * Make the PR for Rally
 
@@ -130,3 +207,5 @@ comments:
 * Test plan
 
 - Have to work on that, too. Modified 14th week accordingly
+
+- Worked on a juice branch to make it possible

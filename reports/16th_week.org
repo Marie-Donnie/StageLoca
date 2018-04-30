@@ -1,0 +1,22 @@
+#+TITLE: Report for : Un intergiciel d’une base de données NewSQL qui considère la localité de l’application cliente -- 16th week --
+#+AUTHOR: Marie Delavergne
+
+* Results
+
+- None of my experiments from this week-end worked :-/
+
+- Doing the 3 nodes mariadb experiments, these are quick
+
+- Watching the tendencies from these new tests on the same cluster, it seems really more consistent than before
+
+#+CAPTION: Tendencies without all results
+#+NAME: fig:tendencies
+[[../images/tendance.png]]
+
+- Checking the behaviour of the regions for cockroach
+  + ok for ping, though I forgot to add the constraint network, it might be why it's so long
+
+
+* Readings
+
+- Searched for "geo-partitioning database" articles, but I'm not sure if any of the results is usable.

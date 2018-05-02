@@ -16,6 +16,10 @@
 - Checking the behaviour of the regions for cockroach
   + ok for ping, though I forgot to add the constraint network, it might be why it's so long
 
+- Got a problem with regions on paravance ; used ecotype when I could (also got cadvisor bug)
+
+- Still got the memory problem on the frontend, so I try to use the control as the deployment machine
+  + Wanted to try and remove the full deploy from the loop in the experiments to avoid the kadeploy that requires a password to be executed when not on a frontend
 
 * Readings
 

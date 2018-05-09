@@ -21,6 +21,57 @@
 - Still got the memory problem on the frontend, so I try to use the control as the deployment machine
   + Wanted to try and remove the full deploy from the loop in the experiments to avoid the kadeploy that requires a password to be executed when not on a frontend
 
+- To get some nodes using reservation for the day: ~funk -w 5:30:00 -r ecotype:16~.
+  + Since it gave me a message stating that my reservation could only begin after 10:43 ~funk -w 5:30:00 -r ecotype:16 -s 10:44:30~ worked like a charm
+
+- Checking regions for Cockroachdb deployed with 3 groups of 5 nodes, separated by 50 ms of latency
+  + realized I was still using "test" for region
+    - finally fixed it with the ~'group_names': [u'chrony', u'database2', u'openstack', u'rally', u'sysbench']~ variable ( [[https://github.com/Marie-Donnie/juice/commit/4a916598e1730717479f3d8add14d427cec6ac08][here]] )
+    - nope, still not working.
+    - finally fixed it, the loop considered the variable as a string
+#+BEGIN_EXAMPLE
+        "Args": [
+            "start",
+            "--insecure",
+            "--advertise-host=10.44.1.60",
+            "--locality=region=database0,datacenter=ecotype-12"
+        ],
+#+END_EXAMPLE
+    - still got some problems with rally:
+#+BEGIN_EXAMPLE
+2018-05-04 13:36:48.209 149 INFO rally.task.runner [-] Task f1097de8-d182-42bc-80df-98a785f66b61 | ITER: 74 START
+Exception in thread Thread-131:
+Traceback (most recent call last):
+ File "/usr/lib/python2.7/threading.py", line 801, in __bootstrap_inner
+   self.run()
+ File "/usr/lib/python2.7/threading.py", line 754, in run
+   self.__target(*self.__args, **self.__kwargs)
+ File "/usr/local/lib/python2.7/dist-packages/rally/task/runner.py", line 93, in _worker_thread
+   scenario_kwargs, event_queue))
+ File "/usr/local/lib/python2.7/dist-packages/rally/task/runner.py", line 67, in _run_scenario_once
+   scenario_inst = cls(context_obj)
+ File "/usr/local/lib/python2.7/dist-packages/rally/plugins/openstack/scenarios/keystone/basic.py", line 34, in __init__
+   atomic_inst=self.atomic_actions())
+ File "/usr/local/lib/python2.7/dist-packages/rally/task/service.py", line 284, in __init__
+   impl_cls, _all_impls = self.discover_impl()
+ File "/usr/local/lib/python2.7/dist-packages/rally/task/service.py", line 116, in wrapper
+   return func(instance, *args, **kwargs)
+ File "/usr/local/lib/python2.7/dist-packages/rally/task/service.py", line 325, in discover_impl
+   if cls.is_applicable(self._clients):
+ File "/usr/local/lib/python2.7/dist-packages/rally/plugins/openstack/services/identity/identity.py", line 28, in is_applicable
+   cloud_version = clients.keystone().version.split(".")[0][1:]
+ File "/usr/local/lib/python2.7/dist-packages/rally/plugins/openstack/osclients.py", line 203, in __call__
+   self.cache[key] = self.create_client(*args, **kwargs)
+ File "/usr/local/lib/python2.7/dist-packages/rally/plugins/openstack/osclients.py", line 346, in create_client
+   self.auth_ref   # noqa
+ File "/usr/local/lib/python2.7/dist-packages/rally/plugins/openstack/osclients.py", line 245, in auth_ref
+   error=str(e))
+AuthenticationFailed: Failed to authenticate to http://10.44.1.60/identity for user 'c_rally_b10490c8_aMt9Rf6G' in project 'c_rally_b10490c8_JTlytGRt': InternalServerError: An unexpected error prevented the server from fulfilling your request. (HTTP 500) (Request-ID: req-894d1893-a5de-44e1-b7c9-e01cb6588b22)
+#+END_EXAMPLE
+
+
 * Readings
 
 - Searched for "geo-partitioning database" articles, but I'm not sure if any of the results is usable.
+
+- Resumed the readings

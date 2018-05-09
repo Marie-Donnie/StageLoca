@@ -47,6 +47,21 @@ Consider a global online learning portal, RoachLearn, that has a database contai
     - read-committed :: updates form uncommitted transactions are never visible to other transactions
     - no lost updates :: concurrent updates of the same record are resolved if commutative or prevented
     - no atomic visibility :: some updates from successful committed transactions might be visible before all updates become visible
+- provides both low latency and strong consistency (serializability) for transactions
+  + without a master
+  + without significant limit on the application design
+- uses generalized paxos and some techniques from the other databases with the aim to achieve single round-trip commit by:
+  + executing parallel generalized paxos on each commit record
+  + ensuring every prepare has been received by a fast quorum of replicas
+  + disallowing aborts for successfully prepared recors
+  + piggybacking notification of commit state on subsequent transactions
+- architecture similar to spanner with a stateful component of the database system as a distributed record manager and a separated stateless DB library for query processing and transaction management
+  + this allows the scalability -through range partitioning- of the storage node which is the only stateful component of the system and the stateless higher levels of the database to be replicated freely
+- every storage nodes of the system are responsible for one or more horizontal partitions and the nodes are distributed in data centers across different locations
+- the DB library is responsible to determine the outcome of a transaction (acts as a transaction manager)
+- MDCC uses an individual master per record, either a storage node or an app-server that is responsible to coordinate the updates to a record
+  + the transaction manager can choose to coordinate the update directly or use the current master to act on his behalf
+- goal for optimistic commit protocol: fault-tolerant atomic commit
 
 
 * Juice

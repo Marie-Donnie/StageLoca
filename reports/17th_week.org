@@ -1,0 +1,30 @@
+#+TITLE: Report for : Un intergiciel d’une base de données NewSQL qui considère la localité de l’application cliente -- 17th week --
+#+AUTHOR: Marie Delavergne
+
+
+* Results
+
+- This week end the experiments didn't work so I had to run it manually. I have at least the 45 nodes Cockroach experiments except for, with 150ms, these scenarios:
+  + keystone/create-user-set-enabled-and-delete.yaml
+  + keystone/create-and-list-users.yaml
+
+
+* Analysis
+
+- Ronan has made a wonderful org file to make the analysis, change what we want on the fly and execute the code directly after the change.
+
+
+* Meetings
+
+- Have to fill in the slides for the presentation
+  + we changed again the plan, measuring the impact of:
+|-------------------------+--------------+----------------------|
+| criterion               | cluster size | latency              |
+|-------------------------+--------------+----------------------|
+| cluster size            | 3/9/45       | LAN                  |
+| latency                 | 9            | 0/50/150             |
+| groups (quorum on 1 gp) | 9 (3x3)      | 10(intra)/150(inter) |
+| groups (quorum on 2 gp) | 9 (3x3)      | 10(intra)/150(inter) |
+|-------------------------+--------------+----------------------|
+
+- Next one monday 16h30

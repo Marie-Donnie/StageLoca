@@ -28,3 +28,55 @@
 |-------------------------+--------------+----------------------|
 
 - Next one monday 16h30
+
+
+* Slides
+
+Keystone in the context of Fog/Edge Massively Distributed Clouds
+
+** OpenStack@TheEdge
+
+*** Why? n independent OpenStack ? Quels sont les challenges? Focus sur Keystone.
+
+- Keystone, the identity service, is key to Openstack
+  + easy to work with
+  + has a federated approach
+
+*** Regions avec un keystone centralisé (faiblesses)
+
+- Centralized Keyston: SPoF
+
+*** Régions avec Galera ou CockroachDB
+
+- Load distribution
+- Database survivability
+
+*** Régions avec keystone federation (pas evalué car keystone specifique mais à évoquer en conclusion car d’un point de vu concept ca peut etre interessant d’appliquer cela à d’autres mecanismes comme Nova).
+
+
+
+*** Action: Marie Comprendre les Flows
+
+** Juice (10min)
+
+- Juice developped to measure the performances of different databases for Openstack Keystone
+
+** Protocol Experimental
+
+*** Flat
+
+**** impact de la taille du cluster 3 / 9 / 45 / 90 + latence 0, 50, 150 RTT
+
+
+
+*** edge site/group  3 groupes *3 sites avec intra groupe = 10ms et inter groupe = 150ms
+
+
+
+*** quantifier l’opportunité offerte par cockroach en limiter les acces à un seul site (trois dans le meeme site) / deux sites (deux dans le meme site et un sur un site distant) et trois sites (un replica sur chacun des sites, a priori ca retombe sur les experience flat).
+
+** Resultat
+
+    4.1.Pour le flat:  on espere montrer que c'est constant coté cockroach mais que c'est lineaire pour Galera (ici on regarde le nbre de sites)
+
+    4.2 Pour le flat: on  espere montrer que la latence impact tout le monde (i.e. cockroach et galera) mais qu'avec cockroach on a une notion de groupe qui pourrait permettre de limiter l'impact de la latence. Cela permet de faire une transition vers la notion de groupe.

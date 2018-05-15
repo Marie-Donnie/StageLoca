@@ -1,0 +1,62 @@
+#+TITLE: Report for : Un intergiciel d’une base de données NewSQL qui considère la localité de l’application cliente -- 18th week --
+#+AUTHOR: Marie Delavergne
+
+
+* Slides
+
+- Working a bit on slides
+
+- Mainly trying to understand Keystone federation now (see schema)
+
+
+
+* Running experiments
+
+** CockroachDB
+- for 3x3
+  - [X] 1 replica per group/site
+  - [X] 2 replicas on the same group/site
+  - [X] 3 replicas on the same site
+
+Since I was doing the 3 replicas experience, I checked if the latency was correct.
+ecotype-25 and 10.44.65.79 are on the same site; the two other on the other sites
+#+BEGIN_EXAMPLE
+root@ecotype-25:~# ping 10.44.65.81
+PING 10.44.65.81 (10.44.65.81) 56(84) bytes of data.
+64 bytes from 10.44.65.81: icmp_seq=1 ttl=64 time=300 ms
+64 bytes from 10.44.65.81: icmp_seq=2 ttl=64 time=300 ms
+--- 10.44.65.81 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1000ms
+rtt min/avg/max/mdev = 300.144/300.185/300.227/0.549 ms
+root@ecotype-25:~# ping 10.44.65.89
+PING 10.44.65.89 (10.44.65.89) 56(84) bytes of data.
+64 bytes from 10.44.65.89: icmp_seq=1 ttl=64 time=300 ms
+64 bytes from 10.44.65.89: icmp_seq=2 ttl=64 time=300 ms
+64 bytes from 10.44.65.89: icmp_seq=3 ttl=64 time=300 ms
+--- 10.44.65.89 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2002ms
+rtt min/avg/max/mdev = 300.140/300.173/300.218/0.032 ms
+root@ecotype-25:~# ping 10.44.65.79
+PING 10.44.65.79 (10.44.65.79) 56(84) bytes of data.
+64 bytes from 10.44.65.79: icmp_seq=1 ttl=64 time=0.199 ms
+64 bytes from 10.44.65.79: icmp_seq=2 ttl=64 time=0.127 ms
+64 bytes from 10.44.65.79: icmp_seq=3 ttl=64 time=0.129 ms
+64 bytes from 10.44.65.79: icmp_seq=4 ttl=64 time=0.120 ms
+64 bytes from 10.44.65.79: icmp_seq=5 ttl=64 time=0.119 ms
+64 bytes from 10.44.65.79: icmp_seq=6 ttl=64 time=0.114 ms
+64 bytes from 10.44.65.79: icmp_seq=7 ttl=64 time=0.105 ms
+64 bytes from 10.44.65.79: icmp_seq=8 ttl=64 time=0.105 ms
+64 bytes from 10.44.65.79: icmp_seq=9 ttl=64 time=0.117 ms
+64 bytes from 10.44.65.79: icmp_seq=10 ttl=64 time=0.114 ms
+--- 10.44.65.79 ping statistics ---
+10 packets transmitted, 10 received, 0% packet loss, time 9219ms
+rtt min/avg/max/mdev = 0.105/0.124/0.199/0.029 ms
+#+END_EXAMPLE
+
+
+
+** MariaDB
+- for 3x3
+  - [X] 1 replica per group/site
+  - [X] 2 replicas on the same group/site
+  - [X] 3 replicas on the same site

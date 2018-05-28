@@ -8,6 +8,13 @@
 
 - Mainly trying to understand Keystone federation now (see schema)
 
+http://galeracluster.com/documentation-webpages/limitations.html#differences-in-transactions
+https://mariadb.com/kb/en/library/acid-concurrency-control-with-transactions/
+http://galeracluster.com/documentation-webpages/isolationlevels.html
+http://galeracluster.com/documentation-webpages/architecture.html
+
+https://www.cockroachlabs.com/docs/stable/architecture/transaction-layer.html#read-refreshing
+https://www.cockroachlabs.com/docs/stable/architecture/overview.html
 
 
 * Running experiments
@@ -60,3 +67,8 @@ rtt min/avg/max/mdev = 0.105/0.124/0.199/0.029 ms
   - [X] 1 replica per group/site
   - [X] 2 replicas on the same group/site
   - [X] 3 replicas on the same site
+
+
+** Bugs
+cp /home/rcherrueau/juice/experiments2/myenv.dsc .
+kaenv3 -a myenv.dsc

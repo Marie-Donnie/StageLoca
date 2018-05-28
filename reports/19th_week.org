@@ -1,0 +1,28 @@
+#+TITLE: OpenStack Summit -- 19th week --
+#+AUTHOR: Marie Delavergne
+
+
+http://galeracluster.com/2015/08/the-primary-component-in-galera-cluster/
+
+- During split network, the majority side of the partition enters a primary component mode, and the other a non-primary component mode
+  - You can't write on non-primary nodes since it would create a split-brain
+  - You also can't read because the nodes are no-longer up-to-date
+
+
+https://www.percona.com/blog/2014/11/17/typical-misconceptions-on-galera-for-mysql/
+
+
+- A transaction usually contains several writes, and the transaction is committed once, so the writes are commited all at the end
+  - might also be a reason for cockroach latency: the same transaction will have to handle writes on different ranges
+
+
+
+* Beyond datacenter cloud: the future of the OS foundation
+
+
+* Keystone - Project Onboarding
+
+A bit about the workflow
+
+
+* Image handling in an edge cloud infrastructure

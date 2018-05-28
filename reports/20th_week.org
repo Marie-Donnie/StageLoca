@@ -1,0 +1,18 @@
+#+TITLE: Report for : Un intergiciel d’une base de données NewSQL qui considère la localité de l’application cliente -- 20th week --
+#+AUTHOR: Marie Delavergne
+
+* Working on the report
+
+- Have to explain MariaDB Galera Cluster and CockroachDB
+
+
+** MariaDB Galera Cluster
+
+Looking at the [[http://galeracluster.com/wp-content/uploads/2013/10/Minimizing-downtime-and-maximizing-elasticity-with-Galera-Cluster-for-MySQL.pdf][Galera white paper]] I realized:
+- there was still a missing information about the synchronization in the replication, so I went right into the code: https://github.com/codership/galera/blob/3.x/galera/src/replicator_smm.cpp
+- I didn't really checked the results for MGC on a grouped regions, even though:
+#+BEGIN_QUOTE
+ The implementation of synchronous replication in Galera Cluster for MySQL has however proven quite resilient to network conditions, and deploying a Galera Cluster across 2 or 3 continents is a popular choice. This is not only a good disaster recovery option, but a common strategy to minimize service response times towards the end user.
+#+END_QUOTE
+    + wanted to try a new deployment, but Jonathan has an experimentation to do
+    + leave it that here anyway to remember to try it

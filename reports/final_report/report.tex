@@ -148,12 +148,13 @@
 \addcontentsline{toc}{section}{Étude de l'existant}
 \section{Étude de l'existant}
 
+Two databases were considered: one distributed, CockroachDB, and the other replicated, MariaDB Galera Cluster.
+
 \subsection{MariaDB Galera Cluster}
 
-MariaDB uses Galera Cluster as a synchronous multi-master cluster.
+MariaDB, an open-source fork of MySQL, uses Galera Cluster as a synchronous multi-master cluster. It means that all nodes in the cluster are masters, with an active-active synchronous replication, so it is possible to read or write on every node at any time.
 
-
-\begin{figure}
+\begin{figure}[H]
   \vspace{-10pt}
   \centering
   \centerline{\includegraphics[width=1\textwidth]{no_push/galera.pdf}}
@@ -163,9 +164,36 @@ MariaDB uses Galera Cluster as a synchronous multi-master cluster.
   \label{fig:MGC}
 \end{figure}
 
+To say it in a more understandable way, MariaDB Galera Cluster allows to have the exact same database on every nodes thanks to a synchronous replication.
+
+
+\begin{figure}[H]
+  \vspace{-10pt}
+  \centering
+  \centerline{\includegraphics[width=1\textwidth]{no_push/certification_based_replication.png}}
+  \vspace{-5pt}
+  \caption{Certification Based Replication from \url{http://galeracluster.com} }
+  \vspace{-5pt}
+  \label{fig:MGC}
+\end{figure}
+
+
+
+
+
+
 \subsection{CockroachDB}
 
+CockroachDB is a NewSQL database that uses the Raft protocol (a alternative version to Lamport's Paxos consensus protocol).
 
-
+\begin{figure}[H]
+  \vspace{-10pt}
+  \centering
+  \centerline{\includegraphics[width=1\textwidth]{no_push/commit-cockroach.png}}
+  \vspace{-5pt}
+  \caption{CockroachDB commit: only a quorum of 2 is required to commit }
+  \vspace{-5pt}
+  \label{fig:MGC}
+\end{figure}
 
 \end{document}

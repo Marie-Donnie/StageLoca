@@ -17,3 +17,16 @@ Looking at the [[http://galeracluster.com/wp-content/uploads/2013/10/Minimizing-
 #+END_QUOTE
   + wanted to try a new deployment, but Jonathan has an experimentation to do
   + leave it that here anyway to remember to try it
+
+
+* Readings
+
+
+- [[https://www.cockroachlabs.com/blog/what-write-skew-looks-like/][Cockroach article about write skews]]
+  + [[https://johann.schleier-smith.com/blog/2016/01/06/analyzing-a-read-only-transaction-anomaly-under-snapshot-isolation.html][Read anomaly under snapshot isolation]] really good explanation from
+  + [[https://www.cs.umb.edu/~poneil/ROAnom.pdf][original article]]
+  + [[https://github.com/jssmith/stressisolation][Project to test the serializability]]
+  + [[http://www.bailis.org/papers/acidrain-sigmod2017.pdf][ACIDRain attacks]]
+  + [[https://www.cse.iitb.ac.in/infolab/Data/Courses/CS632/2009/Papers/p492-fekete.pdf][Making Snapshot Isolation Serializable]]
+  + [[https://arxiv.org/pdf/cs/0701157.pdf][Beginning of the understanding of the snapshot isolation]]
+  + [[https://ristret.com/s/f643zk/history_transaction_histories][A history of transaction histories]]

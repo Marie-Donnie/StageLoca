@@ -1,0 +1,139 @@
+Two databases were considered: one distributed, CockroachDB, and the other replicated, MariaDB Galera Cluster. We also used MariaDB as a control for the other databases, keeping in mind that it is a single point of failure, so we can not really use it in our context of edge computing.
+
+\subsection{MariaDB Galera Cluster}
+
+MariaDB, an open-source fork of MySQL, uses Galera Cluster as a synchronous multi-master cluster. It means that all nodes in the cluster are masters, with an active-active synchronous replication, so it is possible to read or write on every node at any time.
+
+\begin{figure}[H]
+  \vspace{-10pt}
+  \centering
+  \centerline{\includegraphics[width=1\textwidth]{no_push/galera-2.pdf}}
+  \vspace{-5pt}
+  \caption{MariaDB Galera Cluster}
+  \vspace{-5pt}
+  \label{fig:MGC}
+\end{figure}
+
+To say it in a more understandable way, MariaDB Galera Cluster allows to have the exact same database on every nodes thanks to a synchronous replication.
+
+To dive more into details, each time a transaction is requested by a client on a node, it is processed as usual until the client issues a commit. The process is stopped and all changes made to the database in the transaction are collected in a ``write-set'', along with the primary keys of the changed rows. The write-set is then broadcasted to every nodes. It then undergoes a deterministic certification test which uses the given primary keys. It actually checks all transactions between the current transaction and the last successful one to determine whether the primary keys involved conflicts between each others.
+
+If the check fails, the whole transaction is rollbacked, and if it succeeds it is applied on all nodes then committed.
+
+\begin{figure}[H]
+  \vspace{-10pt}
+  \centering
+  \centerline{\includegraphics[width=0.85\textwidth]{no_push/certification_based_replication.png}}
+  \vspace{-5pt}
+  \caption{Certification Based Replication from \url{http://galeracluster.com} }
+  \vspace{-5pt}
+  \label{fig:certificationcommit}
+\end{figure}
+
+
+This is pretty efficient since it only needs a broadcast to make the replication, which means. But this means that when it fails, the entire transaction must be retried and so it may lead to more conflicts and even deadlocks.
+
+It also have advantages like granting there will be no data loss when nodes crash, providing a high availability across the cluster.
+
+Galera Cluster uses a virtual synchrony that unifies the data delivery, providing a formalism for its semantics. Since this does not guarantee temporal synchrony, it also implements a flow control to keep nodes synchronized.
+
+The multi-master replication allows only read-repeatable isolation at best for transactions, but more will be said on the subject in section \ref{sec:serial}, \pageref{sec:serial}.
+
+
+\subsection{CockroachDB}
+CockroachDB is a NewSQL database that uses the Raft protocol (an alternative version to Lamport's Paxos consensus protocol).
+It uses the SQL API to enable SQL requests on every nodes. These requests are translated to key-value operations and -if needed- distributed across the cluster.
+
+CockroachDB implements a single, monolithic sorted map for the keys and values stored, as seen in \ref{fig:cockroachdb}. This map is divided in ranges, which are continuous chunks of this map, with every key being in a single range, so the ranges will not overlap. Each ranges are then replicated (three replicas per range) and finally distributed across the cluster nodes.\cite{CRDB:automatedoperations}
+
+\begin{figure}[H]
+  \vspace{-10pt}
+  \centering
+  \centerline{\includegraphics[width=1\textwidth]{no_push/cockroachdb.png}}
+  \vspace{-5pt}
+  \caption{CockroachDB ranges, replicas and leaseholders}
+  \vspace{-5pt}
+  \label{fig:cockroachdb}
+\end{figure}
+
+One of the replicas acts as the leaseholder, a sort of leader that coordinates all reads and writes for the range. A read only requires the leaseholder.
+When a write is requested, the leaseholder prepares to append it to its log, forward the request to the replicas and when the quorum is achieved, commit the change by add it in the log. The quorum is an agreement from two out of the three replicas to make the change.
+
+\begin{figure}[H]
+  \vspace{-10pt}
+  \centering
+  \centerline{\includegraphics[width=0.85\textwidth]{no_push/commit-cockroach.png}}
+  \vspace{-5pt}
+  \caption{CockroachDB commit: only a quorum of 2 is required to commit }
+  \vspace{-5pt}
+  \label{fig:cockroachdb-commit}
+\end{figure}
+
+To implement an SQL API, Cockroach uses an encoding tool to go from SQL data to a key-value store\cite{CRDB:mapKV}. As an example, a bit of code:
+\begin{verbatim}
+CREATE TABLE test (
+      key       INT PRIMARY KEY,
+      floatVal  FLOAT,
+      stringVal STRING
+)
+
+INSERT INTO test VALUES (10, 4.5, "hello”)
+\end{verbatim}
+
+This row would be stored as:
+
+\begin{center}
+\begin{tabular}{|l|l|}
+\hline
+Key & Value\\
+\hline
+/test/10/floatVal & 4.5\\
+/test/10/stringVal & "hello"\\
+\hline
+\end{tabular}
+\end{center}
+
+Here, \verb~/test/~ is a placeholder for the table ID and the \verb~/*Val~ are placeholders for the column ID used in CockroachDB. Each non-primary key column are stored under a separate key that is prefixed by the primary key (following the table ID) and suffixed by the column ID.
+
+\subsubsection{Raft}
+
+\cite{DBLP:conf/usenix/OngaroO14}
+
+\label{sec:serial}
+\subsection{Serializability}
+Difference between Serializable and Snapshot Isolations from \href{https://www.cockroachlabs.com/blog/what-write-skew-looks-like/}{Cockroach Labs}:
+
+
+Consider the following transactions:
+\begin{table}[H]
+  \centering
+  \begin{tabular}{ c }
+    $P:   y \gets x$\\
+    $Q:   x \gets y$\\
+  \end{tabular}
+\end{table}
+
+
+There are two possible serial executions: $P$ then $Q$ OR $Q$ then $P$
+\begin{table}[H]
+  \centering
+  \begin{tabular}{ r | l }
+    (P) $y \gets x$ & $x \gets y$ (Q) \\
+    (Q) $x \gets y$ & $y \gets x$ (P) \\
+    $x = y$ & $x = y$ \\
+  \end{tabular}
+\end{table}
+
+Snapshot isolation allows another execution:
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{ r | l }
+    1. P reads $x$ as $x_1$ & 2. Q reads $y$ as $y_1$ \\
+    3. P writes $x_1$ to $y$ & 3. Q writes $y_1$ to $x$ \\
+  \end{tabular}
+  \\
+  $x \neq y$, values have been swapped
+\end{table}
+
+Indeed, each transaction kept a consistent view of the database and the writes were not on the same value, so no overlaping of the transaction write set occured, then no retries were triggered.

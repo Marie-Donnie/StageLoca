@@ -3,3 +3,19 @@
 
 
 * Working on the report
+
+
+* Giving links on the video
+
+
+You can find the slides here: https://www.openstack.org/assets/presentation-media/OpenStack-Keystone-Maria-Cockroach3.pdf
+
+We also made a blog article to talk more about the results: https://beyondtheclouds.github.io/blog/openstack/cockroachdb/2018/06/04/evaluation-of-openstack-multi-region-keystone-deployments.html
+
+Juice code is available here:
+https://github.com/BeyondTheClouds/juice
+
+If you were interested by this topic, there were two other presentations from our team:
+Can We Operate and Use an Edge Computing Infrastructure with OpenStack? https://www.openstack.org/videos/vancouver-2018/can-we-operate-and-use-an-edge-computing-infrastructure-with-openstack
+OpenStack internal messaging at the edge : in depth evaluation
+https://www.openstack.org/videos/vancouver-2018/openstack-internal-messaging-at-the-edge-in-depth-evaluation

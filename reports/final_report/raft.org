@@ -13,3 +13,5 @@ An entry of a log stores a command (request), a term number and an integer ident
 
 
 CockroachDB leaseholder is pretty similar to Raft's leader, but it bypasses the algorithm for reads. Indeed, if the writes have been committed, they already have achieved consensus and so this operation does not require another consensus and the leaseholder handles the read by itself. It's also worth saying that CockroachDB /attempts/ to elect a leasholder who is also a Raft group leader to optimize the speed of writes, but this means it is not mandatory\cite{CRDB:replication-layer}.
+
+[[no_push/raft_logs.png]]

@@ -7,7 +7,7 @@
 
 * Giving links on the video
 
-
+#+BEGIN_EXAMPLE
 You can find the slides here: https://www.openstack.org/assets/presentation-media/OpenStack-Keystone-Maria-Cockroach3.pdf
 
 We also made a blog article to talk more about the results: https://beyondtheclouds.github.io/blog/openstack/cockroachdb/2018/06/04/evaluation-of-openstack-multi-region-keystone-deployments.html
@@ -19,3 +19,7 @@ If you were interested by this topic, there were two other presentations from ou
 Can We Operate and Use an Edge Computing Infrastructure with OpenStack? https://www.openstack.org/videos/vancouver-2018/can-we-operate-and-use-an-edge-computing-infrastructure-with-openstack
 OpenStack internal messaging at the edge : in depth evaluation
 https://www.openstack.org/videos/vancouver-2018/openstack-internal-messaging-at-the-edge-in-depth-evaluation
+#+END_EXAMPLE
+
+
+- Youtube does not allow to paste into the comments so I had to trick a bit

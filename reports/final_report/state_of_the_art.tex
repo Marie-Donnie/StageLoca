@@ -37,7 +37,7 @@ It also have advantages like granting there will be no data loss when nodes cras
 
 Galera Cluster uses a virtual synchrony that unifies the data delivery, providing a formalism for its semantics. Since this does not guarantee temporal synchrony, it also implements a flow control to keep nodes synchronized.
 
-The multi-master replication allows only read-repeatable isolation at best for transactions, but more will be said on the subject in section \ref{sec:serial}, \pageref{sec:serial}.
+The multi-master replication allows only read-repeatable isolation at best for transactions, but more will be said on the subject in section \ref{sec:isolation}, \pageref{sec:isolation}.
 
 
 \subsection{CockroachDB}
@@ -100,7 +100,6 @@ Here, \verb~/test/~ is a placeholder for the table ID and the \verb~/*Val~ are p
 Raft was implemented to be a more understandable and easier to learn version of Paxos\cite{DBLP:conf/usenix/OngaroO14}. Though it is safe, available and efficient for common operations, when a choice had to be made, it was always favoring understandability.
 
 
-
 It uses a consensus algorithm in the context of Replicated State Machines. In this context, state machines on a set of nodes compute copies of the same state and continue their work even if some nodes are down. In the context of CockroachDB, the state machines are the ranges and so there is one consensus group per range. This means each nodes participates in thousands of consensus group. So they introduced a new layer they called Multiraft to handle this: it manages the communication by treating a node with all its ranges as a group. That is, each pair of nodes only needs to exchange heartbeat messages once per tick to know if the ranges on these nodes are available\cite{CRDB:multiraft}.
 
 Raft safety properties under non-Byzantines conditions (such as network delays, partitions, packet loss, etc.) have been formally specified and proven. It also guarantees availability if a majority $(\frac{n}{2} + 1)$ of servers are operational and communicate with each other and consistency in the logs independently of the timing (delays and faulty clocks only cause availability problems). Finally, the time to complete a command is only as long as it is necessary to receive responses from the majority of the cluster.
@@ -111,13 +110,31 @@ Time is divided into \emph{terms} of arbitrary length. These terms are numbered 
 
 The election runs as follows: if a leader fails or is disconnected, servers know it because they don't receive the heartbeat before the election timeout, as explained before, so a new leader is elected. When a follower comes to the election timeout, it increments its current term, becomes a candidate, votes for itself and sends a RequestVote RPC to every server in the cluster. A candidate wins the election if it receives votes from a majority of servers for the same term and the followers vote for one candidate on a first-come first-served basis. If a candidate gets a signal from a leader and the term received is at least as large as the candidate current term, the candidate returns to the follower status. There is a mechanism to prevent different rounds of election due to too many followers becoming candidates at the same time: the election timeouts are chosen randomly by the servers from a fixed interval. A follower denies a candidature its log is more up-to-date than the candidate's.
 
+\begin{figure}[H]
+  \vspace{-10pt}
+  \centering
+  \centerline{\includegraphics[width=0.7\textwidth]{no_push/raft_logs.png}}
+  \vspace{-5pt}
+  \caption{Raft logs\cite{DBLP:conf/usenix/OngaroO14}}
+  \vspace{-5pt}
+  \label{fig:raft-log}
+\end{figure}
+
+
 An entry of a log stores a command (request), a term number and an integer identifying its position in the log when the entry was received by the leader. When receiving a new entry, the leader appends the request to its log as a new entry. It then sends the order to append the entries to the other servers to replicate it (using an AppendEntries RPC). The leader then "chooses" when an entry is committed, i.e. when an entry has replicated to a majority of servers. This operation also commits all previous entries in the leader's log, including entries from former leader. The leader maintains a nextIndex for each follower so he knows which entry it will send. RPCs are idempotent; a request that includes previously recorded log is ignored.
 
 
-CockroachDB leaseholder is pretty similar to Raft's leader, but it bypasses the algorithm for reads. Indeed, if the writes have been committed, they already have achieved consensus and so this operation does not require another consensus and the leaseholder handles the read by itself. It's also worth saying that CockroachDB \emph{attempts} to elect a leasholder who is also a Raft group leader to optimize the speed of writes, but this means it is not mandatory\cite{CRDB:replication-layer}.
+CockroachDB leaseholder is pretty similar to Raft's leader, but it bypasses the algorithm for reads. Indeed, if the writes have been committed, they already have achieved consensus and so this operation does not require another consensus and the leaseholder handles the read by itself. It is also worth adding that CockroachDB \emph{attempts} to elect a leasholder who is also a Raft group leader to optimize the speed of writes, but this means it is not mandatory\cite{CRDB:replication-layer}.
 
-\label{sec:serial}
-\subsection{Serializability}
+\label{sec:isolation}
+\subsection{Isolation}
+
+
+There are different anomalies that can occur in Snapshot Isolation that can't happen in Serializable Isolation, and we will detail them in the following sections.
+
+\subsubsection{Write skews}
+
+
 Difference between Serializable and Snapshot Isolations from \href{https://www.cockroachlabs.com/blog/what-write-skew-looks-like/}{Cockroach Labs}:
 
 
@@ -135,8 +152,23 @@ There are two possible serial executions: $P$ then $Q$ OR $Q$ then $P$
 \begin{table}[H]
   \centering
   \begin{tabular}{ r | l }
+    $P$ then $Q$ & $Q$ then $P$ \\
+        \hline
     (P) $y \gets x$ & $x \gets y$ (Q) \\
     (Q) $x \gets y$ & $y \gets x$ (P) \\
+    $x = y$ & $x = y$ \\
+  \end{tabular}
+\end{table}
+Which, more developped, can be read as:
+\begin{table}[H]
+  \centering
+  \begin{tabular}{ r | l }
+    $P$ then $Q$ & $Q$ then $P$ \\
+        \hline
+    $R_P(x_0)$ &  $R_Q(y_0)$ \\
+    $W_P(y_1, x_0)$ & $W_Q(x_1, y_0)$ \\
+    $R_Q(y_1)$ &  $R_P(x_1)$ \\
+    $W_Q(x_1, y_1)$ & $W_P(y_1, x_1)$ \\
     $x = y$ & $x = y$ \\
   \end{tabular}
 \end{table}
@@ -145,12 +177,82 @@ Snapshot isolation allows another execution:
 
 \begin{table}[H]
   \centering
-  \begin{tabular}{ r | l }
-    1. P reads $x$ as $x_1$ & 2. Q reads $y$ as $y_1$ \\
-    3. P writes $x_1$ to $y$ & 3. Q writes $y_1$ to $x$ \\
+  \begin{tabular}{ r  l }
+    $P$ & $Q$ \\
+    1. $R_P(x_0)$ & 2. $R_Q(y_0)$ \\
+    3. $W_P(y_1, x_0)$ & 4. $W_Q(x_1, y_0)$ \\
   \end{tabular}
   \\
   $x \neq y$, values have been swapped
 \end{table}
 
 Indeed, each transaction kept a consistent view of the database and the writes were not on the same value, so no overlaping of the transaction write set occured, then no retries were triggered.
+
+Another example, related to the application and the semantic of it. Consider the following table:
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{ c | c }
+    id & counter \\
+        \hline
+    0 & 1 \\
+    1 & 1 \\
+  \end{tabular}
+\end{table}
+
+The application using this table has a rule where at least one counter must be non-zero. Now, we can think rapidly of two non-concurrent transactions that will be problematic in a non serializable isolation:
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{ c }
+    $P:   0 \gets 0$\\
+    $Q:   1 \gets 0$\\
+  \end{tabular}
+\end{table}
+
+When executed simultaneously (which is correct in term of concurrency, they are writing on different rows), these transactions will violate the application's requirement.
+
+\subsubsection{Read-Only transaction anomaly}
+
+
+The read-only transactions have been assumed to execute serializability before Fekete, O'Niel and O'Neil proved this is not always true\cite{DBLP:journals/sigmod/FeketeOO04}.
+To be perfectly honest, this example involves writes, of course. But not IN the transaction where the error appears. Suppose that we have a bank table.
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{ c | c }
+    type & balance \\
+    \hline
+    checkings (C) & 0 \\
+    savings (S) & 0 \\
+  \end{tabular}
+\end{table}
+
+Once again, consider a set of transactions:
+\begin{table}[H]
+  \centering
+  \begin{tabular}{ l }
+    $T_1:   S \gets S + 20 $\\
+    $T_2:   C \gets C -10 ; if (C+S) <= 0, C \gets C -1 $\\
+    $T_3:   C ; S$\\
+  \end{tabular}
+\end{table}
+
+We can have this execution, since the writes are not concurrent:
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{ r | c | l }
+    $T_1$ & $T_2$ & $T_3$ \\
+    & 1. $R_2(C_0,0)$ & \\
+    & 2. $R_2(S_0,0)$ & \\
+    3. $R_1(S_0,0)$ & & \\
+    4. $W_1(S_1,20)$ & & \\
+    5. $C_1$ & & \\
+    & & 6. $R_3(C_0,0)$ \\
+    & & 7. $R_3(S_1,20)$ \\
+    & & 8. $C_3$\\
+    & 9. $W_2(C_1,-11)$ & \\
+    & 10. $C_2$ & \\
+  \end{tabular}
+\end{table}

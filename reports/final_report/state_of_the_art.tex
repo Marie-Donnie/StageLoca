@@ -40,7 +40,7 @@ The transaction can be presented as a state diagram, as in figure \ref{fig:trans
 \end{figure}
 
 \begin{description}
-\item[{Atomicity}] A transaction is \emph{all or nothing}, which means if any part of the transaction fails, the entire transaction fails and the database is left unchanged. In the example before, if we do not have atomicity, a power failure could happen right before the write on account 2. And then the owner of account 1 would have lost 10 euros and nobody would have gain this amount. To avoid such a problem, the whole transaction must be rollbacked
+\item[{Atomicity}] A transaction is \emph{all or nothing}, which means if any part of the transaction fails, the entire transaction fails and the database is left unchanged. In the example before, if we do not have atomicity, a power failure could happen right before the write on account 2. And then the owner of account 1 would have lost 10 euros and nobody would have gain this amount. To avoid such a problem, the whole transaction must be rollbacked.
 \item[{Consistency}] A transaction must bring the database from one \emph{valid} state to another when it commits. This means that a failing transaction cannot result in the violation of constraints (e.g. foreign key constraint), cascades (e.g. cascade update, cascade delete) and triggers. Looking back at our bank and transaction example, we can say that the system is consistent if the total of the balance of the accounts is constant. In our previous example (from atomicity), 10 euros were lost from the system.
 \item[{Isolation}] Every action within a transaction must be hidden from the other transactions running concurrently. This means that executing transactions concurrently give the same system state as if they were executed sequentially. To understand this, we will consider a new transaction T$_{\text{2}}$ that gives 10 euros from account 1 to account 3. In the previous notation, we have:
 
@@ -53,132 +53,6 @@ The transaction can be presented as a state diagram, as in figure \ref{fig:trans
   This execution would overwrite W$_{\text{1}}$(1,20-10), creating 10 euros in the system.
 \item[{Durability}] Once a transaction has been committed, the system must ensures that it will remains so, even in the event of power losses, crashes, or any errors. If we consider T$_{\text{1}}$ again, or any transaction, if the transaction is committed and the client learns it had been so, we can imagine that the changes were still queue in the disk buffer waiting to be written when a power failure occurs. The changes are then lost though the client does not know it.
 \end{description}
-
-\subsection{MariaDB Galera Cluster}
-
-MariaDB, an open-source fork of MySQL, uses Galera Cluster as a synchronous multi-master cluster. It means that all nodes in the cluster are masters, with an active-active synchronous replication, so it is possible to read or write on every node at any time.
-
-\begin{figure}[H]
-  \vspace{-10pt}
-  \centering
-  \centerline{\includegraphics[width=1\textwidth]{no_push/galera-2.pdf}}
-  \vspace{-5pt}
-  \caption{MariaDB Galera Cluster}
-  \vspace{-5pt}
-  \label{fig:MGC}
-\end{figure}
-
-To say it in a more understandable way, MariaDB Galera Cluster allows to have the exact same database on every nodes thanks to a synchronous replication.
-
-To dive more into details, each time a transaction is requested by a client on a node, it is processed as usual until the client issues a commit. The process is stopped and all changes made to the database in the transaction are collected in a ``write-set'', along with the primary keys of the changed rows. The write-set is then broadcasted to every nodes. It then undergoes a deterministic certification test which uses the given primary keys. It actually checks all transactions between the current transaction and the last successful one to determine whether the primary keys involved conflicts between each others.
-
-If the check fails, the whole transaction is rollbacked, and if it succeeds it is applied on all nodes then committed.
-
-\begin{figure}[H]
-  \vspace{-10pt}
-  \centering
-  \centerline{\includegraphics[width=0.85\textwidth]{no_push/certification_based_replication.png}}
-  \vspace{-5pt}
-  \caption{Certification Based Replication from \url{http://galeracluster.com} }
-  \vspace{-5pt}
-  \label{fig:certificationcommit}
-\end{figure}
-
-
-This is pretty efficient since it only needs a broadcast to make the replication, which means. But this means that when it fails, the entire transaction must be retried and so it may lead to more conflicts and even deadlocks.
-
-It also have advantages like granting there will be no data loss when nodes crash, providing a high availability across the cluster.
-
-Galera Cluster uses a virtual synchrony that unifies the data delivery, providing a formalism for its semantics. Since this does not guarantee temporal synchrony, it also implements a flow control to keep nodes synchronized.
-
-The multi-master replication allows only read-repeatable isolation at best for transactions, but more will be said on the subject in section \ref{sec:isolation}, \pageref{sec:isolation}.
-
-
-\subsection{CockroachDB}
-CockroachDB is a NewSQL database that uses the Raft protocol (an alternative version to Lamport's Paxos consensus protocol).
-It uses the SQL API to enable SQL requests on every nodes. These requests are translated to key-value operations and -if needed- distributed across the cluster.
-
-CockroachDB implements a single, monolithic sorted map for the keys and values stored, as seen in \ref{fig:cockroachdb}. This map is divided in ranges, which are continuous chunks of this map, with every key being in a single range, so the ranges will not overlap. Each ranges are then replicated (three replicas per range) and finally distributed across the cluster nodes.\cite{CRDB:automatedoperations}
-
-\begin{figure}[H]
-  \vspace{-10pt}
-  \centering
-  \centerline{\includegraphics[width=1\textwidth]{no_push/cockroachdb.png}}
-  \vspace{-5pt}
-  \caption{CockroachDB ranges, replicas and leaseholders}
-  \vspace{-5pt}
-  \label{fig:cockroachdb}
-\end{figure}
-
-One of the replicas acts as the leaseholder, a sort of leader that coordinates all reads and writes for the range. A read only requires the leaseholder.
-When a write is requested, the leaseholder prepares to append it to its log, forward the request to the replicas and when the quorum is achieved, commit the change by add it in the log. The quorum is an agreement from two out of the three replicas to make the change.
-
-\begin{figure}[H]
-  \vspace{-10pt}
-  \centering
-  \centerline{\includegraphics[width=0.85\textwidth]{no_push/commit-cockroach.png}}
-  \vspace{-5pt}
-  \caption{CockroachDB commit: only a quorum of 2 is required to commit }
-  \vspace{-5pt}
-  \label{fig:cockroachdb-commit}
-\end{figure}
-
-To implement an SQL API, Cockroach uses an encoding tool to go from SQL data to a key-value store\cite{CRDB:mapKV}. As an example, a bit of code:
-\begin{verbatim}
-CREATE TABLE test (
-      key       INT PRIMARY KEY,
-      floatVal  FLOAT,
-      stringVal STRING
-)
-
-INSERT INTO test VALUES (10, 4.5, "hello”)
-\end{verbatim}
-
-This row would be stored as:
-
-\begin{center}
-\begin{tabular}{|l|l|}
-\hline
-Key & Value\\
-\hline
-/test/10/floatVal & 4.5\\
-/test/10/stringVal & "hello"\\
-\hline
-\end{tabular}
-\end{center}
-
-Here, \verb~/test/~ is a placeholder for the table ID and the \verb~/*Val~ are placeholders for the column ID used in CockroachDB. Each non-primary key column are stored under a separate key that is prefixed by the primary key (following the table ID) and suffixed by the column ID.
-
-\subsubsection{Raft}
-
-Raft was implemented to be a more understandable and easier to learn version of Paxos\cite{DBLP:conf/usenix/OngaroO14}. Though it is safe, available and efficient for common operations, when a choice had to be made, it was always favoring understandability.
-
-
-It uses a consensus algorithm in the context of Replicated State Machines. In this context, state machines on a set of nodes compute copies of the same state and continue their work even if some nodes are down. In the context of CockroachDB, the state machines are the ranges and so there is one consensus group per range. This means each nodes participates in thousands of consensus group. So they introduced a new layer they called Multiraft to handle this: it manages the communication by treating a node with all its ranges as a group. That is, each pair of nodes only needs to exchange heartbeat messages once per tick to know if the ranges on these nodes are available\cite{CRDB:multiraft}.
-
-Raft safety properties under non-Byzantines conditions (such as network delays, partitions, packet loss, etc.) have been formally specified and proven. It also guarantees availability if a majority $(\frac{n}{2} + 1)$ of servers are operational and communicate with each other and consistency in the logs independently of the timing (delays and faulty clocks only cause availability problems). Finally, the time to complete a command is only as long as it is necessary to receive responses from the majority of the cluster.
-
-To dive deeper into the algorithm, a few things must be explained more. At any given time, a server can be either: a \emph{leader}, a \emph{follower} or a \emph{candidate}. Only one \emph{leader} can be elected at any time. He sends periodic heartbeat to followers as soon as he is elected to prevent further election. The leader main roll is to accept log entries from the clients and replicate them to other servers. The \emph{followers} are "passive", they respond to requests from leaders and candidates. Finally, \emph{candidates} are used to elect a new leader.
-
-Time is divided into \emph{terms} of arbitrary length. These terms are numbered with consecutive integers, increasing monotonically and all servers (ranges for CockroachDB) stores the current term. Each term begins with an election with one or more candidate try to become leader. If an election ends with a split vote, the term ends and a new one begins. This serves as a logical clock across the cluster: if two servers communicate and don't have the same term value, they take the largest one as the current. If a candidate or leader discovers this way that his term has ended, he becomes a follower. If the server receives a request with an older term, it rejects the request.
-
-The election runs as follows: if a leader fails or is disconnected, servers know it because they don't receive the heartbeat before the election timeout, as explained before, so a new leader is elected. When a follower comes to the election timeout, it increments its current term, becomes a candidate, votes for itself and sends a RequestVote RPC to every server in the cluster. A candidate wins the election if it receives votes from a majority of servers for the same term and the followers vote for one candidate on a first-come first-served basis. If a candidate gets a signal from a leader and the term received is at least as large as the candidate current term, the candidate returns to the follower status. There is a mechanism to prevent different rounds of election due to too many followers becoming candidates at the same time: the election timeouts are chosen randomly by the servers from a fixed interval. A follower denies a candidature its log is more up-to-date than the candidate's.
-
-\begin{figure}[H]
-  \vspace{-10pt}
-  \centering
-  \centerline{\includegraphics[width=0.7\textwidth]{no_push/raft_logs.png}}
-  \vspace{-5pt}
-  \caption{Raft logs\cite{DBLP:conf/usenix/OngaroO14}}
-  \vspace{-5pt}
-  \label{fig:raft-log}
-\end{figure}
-
-
-An entry of a log stores a command (request), a term number and an integer identifying its position in the log when the entry was received by the leader. When receiving a new entry, the leader appends the request to its log as a new entry. It then sends the order to append the entries to the other servers to replicate it (using an AppendEntries RPC). The leader then "chooses" when an entry is committed, i.e. when an entry has replicated to a majority of servers. This operation also commits all previous entries in the leader's log, including entries from former leader. The leader maintains a nextIndex for each follower so he knows which entry it will send. RPCs are idempotent; a request that includes previously recorded log is ignored.
-
-
-CockroachDB leaseholder is pretty similar to Raft's leader, but it bypasses the algorithm for reads. Indeed, if the writes have been committed, they already have achieved consensus and so this operation does not require another consensus and the leaseholder handles the read by itself. It is also worth adding that CockroachDB \emph{attempts} to elect a leasholder who is also a Raft group leader to optimize the speed of writes, but this means it is not mandatory\cite{CRDB:replication-layer}.
 
 
 \label{sec:isolation}
@@ -312,3 +186,129 @@ We can have this execution, since the writes are not concurrent:
     & 10. $C_2$ & \\
   \end{tabular}
 \end{table}
+
+\section{MariaDB Galera Cluster}
+
+MariaDB, an open-source fork of MySQL, uses Galera Cluster as a synchronous multi-master cluster. It means that all nodes in the cluster are masters, with an active-active synchronous replication, so it is possible to read or write on every node at any time.
+
+\begin{figure}[H]
+  \vspace{-10pt}
+  \centering
+  \centerline{\includegraphics[width=1\textwidth]{no_push/galera-2.pdf}}
+  \vspace{-5pt}
+  \caption{MariaDB Galera Cluster}
+  \vspace{-5pt}
+  \label{fig:MGC}
+\end{figure}
+
+To say it in a more understandable way, MariaDB Galera Cluster allows to have the exact same database on every nodes thanks to a synchronous replication.
+
+To dive more into details, each time a transaction is requested by a client on a node, it is processed as usual until the client issues a commit. The process is stopped and all changes made to the database in the transaction are collected in a ``write-set'', along with the primary keys of the changed rows. The write-set is then broadcasted to every nodes. It then undergoes a deterministic certification test which uses the given primary keys. It actually checks all transactions between the current transaction and the last successful one to determine whether the primary keys involved conflicts between each others.
+
+If the check fails, the whole transaction is rollbacked, and if it succeeds it is applied on all nodes then committed.
+
+\begin{figure}[H]
+  \vspace{-10pt}
+  \centering
+  \centerline{\includegraphics[width=0.85\textwidth]{no_push/certification_based_replication.png}}
+  \vspace{-5pt}
+  \caption{Certification Based Replication from \url{http://galeracluster.com} }
+  \vspace{-5pt}
+  \label{fig:certificationcommit}
+\end{figure}
+
+
+This is pretty efficient since it only needs a broadcast to make the replication, which means. But this means that when it fails, the entire transaction must be retried and so it may lead to more conflicts and even deadlocks.
+
+It also have advantages like granting there will be no data loss when nodes crash, providing a high availability across the cluster.
+
+Galera Cluster uses a virtual synchrony that unifies the data delivery, providing a formalism for its semantics. Since this does not guarantee temporal synchrony, it also implements a flow control to keep nodes synchronized.
+
+The multi-master replication allows only read-repeatable isolation at best for transactions, but more will be said on the subject in section \ref{sec:isolation}, \pageref{sec:isolation}.
+
+
+\section{CockroachDB}
+CockroachDB is a NewSQL database that uses the Raft protocol (an alternative version to Lamport's Paxos consensus protocol).
+It uses the SQL API to enable SQL requests on every nodes. These requests are translated to key-value operations and -if needed- distributed across the cluster.
+
+CockroachDB implements a single, monolithic sorted map for the keys and values stored, as seen in \ref{fig:cockroachdb}. This map is divided in ranges, which are continuous chunks of this map, with every key being in a single range, so the ranges will not overlap. Each ranges are then replicated (three replicas per range) and finally distributed across the cluster nodes.\cite{CRDB:automatedoperations}
+
+\begin{figure}[H]
+  \vspace{-10pt}
+  \centering
+  \centerline{\includegraphics[width=1\textwidth]{no_push/cockroachdb.png}}
+  \vspace{-5pt}
+  \caption{CockroachDB ranges, replicas and leaseholders}
+  \vspace{-5pt}
+  \label{fig:cockroachdb}
+\end{figure}
+
+One of the replicas acts as the leaseholder, a sort of leader that coordinates all reads and writes for the range. A read only requires the leaseholder.
+When a write is requested, the leaseholder prepares to append it to its log, forward the request to the replicas and when the quorum is achieved, commit the change by add it in the log. The quorum is an agreement from two out of the three replicas to make the change.
+
+\begin{figure}[H]
+  \vspace{-10pt}
+  \centering
+  \centerline{\includegraphics[width=0.85\textwidth]{no_push/commit-cockroach.png}}
+  \vspace{-5pt}
+  \caption{CockroachDB commit: only a quorum of 2 is required to commit }
+  \vspace{-5pt}
+  \label{fig:cockroachdb-commit}
+\end{figure}
+
+To implement an SQL API, Cockroach uses an encoding tool to go from SQL data to a key-value store\cite{CRDB:mapKV}. As an example, a bit of code:
+\begin{verbatim}
+CREATE TABLE test (
+      key       INT PRIMARY KEY,
+      floatVal  FLOAT,
+      stringVal STRING
+)
+
+INSERT INTO test VALUES (10, 4.5, "hello”)
+\end{verbatim}
+
+This row would be stored as:
+
+\begin{center}
+\begin{tabular}{|l|l|}
+\hline
+Key & Value\\
+\hline
+/test/10/floatVal & 4.5\\
+/test/10/stringVal & "hello"\\
+\hline
+\end{tabular}
+\end{center}
+
+Here, \verb~/test/~ is a placeholder for the table ID and the \verb~/*Val~ are placeholders for the column ID used in CockroachDB. Each non-primary key column are stored under a separate key that is prefixed by the primary key (following the table ID) and suffixed by the column ID.
+
+\subsection{Raft}
+
+Raft was implemented to be a more understandable and easier to learn version of Paxos\cite{DBLP:conf/usenix/OngaroO14}. Though it is safe, available and efficient for common operations, when a choice had to be made, it was always favoring understandability.
+
+
+It uses a consensus algorithm in the context of Replicated State Machines. In this context, state machines on a set of nodes compute copies of the same state and continue their work even if some nodes are down. In the context of CockroachDB, the state machines are the ranges and so there is one consensus group per range. This means each nodes participates in thousands of consensus group. So they introduced a new layer they called Multiraft to handle this: it manages the communication by treating a node with all its ranges as a group. That is, each pair of nodes only needs to exchange heartbeat messages once per tick to know if the ranges on these nodes are available\cite{CRDB:multiraft}.
+
+Raft safety properties under non-Byzantines conditions (such as network delays, partitions, packet loss, etc.) have been formally specified and proven. It also guarantees availability if a majority $(\frac{n}{2} + 1)$ of servers are operational and communicate with each other and consistency in the logs independently of the timing (delays and faulty clocks only cause availability problems). Finally, the time to complete a command is only as long as it is necessary to receive responses from the majority of the cluster.
+
+To dive deeper into the algorithm, a few things must be explained more. At any given time, a server can be either: a \emph{leader}, a \emph{follower} or a \emph{candidate}. Only one \emph{leader} can be elected at any time. He sends periodic heartbeat to followers as soon as he is elected to prevent further election. The leader main roll is to accept log entries from the clients and replicate them to other servers. The \emph{followers} are "passive", they respond to requests from leaders and candidates. Finally, \emph{candidates} are used to elect a new leader.
+
+Time is divided into \emph{terms} of arbitrary length. These terms are numbered with consecutive integers, increasing monotonically and all servers (ranges for CockroachDB) stores the current term. Each term begins with an election with one or more candidate try to become leader. If an election ends with a split vote, the term ends and a new one begins. This serves as a logical clock across the cluster: if two servers communicate and don't have the same term value, they take the largest one as the current. If a candidate or leader discovers this way that his term has ended, he becomes a follower. If the server receives a request with an older term, it rejects the request.
+
+The election runs as follows: if a leader fails or is disconnected, servers know it because they don't receive the heartbeat before the election timeout, as explained before, so a new leader is elected. When a follower comes to the election timeout, it increments its current term, becomes a candidate, votes for itself and sends a RequestVote RPC to every server in the cluster. A candidate wins the election if it receives votes from a majority of servers for the same term and the followers vote for one candidate on a first-come first-served basis. If a candidate gets a signal from a leader and the term received is at least as large as the candidate current term, the candidate returns to the follower status. There is a mechanism to prevent different rounds of election due to too many followers becoming candidates at the same time: the election timeouts are chosen randomly by the servers from a fixed interval. A follower denies a candidature its log is more up-to-date than the candidate's.
+
+\begin{figure}[H]
+  \vspace{-10pt}
+  \centering
+  \centerline{\includegraphics[width=0.7\textwidth]{no_push/raft_logs.png}}
+  \vspace{-5pt}
+  \caption{Raft logs\cite{DBLP:conf/usenix/OngaroO14}}
+  \vspace{-5pt}
+  \label{fig:raft-log}
+\end{figure}
+
+
+An entry of a log stores a command (request), a term number and an integer identifying its position in the log when the entry was received by the leader. When receiving a new entry, the leader appends the request to its log as a new entry. It then sends the order to append the entries to the other servers to replicate it (using an AppendEntries RPC). The leader then "chooses" when an entry is committed, i.e. when an entry has replicated to a majority of servers. This operation also commits all previous entries in the leader's log, including entries from former leader. The leader maintains a nextIndex for each follower so he knows which entry it will send. RPCs are idempotent; a request that includes previously recorded log is ignored.
+
+
+CockroachDB leaseholder is pretty similar to Raft's leader, but it bypasses the algorithm for reads. Indeed, if the writes have been committed, they already have achieved consensus and so this operation does not require another consensus and the leaseholder handles the read by itself. It is also worth adding that CockroachDB \emph{attempts} to elect a leasholder who is also a Raft group leader to optimize the speed of writes, but this means it is not mandatory\cite{CRDB:replication-layer}.

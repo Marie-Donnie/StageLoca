@@ -1,0 +1,180 @@
+In order to make a database reliable, four properties have been described to guarantee the transaction paradigm. The concept of a transaction, which is defined by all the actions in between any variation of /BEGIN/ and /COMMIT/, requires that all of its actions are executed indivisibly. That is to say, every actions in the transaction are either properly reflected in the database or nothing has been done\cite{DBLP:journals/csur/HarderR83}. To have this indivisibility, a transaction must then enforce these ACID properties (for Atomicity, Consistency, Isolation and Durability).
+
+To illustrate these properties, we will consider a bank, using the following table:
+
+#+NAME: tab:accountS
+|----+---------|
+| id | balance |
+|----+---------|
+|  1 |      20 |
+|  2 |      30 |
+|  3 |      50 |
+|----+---------|
+
+There are three accounts, each one with an id and a balance. For the examples, we will use the following semantic: T_n is the n^th transaction presented, R_n(id,balance) means transaction /n/ reads the /balance/ of the account /id/, W_n(id,balance) is a write from transaction /n/ on the account /id/ with the corresponding /balance/. Finally, there is a C_n commit for the transaction. The transaction execute every action in the reading order (so R_1 W_1 executes R_1 then W_1).
+
+Consider for the examples the following transaction:
+Suppose the owner of account1 wants to give 10 euros to the owner of account2. This is done the following way: T_1: R_1(1,20) W_1(1,20-10) R_1(2,30) W_1(2,30+10) C_1. The transaction can be presented as a state diagram, as in [[fig:transaction]]. The circles are states, the blue one is the state before the transaction begins, the orange the one after the transaction is after the transaction commits. Any states in between are intermediate and will not be considered if a failure happens. In the event of an operation failing, everything in the purple area must be rollbacked, which means the system must return in its previous (blue) state. Every dashed arrow is an action from the transaction and the red ones are the rollbacks in case of failure. We can see that a read does not change the database, as expected.
+
+#+CAPTION: T_1 transaction
+#+NAME: fig:transaction
+[[no_push/transaction.png]]
+
+
+
+- Atomicity :: A transaction is /all or nothing/, which means if any part of the transaction fails, the entire transaction fails and the database is left unchanged. In the example before, if we do not have atomicity, a power failure could happen right before the write on account 2. And then the owner of account 1 would have lost 10 euros and nobody would have gain this amount. To avoid such a problem, the whole transaction must be rollbacked
+- Consistency :: A transaction must bring the database from one /valid/ state to another when it commits. This means that a failing transaction cannot result in the violation of constraints (e.g. foreign key constraint), cascades (e.g. cascade update, cascade delete) and triggers. Looking back at our bank and transaction example, we can say that the system is consistent if the total of the balance of the accounts is constant. In our previous example (from atomicity), 10 euros were lost from the system.
+- Isolation :: Every action within a transaction must be hidden from the other transactions running concurrently. This means that executing transactions concurrently give the same system state as if they were executed sequentially. To understand this, we will consider a new transaction T_2 that gives 10 euros from account 1 to account 3. In the previous notation, we have T_2: R_2(1,20) W_2(1,20-10) R_2(3,50) W_2(3,50+10) C_2. If T_1 and T_2 are executed concurrently without respecting isolation, we could have : R_1(1,20) R_2(1,20) W_1(1,20-10) R_1(2,30) W_1(2,30+10) C_1 W_2(1,20-10) R_2(3,60) W_2(3,60+10) C_2. This execution would overwrite W_1(1,20-10), creating 10 euros in the system.
+- Durability :: Once a transaction has been committed, the system must ensures that it will remains so, even in the event of power losses, crashes, or any errors. If we consider T_1 again, or any transaction, if the transaction is committed and the client learns it had been so, we can imagine that the changes were still queue in the disk buffer waiting to be written when a power failure occurs. The changes are then lost though the client does not know it.
+
+
+** Snapshot vs. Serializable Isolation Level
+Isolation says that "executing transactions concurrently results in a
+system state equivalent than executing transactions sequentially". The
+simple way to do that is by locking the table the transaction applies
+on, in order to prevent concurrent read and write (see
+§[[#sec:acid-mecha]]). But, that mechanism is pessimistic and creates
+contention[fn:contention] that affects execution time, especially
+during long read transactions and update transactions. So, different
+[[https://en.wikipedia.org/wiki/Isolation_%2528database_systems%2529#Isolation_levels][levels
+of isolation]] have been proposed to relax lock, increase
+concurrency possibilities, and limit the contention. They offer a
+trade-off between correctness and performance. Enabling better
+performance comes at a price: the developer must study its
+transactional interactions carefully or risk introducing subtle bugs.
+
+The SQL standard defines four levels of isolation: ~SERIALIZABLE~,
+~REPEATABLE READ~, ~READ COMMITED~ and ~READ UNCOMMITED~. The
+following focuses on ~SERIALIZABLE~ and its advantages against a
+weaker mode called ~SNAPSHOT~ (but stronger than the three other),
+which are the two modes offered by CockroachDB[fn:croach-isolation].
+
+The ~SERIALIZABLE~ level is the stronger one. ~SERIALIZABLE~
+transactions run as if only one transaction were running at a time. In
+the other levels, the database may return incorrect answers in the
+hope that it will be faster than producing the correct one. Such
+incorrect answers are know as dirty/non-repeatable/phantom reads
+phenomena[fn:phenomena].
+
+The ~SNAPSHOT~ level guarantees that all reads made in a transaction
+will see a consistent snapshot of the database ({{{ie}}} the last
+committed values that existed at the time current transaction
+started). The transaction will successfully commit only if no updates
+it has made conflict with any concurrent updates made since the
+snapshot. Thus, ~SNAPSHOT~ isolation offers better performance than
+serializability. It never blocks read-only transactions, readers do
+not block updates, and only a write/write conflict will cause the
+transaction to abort. Such level really limit contention and, yet
+still avoids dirty/non-repeatable/phantom reads anomalies. But another
+anomaly, called /write skew/[fn:write-skew], may appear with
+~SNAPSHOT~ isolation.
+
+#+BEGIN_note
+A write skew appears when two concurrent updates apply on the same
+range of values and commit without conflicting, but produce a non sens
+result.
+
+In git, you can see it as two people that edit the same function in a
+source code. The first edits a line in the beginning of the function.
+The other edits a line in the end of the function. Then, performing a
+~git-merge~ will succeed with no conflict because the two change
+different lines. However, the merge result certainly produced a
+non-sens function.
+
+*Why write skew sucks*. Reconsider the previous banking system and add
+a new account held by Alice (id α' -- see
+[[#tab:account2]][fn:write-skew-table]). The banking system lets one of
+the two accounts go overdraft if the sum of both is higher or equal to
+0 (~CHECK (balance α) + (balance α') >= 0~). Then, (1) assume that
+account α and α' start at 50. /In a first snaphsot/ (2_{1}) Txn_{1} pick 100
+on α which is OK because the amount of α+α' is 0. /In a second
+snapshot/ (2_{2}) Txn_{2} pick 100 on α' which is OK because the amount of
+α+α' is 0. (3) Txn_{1} and Txn_{2} commit without conflict because Txn_{1} only
+updates α and Txn_{2} only updates α'. But, the merge of both
+transactions leaves the banking system with missing money (i.e., -50
+on both α').
+
+In case of ~SERIALIZABLE~ transaction, Txn_{1} and Txn_{2} will be executed
+sequentially. Making the second transaction violating the ~CHECK~
+constraint.
+#+END_note
+
+[fn:contention] Resource contention is a conflict over access to a
+shared resources.
+[[https://en.wikipedia.org/wiki/Amdahl's_law][Amdahl's law]] shows
+that contention is the limiting
+factor of parallelisation and makes the speedup asymptotically
+approach a speedup limit. In other word, contention will always limit
+(until reach a maximum) your speedup whatever the number of
+transactions you run in parallel.
+[fn:phenomena] TODO
+[fn:write-skew]
+https://blogs.msdn.microsoft.com/craigfr/2007/05/16/serializable-vs-snapshot-isolation-level/
+[fn:croach-isolation]
+https://www.cockroachlabs.com/docs/stable/transactions.html#isolation-levels
+[fn:write-skew-table] The (new) ~account~ Relation for a Banking
+System. Now Alice holds two accounts (α and α'). The banking system
+lets one of the two accounts go overdraft if the sum of both is higher
+or equal to 0 (~CHECK (balance α) + (balance α') >= 0~).
+#+NAME: tab:account2
+| id | name   | ... | balance |
+|----+--------+-----+---------|
+| α  | Alice  | ... |    50.0 |
+| α' | Alice  | ... |    50.0 |
+| β  | Bob    | ... |    70.0 |
+| γ  | Claire | ... |    20.0 |
+
+*** Stale reads                                                    :noexport:
+In computer processing, if a processor changes the value of an operand
+and then, at a subsequent time, fetches the operand and obtains the
+old rather than the new value of the operand, then it is said to have
+seen stale data -- http://whatis.techtarget.com/definition/stale-data
+
+** Mechanisms to ensure ACID properties
+:PROPERTIES:
+:CUSTOM_ID: sec:acid-mecha
+:END:
+Traditional Relation Databases relies on the following mechanisms to
+ensure ACID properties.
+
+- Lock             :: Locking transaction execution to prevent other
+     transactions to modify data until the first transaction succeeds
+     or fails. Naive implementations make all readers wait until the
+     writer is done (read-write lock). That mechanism is pessimistic
+     and creates contention[fn:contention] that affects execution
+     time, especially during long read transactions and update
+     transactions. So,
+[[https://en.wikipedia.org/wiki/Isolation_%2528database_systems%2529#Isolation_levels][different
+levels of isolation]] has been proposed
+     to relax lock, increase concurrency possibilities, and limit the
+     contention.
+
+- Multi-Version Concurrency Control[fn:mvcc]
+([[https://en.wikipedia.org/wiki/Multiversion_concurrency_control][MVCC]])
+:: Intuitively,
+     every tuples of the database are versioned. A new transaction
+     applies on a copy of the most recent changes and a ~COMMIT~ tells
+     to do a merge with the production database. Hence, readings can
+     occur concurrently with a writings/updatings/deletings which
+     limit contention. Has a drawback, tuple may be out of date at the
+     time you read it, but it's never wrong in a way that will break
+     consistency, because your transaction only proceed a read.
+
+     With MVCC, contention still exists when concurrent transactions
+     try to modify the same tuple (e.g., two concurrent updates).
+     Intuitively, it results in a merge conflict. Concretely,
+     concurrent /editing/ transactions are still implemented with a
+     lock.
+
+     MVCC implements
+[[https://en.wikipedia.org/wiki/Isolation_%2528database_systems%2529#Serializable][snapshot
+isolation]].
+
+- Two-phase Commit (2PC) -- Atomicity only :: 2PC is an instantiation
+     of a consensus protocol (e.g., raft[[cite:OO14]]) to ensure atomicity
+     of a transaction. The consensus protocol ensures that all pears
+     fully execute the transaction.
+
+[fn:mvcc] In programming languages, MVCC implements
+[[https://en.wikipedia.org/wiki/Transactional_memory][transactional
+memory]].

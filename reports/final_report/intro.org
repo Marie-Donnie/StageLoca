@@ -1,9 +1,14 @@
+My internship has been about considering the client locality in a NewSQL database. This kind of database scales while keeping the properties required to enforce proper transactions. Its entries are distributed across a cluster of nodes. What we want is to prioritize the access to one node rather the entirety of the cluster of nodes. This report will explain how we evaluated performances of different topologies and databases to pave the way towards the locality we want.
 
+"We" designates the Discovery initiative. This is a Inria Project Lab (IPL) that involves the Stack, Avalon, Corse, Myriads and Resist teams, along with Orange and some ponctual help from Renater or RedHat. The initiative aims at implementing a fully decentralized IaaS manager, by using a revised OpenStack to make it cooperative.
 
 univ nantes - ls2n
+
+
+
 inria
-discovery initiative
-Discovery est un Inria Project Lab (IPL) associant les équipes Avalon, Corse, Myriads, Resist et Stack, ainsi qu’Orange et des collaborations ponctuelles avec des acteurs comme Renater ou encore RedHat.
+
+
 
 
 imt

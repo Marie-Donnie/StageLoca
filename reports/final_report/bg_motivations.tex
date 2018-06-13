@@ -2,7 +2,18 @@
 
 More and more applications use the geographic distribution of the users for a better service, such as videos streams, the internet of things related applications, or the autonomous driving applications. This kind of applications are deployed on edge infrastructures. Edge computing is a way to get the applications, data and services away from the centralized core to the other end of a network, closest to the users and directly in contact to ``the physical world''. It is as if there was a small brain close to the sensitive part of a neuron, rather than one centralized far away, which creates delay in response.
 
-To study edge computing, the Discovery initiative analyzes and modify the infrastructure manager OpenStack. OpenStack is a set of open-source services to control and manage everything needed to operate a datacenter. The services ranges from managing computing resources (e.g. virtual machines with Nova, containers with Magnum or physical machines with Ironic) to storage resources (e.g. disk volumes with Cinder, object stores with Swift), through network resources (e.g. Neutron), monitoring services (e.g. Ceilometer), benchmarking (e.g. Rally), etc.
+To study edge computing, the Discovery initiative analyzes and modifies the infrastructure manager OpenStack. OpenStack is a set of open-source services to control and manage everything needed to operate a datacenter. The services ranges from managing computing resources (e.g. virtual machines with Nova, containers with Magnum or physical machines with Ironic) to storage resources (e.g. disk volumes with Cinder, object stores with Swift), through network resources (e.g. Neutron), monitoring services (e.g. Ceilometer), benchmarking (e.g. Rally), etc.
 
 OpenStack is one of the major solution to manage private and public cloud computing infrastructures and one that can very well be considered to handle the edge computing. Though it had been developped with the idea of being able to scale, some services, like the relational database it relies on, do not satisfy this idea. This makes OpenStack unable, for now, to manage hundreds of small, massively distributed, datacenters. Moreover, to deploy and manage edge datacenters, OpenStack have to handle high delays. And then again, other services like the message broker become unusable under this high delays. The Discovery initiative decided to adapt OpenStack to operate simultaneously these hundreds of small edge datacenters, to avoid reinventing the wheel.
+
+
+
 \section{Problem}
+
+Every OpenStack service uses a relational database to save its state. This database is a bottleneck to achieve the goal of a massively distributed OpenStack. They are difficult to distribute, especially in a high latency context.
+
+The Discovery initiative works on replacing the relational database by a NewSQL one, using CockroachDB, which has been inspired by Google's Spanner\cite{CRDB:HLC}. In particular, it paved the way towards a use of CockroachDB with OpenStack Keystone.
+
+Keystone is the identity service of OpenStack. It manages the authentication of users and map them to the services they can access, using a catalog of all services deployed in the current configuration. Keystone is interesting because it does not use subqueries when making request to the database, so it is easier to ``plug'' to an other database. Moreover, when wanting to distribute OpenStack in different regions, one can either use Galera, that replicates data over the cluster, or use a distributed database such as CockroachDB in order to have all her users and services available across all regions.
+
+Nevertheless, we have to think about how to distribute properly the data across all nodes of the clustered database. In the context of a massively distributed edge computing, we must push the idea to keep the data the closest to the users possible to avoid latency in the requests.

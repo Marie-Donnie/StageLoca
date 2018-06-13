@@ -218,13 +218,13 @@ If the check fails, the whole transaction is rollbacked, and if it succeeds it i
 \end{figure}
 
 
-This is pretty efficient since it only needs a broadcast to make the replication, which means. But this means that when it fails, the entire transaction must be retried and so it may lead to more conflicts and even deadlocks.
+This is pretty efficient since it only needs a broadcast to make the replication, which means the commit does not have to wait for the responses of the other nodes. But this means that when it fails, the entire transaction must be retried and so it may lead to more conflicts and even deadlocks.
 
 It also have advantages like granting there will be no data loss when nodes crash, providing a high availability across the cluster.
 
 Galera Cluster uses a virtual synchrony that unifies the data delivery, providing a formalism for its semantics. Since this does not guarantee temporal synchrony, it also implements a flow control to keep nodes synchronized.
 
-The multi-master replication allows only read-repeatable isolation at best for transactions, but more will be said on the subject in section \ref{sec:isolation}, \pageref{sec:isolation}.
+The multi-master replication allows only read-repeatable isolation at best for transactions. Indeed, they previously talked about Snapshot isolation before Jepsen analyzed MariaDB Galera Cluster and realized they did not provide the correct announced isolation\cite{MGC:jepsen}.
 
 
 \section{CockroachDB}

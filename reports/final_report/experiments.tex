@@ -5,7 +5,9 @@ To evaluate if OpenStack is ready for the management of an edge infrastructure, 
 
 Juice uses EnosLib\footnote{\url{https://github.com/beyondtheclouds/enoslib}}, a library developed by the Discovery initiative to acquire resources from different infrastructures and then describe and run an experimentation workflow.
 
-Juice uses Ansible scripts to do the required tasks and YAML files to configure the tasks and the parameters of the experiments. Juice itself has different commands callable from a shell, such as deploy, which claim resources from Grid'5000 and configure them, emulate, that emulates a network with constraints using netem\footnote{\url{https://wiki.linuxfoundation.org/networking/netem}}, or rally, which uses the benchmarking tool of OpenStack to test different scenarios given in the parameters.
+Juice uses Ansible scripts to do the required tasks and YAML files to configure the tasks and the parameters of the experiments. Juice install the required dependencies (python librairies, docker, chrony to synchronize the nodes, \dots), the docker for the required DBMS, and, depending on the parameters, benchmarking tools (see subsection \ref{subsec:benchmarking}). The DBMS are store directly on the RAM.
+
+Juice itself has different commands callable from a shell, such as deploy, which claim resources from Grid'5000 and configure them, emulate, that emulates a network with constraints using netem\footnote{\url{https://wiki.linuxfoundation.org/networking/netem}}, or rally, which uses the benchmarking tool of OpenStack to test different scenarios given in the parameters.
 
 We then developed automated python experiments, calling Juice API to implement our test plan presented in section \ref{sec:testplan}, page \pageref{sec:testplan}.
 
@@ -13,18 +15,34 @@ We then developed automated python experiments, calling Juice API to implement o
 
 To fully deploy an OpenStack, different approaches coexist, such as Kolla, which provides containers and tools to operate OpenStack infrastructures for production, or DevStack, which is a series of scripts to bring up an Openstack environment. DevStack uses the repositories for OpenStack services and it is then really easy to change the link to whatever fork is needed. This is why we chose this approach because it would be easier to correct any services we want if need be, which would be longer in a container approach.
 
+The deployment of OpenStack relies on DevStack stable/pike and uses default parameters for Keystone (e.g., SQL backend, fernet token, \dots). As said previously, OpenStack, and therefore Devstack, do not natively support CockroachDB. DevStack is then tweaked to ensure Keystone connects to the right DBMS container. The Discovery initiative made a blog article about the support of CockroachDB in Keystone\footnote{\url{https://beyondtheclouds.github.io/blog/openstack/cockroachdb/2017/12/22/a-poc-of-openstack-keystone-over-cockroachdb.html}}.
 
-
-
+\label{subsec:benchmarking}
 \subsection{OpenStack benchmarking}
 
 
+
 \label{sec:testplan}
-\section{Test plan: Multiple OpenStack instances deployment with the databases}
+\section{Test plan}
+
+\subsection{The testbed: Grid'5000}
+Grid’5000\footnote{\url{https://www.grid5000.fr/mediawiki/index.php/Grid5000:Home}} is a large-scale and versatile testbed for experiment-driven research in all areas of computer science, with a focus on parallel and distributed computing including Cloud, HPC and Big Data. The platform gives an access to approximately 1000 machines grouped in 30 clusters geographically distributed in 8 sites. This study uses the ecotype cluster made of 48 nodes with each:
+
+\begin{description}
+    \item{CPU:} Intel Xeon E5-2630L v4 Broadwell 1.80GHz (2 CPUs/node, 10 cores/CPU)
+    \item{Memory:} 128 GB
+    \item{Network:}      \begin{itemize}
+        \item eth0/eno1, Ethernet, configured rate: 10 Gbps, model: Intel 82599ES 10-Gigabit SFI/SFP+ Network Connection, driver: ixgbe
+        \item eth1/eno2, Ethernet, configured rate: 10 Gbps, model: Intel 82599ES 10-Gigabit SFI/SFP+ Network Connection, driver: ixgbe
+      \end{itemize}
+\end{description}
 
 
-\subsection{MariaDB and Keystone: a single MariaDB}
-\subsection{Galera in multi-master replication mode and Keystone: over replicated Galera}
-\subsection{CockroachDB and Keystone: over distributed CockroachDB}
+\subsection{Multiple OpenStack instances deployment with the databases}
+
+
+\subsubsection{MariaDB and Keystone: a single MariaDB}
+\subsubsection{Galera in multi-master replication mode and Keystone: over replicated Galera}
+\subsubsection{CockroachDB and Keystone: over distributed CockroachDB}
 
 \subsection{Parameters}

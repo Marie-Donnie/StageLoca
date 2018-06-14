@@ -64,16 +64,15 @@ There are different anomalies that can occur in Snapshot Isolation that can't ha
 \subsubsection{Write skews}
 
 
-Difference between Serializable and Snapshot Isolations from \href{https://www.cockroachlabs.com/blog/what-write-skew-looks-like/}{Cockroach Labs}:
+Difference between Serializable and Snapshot Isolations from Cockroach Labs\cite{CRDB:write-skew}:
 
-\cite{CRDB:write-skew}
 
 Consider the following transactions:
 \begin{table}[H]
   \centering
   \begin{tabular}{ c }
-    $P:   y \gets x$\\
-    $Q:   x \gets y$\\
+    P:   $R_P(x, x)$ $W_P(y, x)$ $C_P$ \\
+    Q:   $R_Q(y, y)$ $W_Q(x, y)$ $C_Q$ \\
   \end{tabular}
 \end{table}
 
@@ -83,9 +82,9 @@ There are two possible serial executions: $P$ then $Q$ OR $Q$ then $P$
   \centering
   \begin{tabular}{ r | l }
     $P$ then $Q$ & $Q$ then $P$ \\
-        \hline
-    (P) $y \gets x$ & $x \gets y$ (Q) \\
-    (Q) $x \gets y$ & $y \gets x$ (P) \\
+    \hline
+    (P) $W_P(y, x)$ & $W_Q(x, y)$ (Q) \\
+    (Q) $W_Q(x, y)$ & $W_P(y, x)$ (P) \\
     $x = y$ & $x = y$ \\
   \end{tabular}
 \end{table}
@@ -95,13 +94,15 @@ Which, more developped, can be read as:
   \begin{tabular}{ r | l }
     $P$ then $Q$ & $Q$ then $P$ \\
         \hline
-    $R_P(x_0)$ &  $R_Q(y_0)$ \\
+    $R_P(x, x_0)$ &  $R_Q(y, y_0)$ \\
     $W_P(y_1, x_0)$ & $W_Q(x_1, y_0)$ \\
-    $R_Q(y_1)$ &  $R_P(x_1)$ \\
+    $R_Q(y, y_1)$ &  $R_P(x, x_1)$ \\
     $W_Q(x_1, y_1)$ & $W_P(y_1, x_1)$ \\
     $x = y$ & $x = y$ \\
   \end{tabular}
 \end{table}
+
+The commits are voluntarily omitted here because they do not change the execution.
 
 Snapshot isolation allows another execution:
 
@@ -109,7 +110,7 @@ Snapshot isolation allows another execution:
   \centering
   \begin{tabular}{ r  l }
     $P$ & $Q$ \\
-    1. $R_P(x_0)$ & 2. $R_Q(y_0)$ \\
+    1. $R_P(x, x_0)$ & 2. $R_Q(y, y_0)$ \\
     3. $W_P(y_1, x_0)$ & 4. $W_Q(x_1, y_0)$ \\
   \end{tabular}
   \\
@@ -135,8 +136,8 @@ The application using this table has a rule where at least one counter must be n
 \begin{table}[H]
   \centering
   \begin{tabular}{ c }
-    $P:   0 \gets 0$\\
-    $Q:   1 \gets 0$\\
+    P:   $R_P(0, 1)$ $W_P(0, 0)$ $C_P$ \\
+    Q:   $R_P(1, 1)$ $W_P(1, 0)$ $C_Q$ \\
   \end{tabular}
 \end{table}
 
@@ -162,9 +163,9 @@ Once again, consider a set of transactions:
 \begin{table}[H]
   \centering
   \begin{tabular}{ l }
-    $T_1:   S \gets S + 20 $\\
-    $T_2:   C \gets C -10 ; if (C+S) <= 0, C \gets C -1 $\\
-    $T_3:   C ; S$\\
+    $T{_1}$:   $R_{T_1}(S, S)$ $W_{T_1}(S, S+20)$ $C_{T_1}$ \\
+    $T{_2}$:   $R_{T_2}(C, C)$ $R_{T_2}(S, S)$ if (C-10+S) $\leq$ 0 then $W_{T_2}(C, C-11)$ else $W_{T_2}(C, C-10)$ $C_{T_2}$ \\
+    $T{_3}$:   $R_{T_3}(C, C)$ $R_{T_3}(S, S)$ $C_{T_3}$ \\
   \end{tabular}
 \end{table}
 
@@ -174,16 +175,16 @@ We can have this execution, since the writes are not concurrent:
   \centering
   \begin{tabular}{ r | c | l }
     $T_1$ & $T_2$ & $T_3$ \\
-    & 1. $R_2(C_0,0)$ & \\
-    & 2. $R_2(S_0,0)$ & \\
-    3. $R_1(S_0,0)$ & & \\
-    4. $W_1(S_1,20)$ & & \\
-    5. $C_1$ & & \\
-    & & 6. $R_3(C_0,0)$ \\
-    & & 7. $R_3(S_1,20)$ \\
-    & & 8. $C_3$\\
-    & 9. $W_2(C_1,-11)$ & \\
-    & 10. $C_2$ & \\
+    & 1. $R_{T_2}(C,0)$ & \\
+    & 2. $R_{T_2}(S,0)$ & \\
+    3. $R_{T_1}(S,0)$ & & \\
+    4. $W_{T_1}(S,20)$ & & \\
+    5. $C_{T_1}$ & & \\
+    & & 6. $R_{T_3}(C,0)$ \\
+    & & 7. $R_{T_3}(S,20)$ \\
+    & & 8. $C_{T_3}$ \\
+    & 9. $W_{T_2}(C,-11)$ & \\
+    & 10. $C_{T_2}$ & \\
   \end{tabular}
 \end{table}
 
@@ -210,9 +211,9 @@ If the check fails, the whole transaction is rollbacked, and if it succeeds it i
 \begin{figure}[H]
   \vspace{-10pt}
   \centering
-  \centerline{\includegraphics[width=0.85\textwidth]{no_push/certification_based_replication.png}}
+  \centerline{\includegraphics[width=0.85\textwidth]{no_push/commit-galera.png}}
   \vspace{-5pt}
-  \caption{Certification Based Replication from \url{http://galeracluster.com} }
+  \caption{Certification Based Replication (figure adapted from \url{http://galeracluster.com}) }
   \vspace{-5pt}
   \label{fig:certificationcommit}
 \end{figure}
@@ -300,9 +301,9 @@ The election runs as follows: if a leader fails or is disconnected, servers know
 \begin{figure}[H]
   \vspace{-10pt}
   \centering
-  \centerline{\includegraphics[width=0.7\textwidth]{no_push/raft_logs.png}}
+  \centerline{\includegraphics[width=0.6\textwidth]{no_push/raft_logs.png}}
   \vspace{-5pt}
-  \caption{Raft logs\cite{DBLP:conf/usenix/OngaroO14}}
+  \caption{Raft logs (figure reproduced from \cite{DBLP:conf/usenix/OngaroO14})}
   \vspace{-5pt}
   \label{fig:raft-log}
 \end{figure}

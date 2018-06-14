@@ -21,6 +21,8 @@
 \lstset{extendedchars=false, texcl}
 % Eye candy
 
+%% For temporary redefining the geometry of titlepage.
+\usepackage{geometry}
 
 \lstdefinestyle{python}{
   language=python,
@@ -71,7 +73,7 @@
  %% --
 
 %% Larger page
-\usepackage[left=4cm,right=4cm,top=5cm,bottom=4cm]{geometry}
+%%\usepackage[left=4cm,right=4cm,top=5cm,bottom=4cm]{geometry}
 
 %% Adjust toc depth
 \setcounter{tocdepth}{4}
@@ -106,36 +108,41 @@
 \begin{document}
 %
 %% \maketitle
+\newgeometry{bottom=2.5cm}
+
 \begin{titlepage}
-	\centering
-	{\scshape\LARGE\bfseries A middleware for a NewSQL database that reflects the client application locality \par}
-	\vspace{0cm}
-	{\Large\itshape Marie Delavergne\par}
-        {\Large - Report for Master 2 ALMA -\par}
+  \centering
+      {\scshape\LARGE\bfseries Considering the client locality in the context of Edge Computing \par}
+      \vspace{1cm}
+             {\Large - Internship Report for Master 2 ALMA -\par}
+             {\Large January--June 2018 \par}
+             \vspace{1.5cm}
+               	    {\Large\itshape Marie Delavergne\par}
 
-	\vfill
+	            \vfill
 
-        % Bottom of the page
+                    % Bottom of the page
 
-        {\large Under the supervision of Ronan-Alexandre Cherrueau and Achour Mostefaoui \par}
-        {\large Inria - Discovery Initiative / LS2N - Stack team\par}
-	{\large University of Nantes - 2017-2018 \par}
+                    {\large Supervisors: Ronan-Alexandre Cherrueau (Inria)\\
+                      \hspace{3.45cm}Achour Mostefaoui (University of Nantes)\par}
+                          \vspace{2cm}
+                    {\large Inria - Discovery Initiative / LS2N - Stack team\par}
+	            {\large University of Nantes\par}
+                          \vspace{0.5cm}
+                    \begin{figure}[!h]\centering
+                      \begin {minipage}{0.3\textwidth}                        \centerline{\includegraphics[width=\linewidth]{no_push/inr_logo_eng_rouge.png}}
+                        \label{Fig:inria}
+                      \end{minipage}
+                      \begin{minipage}{0.3\textwidth}                   \centerline{\includegraphics[width=\linewidth]{no_push/logo_un2012quadri_larg40.png}}
+                        \label{Fig:univnantes}
+                      \end{minipage}
 
-\begin{figure}[!h]\centering
-   \begin{minipage}{0.3\textwidth}
-     \centerline{\includegraphics[width=\linewidth]{no_push/logo_un2012quadri_larg40.png}}
-     \label{Fig:univnantes}
-   \end{minipage}
-   \begin {minipage}{0.3\textwidth}
-     \centerline{\includegraphics[width=\linewidth]{no_push/inr_logo_eng_rouge.png}}
-     \label{Fig:inria}
-   \end{minipage}
-\end{figure}
 
+                    \end{figure}
 
 
 \end{titlepage}
-
+\restoregeometry
 
 \clearpage
 \tableofcontents

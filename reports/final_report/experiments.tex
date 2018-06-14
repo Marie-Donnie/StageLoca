@@ -1,1 +1,30 @@
-what we've done
+\section{Turn on the Juice}
+
+
+To evaluate if OpenStack is ready for the management of an edge infrastructure, we have built Juice\footnote{\url{https://github.com/beyondtheclouds/juice}}. Juice tests and evaluates the performance of Relational Database Management Systems (RDBMS) in the context of a distributed OpenStack with high latency network.
+
+Juice uses EnosLib\footnote{\url{https://github.com/beyondtheclouds/enoslib}}, a library developed by the Discovery initiative to acquire resources from different infrastructures and then describe and run an experimentation workflow.
+
+Juice uses Ansible scripts to do the required tasks and YAML files to configure the tasks and the parameters of the experiments. Juice itself has different commands callable from a shell, such as deploy, which claim resources from Grid'5000 and configure them, emulate, that emulates a network with constraints using netem\footnote{\url{https://wiki.linuxfoundation.org/networking/netem}}, or rally, which uses the benchmarking tool of OpenStack to test different scenarios given in the parameters.
+
+We then developed automated python experiments, calling Juice API to implement our test plan presented in section \ref{sec:testplan}, page \pageref{sec:testplan}.
+
+\subsection{OpenStack deployment}
+
+To fully deploy an OpenStack, different approaches coexist, such as Kolla, which provides containers and tools to operate OpenStack infrastructures for production, or DevStack, which is a series of scripts to bring up an Openstack environment. DevStack uses the repositories for OpenStack services and it is then really easy to change the link to whatever fork is needed. This is why we chose this approach because it would be easier to correct any services we want if need be, which would be longer in a container approach.
+
+
+
+
+\subsection{OpenStack benchmarking}
+
+
+\label{sec:testplan}
+\section{Test plan: Multiple OpenStack instances deployment with the databases}
+
+
+\subsection{MariaDB and Keystone: a single MariaDB}
+\subsection{Galera in multi-master replication mode and Keystone: over replicated Galera}
+\subsection{CockroachDB and Keystone: over distributed CockroachDB}
+
+\subsection{Parameters}

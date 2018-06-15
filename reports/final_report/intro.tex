@@ -1,3 +1,35 @@
+Consider a bank. In the past, every transaction was recorded on paper, everything was computed manually and people working in the bank probably made mistakes. Nowadays, everything is digital and the bank software can not be fallible. The software must also store all the information about its clients, accounts, transactions, \dots.
+
+In the digital word, this information is stored in databases, which are exactly organized collections of data. The databases can store all sorts of data, like words, numbers, or even texts. To store these data, they traditionally use different tables for different information, linked and identified by an unique identifier (ID). As we can see on tables \ref{tab:clientname} and \ref{tab:accountbalance}, the ID is the account's number and it is used to point a client name to her account balance. A single row refers to the same ID. In this example, Scrooge McDuck, with the account number 1, has a balance of \$300,000,000,000,000. Donald Duck, on the other hand, only has \$5 on his account numbered 2.
+\begin{table}[H]
+  \begin{minipage}[b]{0.45\linewidth}\centering
+\begin{tabular}{|c|c|c|}
+\hline
+ID & First Name & Last Name \\
+\hline
+1 & Scrooge & McDuck \\
+2 & Donald & Duck \\
+\hline
+\end{tabular}
+\caption{Client name table}
+\label{tab:clientname}
+  \end{minipage}
+\begin{minipage}[b]{0.45\linewidth}\centering
+
+\begin{tabular}{|c|c|}
+\hline
+ID & Balance \\
+\hline
+1 & 300,000,000,000,000 \\
+2 & 5 \\
+\hline
+\end{tabular}
+\caption{Account balance table}
+\label{tab:accountbalance}
+\end{minipage}
+\end{table}
+
+
 My internship has been about considering the client locality in a NewSQL database. This kind of database scales while keeping the properties required to enforce proper transactions. Its entries are distributed across a cluster of nodes. What we want is to prioritize the access to one node rather the entirety of the cluster of nodes. This report will explain how we evaluated performances of different topologies and databases to pave the way towards the locality we want.
 
 "We" designates the Discovery initiative\cite{discovery}. This is a Inria Project Lab (IPL) that involves the Stack, Avalon, Corse, Myriads and Resist teams, along with Orange and some ponctual help from Renater or RedHat. The initiative aims at implementing a fully decentralized IaaS manager, by using a revised OpenStack to make it cooperative. It studies the possiblity of infrastructures for the massively distributed cloud computing in small edge datacenters. Those infrastructures aim at avoiding the problems of datacenter scaling and limiting the latency by bringing the compute nodes closer to the users.

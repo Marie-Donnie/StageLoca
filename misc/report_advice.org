@@ -1,0 +1,57 @@
+(For thesis introduction)
+
+Keep it short, *7 to 10 pages*
+
+- Context of the study ::
+ + Provide a brief history of the issues to date.
+ + Situate your particular topic withing the broad area of research.
+ + Note that the field is changing, and more research is required on
+   your topic.
+- Statement of the Problem ::
+ + Or, motivation for the study!
+ + Identify a key point of concern (for example, increasing use or
+   prominence, lack of research to date, response to an agenda, a new
+   discovery, or perhaps one not yet applied to this context).
+ + Refer to the literature only to the extent needed to demponstrate
+   why your project is worth doing. Reserve your full review of
+   existing theory or practice for later chapter.
+ + Be sure that the motivation, or problem, suggests a need for
+   further investigation.
+- Aim and Scope ::
+ + Be sure that your *aim* responds logically to the problem
+   statement.
+ + Stick rigorously to a single aim. Do not include elements in it
+   that describe how you intend to achieve this aim; reserve these
+   for a later chapter.
+ + Present clearly the limit. What your thesis doesn't do.
+ + When you have written the conclusion to your whole study, check
+   that they respond to this aim. If they don't, change the aim or
+   rethink your conclusion.
+ + If you change the aim, revise the motivation for studying it.
+ + Be sure to establish the scope of your study by identifying
+   limitations of factors such as time, location, resources, or the
+   extablished of particular fields or theories.
+- Significance of the Study ::
+ + Explain how your thesis contributes to the field.
+ + There are four main areas of contribution: theory development,
+   tangible solution, innovative methods, and policy extension. One
+   of these contributions must ve identified as the basis of your
+   primary contribution to the field.
+ + In contrast to reports for industry, theory development is an
+   expected and required contribution; for PhDs in particular, it
+   must be "original".
+- Overview of the Study ::
+ + Or, Structure of the Thesis!
+ + Sketch out how the thesis is structured. Don't confine yourself to
+   a list of the chapter, but show how they are linked and that one
+   section logiclally leads to another.
+ + Check wheter the reader can see from this sketch how the aim will
+   be achieved.
+
+Revising your introduction, aligning your conclusion:
+- To avoid making promises to the examinar that you can't keep or that
+ you do not later address, regularly review your introduction chapter
+ and revise it accordingly.
+- Consider starting your conclusioooon chapter on the same day that
+ you begin your introduction, and, each time you work on one, work on
+ the other, thus keeping them in aligment.

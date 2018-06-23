@@ -9,6 +9,8 @@ Juice uses Ansible scripts to do the required tasks and YAML files to configure 
 
 Juice itself has different commands callable from a shell, such as deploy, which claim resources from Grid'5000 and configure them, emulate, that emulates a network with constraints using netem\footnote{\url{https://wiki.linuxfoundation.org/networking/netem}}, or rally, which uses the benchmarking tool of OpenStack to test different scenarios given in the parameters.
 
+We use two different network interface to transfer metrics data to a special node that collect all of it and another to link the nodes hosting an OpenStack instance. This is to make sure the collection of data will not be impaired by the delay we apply during the experiments.
+
 We then developed automated python experiments, calling Juice API to implement our test plan presented in section \ref{sec:testplan}, page \pageref{sec:testplan}.
 
 \subsection{OpenStack deployment}
@@ -17,32 +19,152 @@ To fully deploy an OpenStack, different approaches coexist, such as Kolla, which
 
 The deployment of OpenStack relies on DevStack stable/pike and uses default parameters for Keystone (e.g., SQL backend, fernet token, \dots). As said previously, OpenStack, and therefore Devstack, do not natively support CockroachDB. DevStack is then tweaked to ensure Keystone connects to the right DBMS container. The Discovery initiative made a blog article about the support of CockroachDB in Keystone\footnote{\url{https://beyondtheclouds.github.io/blog/openstack/cockroachdb/2017/12/22/a-poc-of-openstack-keystone-over-cockroachdb.html}}.
 
-\label{subsec:benchmarking}
+Juice default configuration for DevStack\footnote{\url{https://github.com/beyondtheclouds/juice/blob/master/ansible/roles/openstack/templates/local.conf.j2}} disables all services except Keystone and its database, but one could test any other service she wants, provided she knows how to use DevStack configuration, though.
+
+
 \subsection{OpenStack benchmarking}
+\label{subsec:benchmarking}
+
+We used mainly OpenStack Rally\footnote{\url{https://github.com/openstack/rally}} to benchmark the performance of Keystone. It generates a load to evaluate how Keystone control plane behaves when scaling.
+One Rally executes is load on one instance of OpenStack. This means we can either launch one Rally on the entire cluster or one Rally per instance, which creates a huge burst. Indeed, there are two variables to configure the execution of a Rally scenario: the number of times a task is executed during the scenario and the concurrency, defining the number of parallel task executions. Thus, a scenario with a times of 100 runs one hundred iterations of the scenario by a constant load on the OpenStack instance. A concurrency of 10 specifies that the one hundred iterations are achieved by ten users in a concurrent manner.
+
+This means that when we are executing a burst on 45 OpenStack instances (and so 45 Rallys) with a concurrency of 10 and a times of 100 charges 450 constant transactions on the RDBMS up until the 4,500 iteration are done.
+
+In addition to Rally, Juice can also use sysbench\footnote{\url{https://github.com/akopytov/sysbench}} to benchmark the database more precisely.
+TODO
 
 
+\subsection{Globabl backup}
 
-\label{sec:testplan}
+The execution of a Rally scenario produces a json file. The json file contains a list of entries: one for each iteration of the scenario. An entry then retains the time it takes to complete all Keystone operations involved in the Rally scenario.
+
+Juice \verb+backup+ produces an archive with the corresponding json files to the scenarios ran for each Rally instances as well as general metrics collected over the experiments such as the CPU/RAM consumption, network communications (all stored in a influxdb archive).
+
+If one needs to also get a backup of the studied database, she only needs to add the ansible rule in the backup file of the corresponding database (\url{https://github.com/BeyondTheClouds/juice/blob/master/ansible/roles/database/RDBMS-NAME/tasks/backup.yml}).
+
+
 \section{Test plan}
-
+\label{sec:testplan}
 \subsection{The testbed: Grid'5000}
 Grid’5000\footnote{\url{https://www.grid5000.fr/mediawiki/index.php/Grid5000:Home}} is a large-scale and versatile testbed for experiment-driven research in all areas of computer science, with a focus on parallel and distributed computing including Cloud, HPC and Big Data. The platform gives an access to approximately 1000 machines grouped in 30 clusters geographically distributed in 8 sites. This study uses the ecotype cluster made of 48 nodes with each:
 
 \begin{description}
-    \item{CPU:} Intel Xeon E5-2630L v4 Broadwell 1.80GHz (2 CPUs/node, 10 cores/CPU)
-    \item{Memory:} 128 GB
-    \item{Network:}      \begin{itemize}
+    \item[CPU:] Intel Xeon E5-2630L v4 Broadwell 1.80GHz (2 CPUs/node, 10 cores/CPU)
+    \item[Memory:] 128 GB
+    \item[Network:]      \begin{itemize}
         \item eth0/eno1, Ethernet, configured rate: 10 Gbps, model: Intel 82599ES 10-Gigabit SFI/SFP+ Network Connection, driver: ixgbe
         \item eth1/eno2, Ethernet, configured rate: 10 Gbps, model: Intel 82599ES 10-Gigabit SFI/SFP+ Network Connection, driver: ixgbe
       \end{itemize}
 \end{description}
+
+\subsection{Rally scenarios}
+
+Here is the complete list of rally scenarios considered in this study. Values inside the parentheses refer to the percentage of reads versus the percent of writes on the RDBMS. More information about each scenario is available in the appendix (see, Detailed Rally scenarios, page \pageref{sec:detail-rally}).
+
+\begin{description}
+    \item[keystone/authenticate-user-and-validate-token (96.46, 3.54):] Authenticate and validate a keystone token.
+    \item[keystone/create-add-and-list-user-roles (96.22, 3.78):] Create user role, add it and list user roles for given user.
+    \item[keystone/create-and-list-tenants (92.12, 7.88):] Create a keystone tenant with random name and list all tenants.
+    \item[keystone/get-entities (91.9, 8.1):] Get instance of a tenant, user, role and service by id’s. An ephemeral tenant, user, and role are each created. By default, fetches the ’keystone’ service.
+    \item[keystone/create-user-update-password (89.79, 10.21):] Create user and update password for that user.
+    \item[keystone/create-user-set-enabled-and-delete (91.07, 8.93):] Create a keystone user, enable or disable it, and delete it.
+    \item[keystone/create-and-list-users (92.05, 7.95):] Create a keystone user with random name and list all users.
+\end{description}
+
 
 
 \subsection{Multiple OpenStack instances deployment with the databases}
 
 
 \subsubsection{MariaDB and Keystone: a single MariaDB}
-\subsubsection{Galera in multi-master replication mode and Keystone: over replicated Galera}
-\subsubsection{CockroachDB and Keystone: over distributed CockroachDB}
 
-\subsection{Parameters}
+
+
+
+Figure \ref{fig:key-dep-centralized} depicts the deployment for MariaDB. MariaDB is a centralized RDBMS and thus, the Keystone backend is centralized in the first OpenStack instance.
+
+\begin{wrapfigure}{r}{0.5\textwidth}
+  \vspace{-20pt}
+  \begin{center}
+    \includegraphics[width=0.5\textwidth]{no_push/keystone-centralized.png}
+  \end{center}
+  \vspace{-20pt}
+  \caption{Keystone deployment with a centralized MariaDB.}
+  \vspace{-15pt}
+  \label{fig:key-dep-centralized}
+\end{wrapfigure}
+
+ Other Keystones from the other OpenStack nodes refers to the backend of the first instance. The red logo is an OpenStack instance, the turtle is the Keystone logo.
+
+This kind of deployment is easy to set up since you only need to have the IP address of the node storing MariaDB to add any other node, so the nodes configurations are all the same. MariaDB also has the advantage of having a lot of work done on the performance under different types of workloads.
+
+But this kind of deployment comes with -at least- two possible limitations. First, a centralized RDBMS is a single point of failure that makes all OpenStack instances unusable if it crashes. Second, a network disconnection of, for example, one of the ``bottom'' OpenStack instance with the one that stores MariaDB makes the separated node unusable.
+
+
+
+\subsubsection{Galera in multi-master replication mode and Keystone: over replicated Galera}
+The figure \ref{fig:key-dep-galera} depicts the deployment for Galera. Galera synchronizes multiple MariaDB databases in an active/active (multi-master) fashion, as previously explained in section \ref{sec:galera-cluster}.
+
+\begin{wrapfigure}{l}{0.5\textwidth}
+  \vspace{-20pt}
+  \begin{center}
+    \includegraphics[width=0.5\textwidth]{no_push/keystone-galera.png}
+  \end{center}
+  \vspace{-20pt}
+  \caption{Keystone deployment with synchronized MariaDB instances thanks to Galera.}
+  \vspace{-12pt}
+  \label{fig:key-dep-galera}
+\end{wrapfigure}
+
+ Thus Keystone’s backend of every OpenStack instance is replicated between all nodes, which allows reads and writes on any instances. The figure semantic is the same as in figure \ref{fig:key-dep-centralized}, but with the added synchronization between the replicated MariaDB thanks to Galera (blue ring).
+
+We use a multi-master topology, which means reads and writes can be done on any nodes. For the State Snapshot Transfer, we use rsync because it is faster and we do not need to reboot the nodes. We also use the \verb+wsrep_sync_wait+ at the maximum level to ensure causality checks on \verb+READ+, \verb+UPDATE+, \verb+DELETE+, \verb+INSERT+, \verb+REPLACE+ and \verb+SHOW+ operations. This means there is a check to see if the node is fully synchronized before these operations are executed.
+
+Regarding possible limitations, few rumors\footnote{\url{http://www.fromdual.com/limitations-of-galera-cluster}} stick to Galera. First, synchronization may suffer from high latency networks. Second, contention during writes on the database may limit its scalability.
+
+
+
+
+\subsubsection{CockroachDB and Keystone: over distributed CockroachDB}
+Figure \ref{fig:key-dep-crdb} depicts the deployment for CockroachDB. In this deployment, each OpenStack instance has its own Keystone.
+
+\begin{wrapfigure}{r}{0.5\textwidth}
+  \vspace{-20pt}
+  \begin{center}
+    \includegraphics[width=0.5\textwidth]{no_push/keystone-cockroachdb.png}
+  \end{center}
+  \vspace{-20pt}
+  \caption{Keystone deployment with CockroachDB.}
+  \vspace{-12pt}
+  \label{fig:key-dep-crdb}
+\end{wrapfigure}
+
+The backend is distributed through key-value stores on every OpenStack instance. Meaning, the data a Keystone is sought for is not necessarily in its local key-value store.
+
+CockroachDB is relatively new and we know a few about its limitations, but first, CockroachDB may suffer from high network latency even during reads if the data is located on another node. Second, as Galera, transaction contention may dramatically slow down the overall execution. However, CockroachDB offers locality option (replicas zone) to drive the selection of key-value stores during writes and replication. Thanks to this option it is be possible to mitigate the impact of latency by ensuring that writes happen close the OpenStack operator. Indeed, we can choose to refer to three of the instances as the same region (with \verb+--locality=region=REGION-NAME,datacenter=NODE-NAME+) and then specify that the Keystone table should be only on this region. For example, to specify one replica per region:
+\begin{verbatim}
+constraints: {
+"+region=REGION-NAME-1": 1,
+"+region=REGION-NAME-2": 1,
+"+region=REGION-NAME-3": 1
+}
+\end{verbatim}
+
+\subsection{Parameters variations}
+\label{subsec:param}
+\subsubsection{Number of OpenStack instances}
+
+The OpenStack size defines the number of OpenStack instances deployed for an experiment. It varies between 3, 9 and 45. A value of 3, means Juice deploys OpenStack on three different nodes, 9 on nine different nodes, \dots The value of 45 comes from the maximum number of nodes available on the ecotype Grid’5000 cluster, but Juice is not limited itself.
+
+
+Experiments that test the impact of the number of OpenStack instances consider a LAN link between each OpenStack instances.
+
+\subsubsection{Delay}
+
+The delay defines the network latency between two OpenStack instances. It is expressed in terms of the time for a signal sent from one node to reach another, (i.e., a value of 50 stands for 100 ms of Round-Trip Time, 150 is 300 ms of RTT). The 0 value stands for LAN speed which is approximately 0.08 ms of RTT on the ecotype Grid’5000 cluster (10 Gbps card).
+
+Juice applies theses network latencies with tc netem. Note that, as previously said, juice applies tc rules on network interfaces that are dedicated to the RDBMS communications. Thus, metrics collection and other network traffics are not limited.
+
+Experiments that test the impact of the network latency are done with 9 OpenStack instances. They make the delay varies by applying traffic shaping homogeneously between the 9 OpenStack instances.
+
+\subsection{How we make the analysis}

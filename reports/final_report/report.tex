@@ -97,6 +97,9 @@
 %% Image in title
 \usepackage{graphicx}
 
+%% Images wrapped in text
+\usepackage{wrapfig}
+
 %% Subfigures
 \usepackage{subcaption}
 
@@ -154,41 +157,52 @@
 
 \section*{Résumé}
 
-\addcontentsline{toc}{section}{Introduction}
+\addcontentsline{toc}{section}{\textbf{Introduction}}
 \chapter*{Introduction}
 
 \input{intro}
 
 
-\chapter{Background and motivation}
+\chapter{Openstack at the Edge}
 
 
 \input{bg_motivations}
 
 
-\chapter{State of the art}
+\chapter{Relational database management systems considered}
 
 \input{state_of_the_art}
 
 
-\chapter{Experiments}
+\chapter{How to compare these management systems}
 
 \input{experiments}
 
 
-\chapter{Results}
+\chapter{How do they actually compare}
 
 \input{results}
 
-\addcontentsline{toc}{section}{Conclusion}
+\addcontentsline{toc}{section}{\textbf{Conclusion}}
 \chapter*{Conclusion}
+
+\input{conclusion}
+
+\clearpage
+\addcontentsline{toc}{section}{\textbf{Appendix}}
+\chapter*{Appendix}
+\label{sec:appendix}
+
+\input{appendix}
 
 \clearpage
 \phantomsection
-\addcontentsline{toc}{section}{Bibliography}
+\addcontentsline{toc}{section}{\textbf{Bibliography}}
 
 \printbibliography[title={Book references},type=book]
 \printbibliography[title={Article references},type=article]
 \printbibliography[title={Other references}, nottype=article, nottype=book]
+
+
 
 \end{document}

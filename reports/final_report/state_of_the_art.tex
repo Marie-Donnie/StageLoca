@@ -4,7 +4,7 @@ Two databases were considered: one distributed, CockroachDB, and the other repli
 \section{Databases and ACID properties}
 
 \subsection{ACID properties}
-In order to make a database reliable, four properties have been described to guarantee the transaction paradigm. The concept of a transaction, which is defined by all the actions in between any variation of \emph{BEGIN} and \emph{COMMIT}, requires that all of its actions are executed indivisibly. That is to say, every actions in the transaction are either properly reflected in the database or nothing has been done\cite{DBLP:journals/csur/HarderR83}. To have this indivisibility, a transaction must then enforce these ACID properties (for Atomicity, Consistency, Isolation and Durability).
+The concept of a transaction is defined by all the actions in between any variation of \emph{BEGIN} and \emph{COMMIT} and requires that all of its actions are executed indivisibly. That is to say, every actions in the transaction are either properly reflected in the database or nothing has been done\cite{DBLP:journals/csur/HarderR83}. In order to make a database reliable, four properties, designated by the ACID acronym, have been described to guarantee the transaction paradigm. To have this indivisibility, a transaction must then enforce these ACID properties (for Atomicity, Consistency, Isolation and Durability).
 
 To illustrate these properties, we will consider a bank, using the following table:
 
@@ -40,31 +40,39 @@ The transaction can be presented as a state diagram, as in figure \ref{fig:trans
 \end{figure}
 
 \begin{description}
-\item[{Atomicity}] A transaction is \emph{all or nothing}, which means if any part of the transaction fails, the entire transaction fails and the database is left unchanged. In the example before, if we do not have atomicity, a power failure could happen right before the write on account 2. And then the owner of account 1 would have lost 10 euros and nobody would have gain this amount. To avoid such a problem, the whole transaction must be rollbacked.
+\item[{Atomicity}] A transaction is \emph{all or nothing}, which means if any part of the transaction fails, the entire transaction fails and the database is left unchanged. In the example before, if we do not have atomicity, a power failure could happen right before the write on account 2. And then the owner of account 1 would have lost 10 euros and nobody would have gain this amount.
 \item[{Consistency}] A transaction must bring the database from one \emph{valid} state to another when it commits. This means that a failing transaction cannot result in the violation of constraints (e.g. foreign key constraint), cascades (e.g. cascade update, cascade delete) and triggers. Looking back at our bank and transaction example, we can say that the system is consistent if the total of the balance of the accounts is constant. In our previous example (from atomicity), 10 euros were lost from the system.
 \item[{Isolation}] Every action within a transaction must be hidden from the other transactions running concurrently. This means that executing transactions concurrently give the same system state as if they were executed sequentially. To understand this, we will consider a new transaction T$_{\text{2}}$ that gives 10 euros from account 1 to account 3. In the previous notation, we have:
 
-  T$_{\text{2}}$: R$_{\text{2}}$(1,20) W$_{\text{2}}$(1,20-10) R$_{\text{2}}$(3,50) W$_{\text{2}}$(3,50+10) C$_{\text{2}}$
+  T$_{\text{2}}$: \textcolor{red}{R$_{\text{2}}$(1,20)} W$_{\text{2}}$(1,20-10) \textcolor{red}{R$_{\text{2}}$(3,50)} W$_{\text{2}}$(3,50+10) C$_{\text{2}}$
 
   If T$_{\text{1}}$ and T$_{\text{2}}$ are executed concurrently without respecting isolation, we could have :
 
-  R$_{\text{1}}$(1,20) R$_{\text{2}}$(1,20) W$_{\text{1}}$(1,20-10) R$_{\text{1}}$(2,30) W$_{\text{1}}$(2,30+10) C$_{\text{1}}$ W$_{\text{2}}$(1,20-10) R$_{\text{2}}$(3,60) W$_{\text{2}}$(3,60+10) C$_{\text{2}}$
+  \textcolor{red}{R$_{\text{1}}$(1,20) R$_{\text{2}}$(1,20)} W$_{\text{1}}$(1,20-10) R$_{\text{1}}$(2,30) W$_{\text{1}}$(2,30+10) C$_{\text{1}}$ W$_{\text{2}}$(1,20-10) R$_{\text{2}}$(3,60) W$_{\text{2}}$(3,60+10) C$_{\text{2}}$
 
-  This execution would overwrite W$_{\text{1}}$(1,20-10), creating 10 euros in the system.
+In this execution, there is a race condition on the reads of account 1: the reads both happen before any write has been done and so the last write coming is the only one that will really do anything since the first will be overwritten. This particular execution would overwrite W$_{\text{1}}$(1,20-10), creating 10 euros in the system.
 \item[{Durability}] Once a transaction has been committed, the system must ensures that it will remains so, even in the event of power losses, crashes, or any errors. If we consider T$_{\text{1}}$ again, or any transaction, if the transaction is committed and the client learns it had been so, we can imagine that the changes were still queue in the disk buffer waiting to be written when a power failure occurs. The changes are then lost though the client does not know it.
 \end{description}
 
 
-\label{sec:isolation}
-\subsection{Isolation and anomalies}
 
-There are different anomalies that can occur in Snapshot Isolation that can't happen in Serializable Isolation, and we will detail them in the following sections.
+\subsection{Isolation and anomalies}
+\label{sec:isolation}
+To ensure the soundness of the database, several levels of isolation exists, trying to balance between performance and correctness. The higher levels usually implement locks on data, which means a piece of data becomes unavailable to other concurrency. This leads to a loss of concurrency, and therefore a loss in performance, and a longer latency in requests. Each level of isolation forbid all actions that were previously forbidden in the lower levels.
+From the most relaxed to the highest isolation, we can separate:
+\begin{description}
+\item[Read uncommitted] This level of isolation allows dirty reads, which means that a transaction can see a uncommitted change.
+\item[Read committed] This level guarantees that anything read is already committed. It nevertheless allows non-repeatable reads, which means a transaction that reads twice the same row can have different readings.
+\item[Repeatable reads] In this level, no transaction can read different values for the same row; rows can added in between, though. This allows phantom reads, which means a sum, for an example, can return a different value if rows have been added even if no row has been updated.
+\item[Snapshot isolation] Snapshot isolation ensures that no search queries executed two times in the same transactions can't have different values. Though this means no phantom reads should happen, write skews and an even weirder read-only transaction anomaly can happen. This is detailed in sections \ref{sec:ws} and \ref{sec:ro-anomaly}.
+\item[Serializable] This is the highest isolation level. None of the above anomalies can happen in this level.
+\end{description}
 
 
 \subsubsection{Write skews}
+\label{sec:ws}
 
-
-Difference between Serializable and Snapshot Isolations from Cockroach Labs\cite{CRDB:write-skew}:
+The write skew, as well as the other transaction anomaly phenomena, have been detailed in \cite{DBLP:journals/corr/abs-cs-0701157} and it has been explained in a blog article from Cockroach Labs\cite{CRDB:write-skew}, to justify why the serializable level is important.
 
 
 Consider the following transactions:
@@ -143,8 +151,10 @@ The application using this table has a rule where at least one counter must be n
 
 When executed simultaneously (which is correct in term of concurrency, they are writing on different rows), these transactions will violate the application's requirement.
 
-\subsubsection{Read-Only transaction anomaly}
 
+
+\subsubsection{Read-Only transaction anomaly}
+\label{sec:ro-anomaly}
 
 The read-only transactions have been assumed to execute serializability before Fekete, O'Niel and O'Neil proved this is not always true\cite{DBLP:journals/sigmod/FeketeOO04}.
 To be perfectly honest, this example involves writes, of course. But not IN the transaction where the error appears. Suppose that we have a bank table.
@@ -189,7 +199,7 @@ We can have this execution, since the writes are not concurrent:
 \end{table}
 
 \section{MariaDB Galera Cluster}
-
+\label{sec:galera-cluster}
 MariaDB, an open-source fork of MySQL, uses Galera Cluster as a synchronous multi-master cluster. It means that all nodes in the cluster are masters, with an active-active synchronous replication, so it is possible to read or write on every node at any time.
 
 \begin{figure}[H]

@@ -156,3 +156,91 @@ Definition Code: \url{https://github.com/openstack/rally-openstack/blob/master/s
 Source Code: \url{https://github.com/openstack/rally-openstack/blob/master/rally\_openstack/scenarios/keystone/basic.py#L145-L163}
 
 Number of runs: 100
+
+\section{Results}
+\label{results}
+
+\subsection{Number of OpenStack instances impact under light load}
+\begin{figure}[H]
+  \vspace{-10pt}
+  \centering
+  \centerline{\includegraphics[width=1.4\textwidth, angle=90]{no_push/oss-impact-light.png}}
+  \vspace{-5pt}
+  \caption{Impact of the Number of OpenStack Instances on the Completion Time under Light Load – Median Time for Each Operations.}
+  \vspace{-5pt}
+  \label{fig:oss-impact-light}
+\end{figure}
+
+
+\begin{figure}[H]
+  \vspace{-10pt}
+  \centering
+  \centerline{\includegraphics[width=1.4\textwidth, angle=90]{no_push/oss-impact-light-cdf.png}}
+  \vspace{-5pt}
+  \caption{Impact of the Number of OpenStack Instances on the Completion Time under Light Load – Cummulative Distibution}
+  \vspace{-5pt}
+  \label{fig:oss-impact-light-cdf}
+\end{figure}
+
+\subsection{Delay impact under light load}
+\begin{figure}[H]
+  \vspace{-10pt}
+  \centering
+  \centerline{\includegraphics[width=1.4\textwidth, angle=90]{no_push/delay-impact-light.png}}
+  \vspace{-5pt}
+  \caption{Impact of the Delay on the Completion Time under Light Load – Median Time for Each Operations.}
+  \vspace{-5pt}
+  \label{fig:delay-impact-light}
+\end{figure}
+
+\begin{figure}[H]
+  \vspace{-10pt}
+  \centering
+  \centerline{\includegraphics[width=1.4\textwidth, angle=90]{no_push/delay-impact-light-cdf.png}}
+  \vspace{-5pt}
+  \caption{Impact of the Delay on the Completion Time under Light Load – Cummulative Distibution.}
+  \vspace{-5pt}
+  \label{fig:delay-impact-light-cdf}
+\end{figure}
+
+\subsection{Delay impact under heavy load}
+\begin{figure}[H]
+  \vspace{-10pt}
+  \centering
+  \centerline{\includegraphics[width=1.4\textwidth, angle=90]{no_push/delay-impact-high.png}}
+  \vspace{-5pt}
+  \caption{Impact of the Delay on the Completion Time under Heavy Load – Median Time for Each Operations.}
+  \vspace{-5pt}
+  \label{fig:delay-impact-high}
+\end{figure}
+
+\begin{figure}[H]
+  \vspace{-10pt}
+  \centering
+  \centerline{\includegraphics[width=1.4\textwidth, angle=90]{no_push/delay-impact-high-cdf.png}}
+  \vspace{-5pt}
+  \caption{Impact of the Delay on the Completion Time under Heavy Load – Cummulative Distibution.}
+  \vspace{-5pt}
+  \label{fig:delay-impact-high-cdf}
+\end{figure}
+
+\subsection{Locality impact under light load}
+\begin{figure}[H]
+  \vspace{-10pt}
+  \centering
+  \centerline{\includegraphics[width=1.4\textwidth, angle=90]{no_push/zones-impact-light.png}}
+  \vspace{-5pt}
+  \caption{Impact of the Locality on the Completion Time under Light Load – Median Time for Each Operations.}
+  \vspace{-5pt}
+  \label{fig:zones-impact-light}
+\end{figure}
+
+\begin{figure}[H]
+  \vspace{-10pt}
+  \centering
+  \centerline{\includegraphics[width=1.4\textwidth, angle=90]{no_push/zones-impact-light-cdf.png}}
+  \vspace{-5pt}
+  \caption{Impact of the Locality on the Completion Time under Light Load – Cummulative Distibution.}
+  \vspace{-5pt}
+  \label{fig:zones-impact-light-cdf}
+\end{figure}

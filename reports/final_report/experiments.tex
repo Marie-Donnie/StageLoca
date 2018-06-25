@@ -5,9 +5,37 @@ To evaluate if OpenStack is ready for the management of an edge infrastructure, 
 
 Juice uses EnosLib\footnote{\url{https://github.com/beyondtheclouds/enoslib}}, a library developed by the Discovery initiative to acquire resources from different infrastructures and then describe and run an experimentation workflow.
 
-Juice uses Ansible scripts to do the required tasks and YAML files to configure the tasks and the parameters of the experiments. Juice install the required dependencies (python librairies, docker, chrony to synchronize the nodes, \dots), the docker for the required DBMS, and, depending on the parameters, benchmarking tools (see subsection \ref{subsec:benchmarking}). The DBMS are store directly on the RAM.
+Juice uses Ansible scripts to do the required tasks,YAML files to configure the tasks and the parameters of the experiments and python files to wrap everything up. Juice install the required dependencies (python librairies, docker, chrony to synchronize the nodes, \dots), the docker for the required DBMS, and, depending on the parameters, benchmarking tools (see subsection \ref{subsec:benchmarking}). The DBMS are store directly on the RAM.
 
-Juice itself has different commands callable from a shell, such as deploy, which claim resources from Grid'5000 and configure them, emulate, that emulates a network with constraints using netem\footnote{\url{https://wiki.linuxfoundation.org/networking/netem}}, or rally, which uses the benchmarking tool of OpenStack to test different scenarios given in the parameters.
+Juice itself has different commands callable from a shell, such as deploy, which claim resources from Grid'5000 and configure them, emulate, that emulates a network with constraints using netem\footnote{\url{https://wiki.linuxfoundation.org/networking/netem}}, or rally, which uses the benchmarking tool of OpenStack to test different scenarios given in the parameters. Listing \ref{lst:juice-api} shows the global Juice API, along with everything that can be called using Juice, using docopt\footnote{\url{http://docopt.org/}}.
+
+\begin{lstlisting}[caption={Juice help command}\label{lst:juice-api}, captionpos=b]
+
+Tool to test the performances of MariaDB, Galera and CockroachdB with
+OpenStack on Grid'5000 using Enoslib
+
+Usage:
+juice [-h | --help] [-v | --version] <command> [<args>...]
+
+Options:
+    -h --help      Show this help
+    -v --version   Show version number
+
+Commands:
+    deploy         Claim resources from g5k and configure them
+    g5k            Claim resources on Grid'5000 (from a frontend)
+    info           Show information of the actual deployment
+    inventory      Generate the Ansible inventory file
+    prepare        Configure the resources
+    emulate        Emulate network using tc netem
+    stress         Launch sysbench tests (after a deployment)
+    openstack      Add OpenStack Keystone to the deployment
+    rally          Benchmark the Openstack
+    backup         Backup the environment
+    destroy        Destroy all the running dockers (not the
+
+Run 'juice COMMAND --help' for more information on a command
+\end{lstlisting}
 
 We use two different network interface to transfer metrics data to a special node that collect all of it and another to link the nodes hosting an OpenStack instance. This is to make sure the collection of data will not be impaired by the delay we apply during the experiments.
 
@@ -26,7 +54,7 @@ Juice default configuration for DevStack\footnote{\url{https://github.com/beyond
 \label{subsec:benchmarking}
 
 We used mainly OpenStack Rally\footnote{\url{https://github.com/openstack/rally}} to benchmark the performance of Keystone. It generates a load to evaluate how Keystone control plane behaves when scaling.
-One Rally executes is load on one instance of OpenStack. This means we can either launch one Rally on the entire cluster or one Rally per instance, which creates a huge burst. Indeed, there are two variables to configure the execution of a Rally scenario: the number of times a task is executed during the scenario and the concurrency, defining the number of parallel task executions. Thus, a scenario with a times of 100 runs one hundred iterations of the scenario by a constant load on the OpenStack instance. A concurrency of 10 specifies that the one hundred iterations are achieved by ten users in a concurrent manner.
+One Rally executes is load on one instance of OpenStack. This means we can either launch one Rally on the entire cluster (light load mode) or one Rally per instance (heavy load mode), which creates a huge burst. Indeed, there are two variables to configure the execution of a Rally scenario: the number of times a task is executed during the scenario and the concurrency, defining the number of parallel task executions. Thus, a scenario with a times of 100 runs one hundred iterations of the scenario by a constant load on the OpenStack instance. A concurrency of 10 specifies that the one hundred iterations are achieved by ten users in a concurrent manner.
 
 This means that when we are executing a burst on 45 OpenStack instances (and so 45 Rallys) with a concurrency of 10 and a times of 100 charges 450 constant transactions on the RDBMS up until the 4,500 iteration are done.
 
@@ -71,7 +99,21 @@ Here is the complete list of rally scenarios considered in this study. Values in
     \item[keystone/create-and-list-users (92.05, 7.95):] Create a keystone user with random name and list all users.
 \end{description}
 
+As previously said, Rally can be ran in a light load mode or heavy load mode for every scenarios. Figures \ref{fig:rally-light} and \ref{fig:rally-high} show the principle on light and heavy load on three nodes: the white ermine is the Rally mascot and the red logo is Openstack's.
 
+
+\begin{figure}[!h]\centering
+  \begin {minipage}{0.3\textwidth}                        \centerline{\includegraphics[width=\linewidth]{no_push/rally-light.png}}
+    \vspace{-20pt}
+    \caption{Rally light load mode}
+    \label{fig:rally-light}
+  \end{minipage}
+  \begin{minipage}{0.3\textwidth}                   \centerline{\includegraphics[width=\linewidth]{no_push/rally-high.png}}
+    \vspace{-10pt}
+    \caption{Rally heavy load mode}
+    \label{fig:rally-high}
+  \end{minipage}
+\end{figure}
 
 \subsection{Multiple OpenStack instances deployment with the databases}
 
@@ -79,12 +121,9 @@ Here is the complete list of rally scenarios considered in this study. Values in
 \subsubsection{MariaDB and Keystone: a single MariaDB}
 
 
-
-
 Figure \ref{fig:key-dep-centralized} depicts the deployment for MariaDB. MariaDB is a centralized RDBMS and thus, the Keystone backend is centralized in the first OpenStack instance.
 
-\begin{wrapfigure}{r}{0.5\textwidth}
-  \vspace{-20pt}
+\begin{figure}
   \begin{center}
     \includegraphics[width=0.5\textwidth]{no_push/keystone-centralized.png}
   \end{center}
@@ -92,7 +131,7 @@ Figure \ref{fig:key-dep-centralized} depicts the deployment for MariaDB. MariaDB
   \caption{Keystone deployment with a centralized MariaDB.}
   \vspace{-15pt}
   \label{fig:key-dep-centralized}
-\end{wrapfigure}
+\end{figure}
 
  Other Keystones from the other OpenStack nodes refers to the backend of the first instance. The red logo is an OpenStack instance, the turtle is the Keystone logo.
 
@@ -124,11 +163,10 @@ Regarding possible limitations, few rumors\footnote{\url{http://www.fromdual.com
 
 
 
-
 \subsubsection{CockroachDB and Keystone: over distributed CockroachDB}
 Figure \ref{fig:key-dep-crdb} depicts the deployment for CockroachDB. In this deployment, each OpenStack instance has its own Keystone.
 
-\begin{wrapfigure}{r}{0.5\textwidth}
+\begin{figure}
   \vspace{-20pt}
   \begin{center}
     \includegraphics[width=0.5\textwidth]{no_push/keystone-cockroachdb.png}
@@ -137,11 +175,18 @@ Figure \ref{fig:key-dep-crdb} depicts the deployment for CockroachDB. In this de
   \caption{Keystone deployment with CockroachDB.}
   \vspace{-12pt}
   \label{fig:key-dep-crdb}
-\end{wrapfigure}
+\end{figure}
 
 The backend is distributed through key-value stores on every OpenStack instance. Meaning, the data a Keystone is sought for is not necessarily in its local key-value store.
 
-CockroachDB is relatively new and we know a few about its limitations, but first, CockroachDB may suffer from high network latency even during reads if the data is located on another node. Second, as Galera, transaction contention may dramatically slow down the overall execution. However, CockroachDB offers locality option (replicas zone) to drive the selection of key-value stores during writes and replication. Thanks to this option it is be possible to mitigate the impact of latency by ensuring that writes happen close the OpenStack operator. Indeed, we can choose to refer to three of the instances as the same region (with \verb+--locality=region=REGION-NAME,datacenter=NODE-NAME+) and then specify that the Keystone table should be only on this region. For example, to specify one replica per region:
+CockroachDB is relatively new and we know a few about its limitations, but first, CockroachDB may suffer from high network latency even during reads if the data is located on another node. Second, as Galera, transaction contention may dramatically slow down the overall execution.
+
+However, CockroachDB offers locality option (replicas zone) to drive the selection of key-value stores during writes and replication. Thanks to this option, we managed to try a topology that considered locality.
+
+
+\subsubsection{CockroachDB and Keystone: over distributed CockroachDB, using replication zones}
+\label{subsubsec:replication-zones}
+ it is be possible to mitigate the impact of latency by ensuring that writes happen close the OpenStack operator. Indeed, we can choose to refer to three of the instances as the same region (with \verb+--locality=region=REGION-NAME,datacenter=NODE-NAME+) and then specify that the Keystone table should be only on this region. For example, to specify one replica per region:
 \begin{verbatim}
 constraints: {
 "+region=REGION-NAME-1": 1,
@@ -149,6 +194,24 @@ constraints: {
 "+region=REGION-NAME-3": 1
 }
 \end{verbatim}
+
+\begin{figure}
+  \begin{center}
+    \includegraphics[width=0.5\textwidth]{no_push/locality.png}
+  \end{center}
+  \vspace{-20pt}
+  \caption{Keystone deployment over CockroachDB using replication zones, three replicas on the first group.}
+  \vspace{-15pt}
+  \label{fig:locality}
+\end{figure}
+
+
+Figure \ref{fig:locality} represents the final type of deployment we used. The OpenStack logos represents an instance of OpenStack and Keystone. All of them also have a CockroachDB instance, represented by the CockroachDB logo (the green cockroach). The database has a Keystone table, which gets all Keystone data, distributed using the replication zones. The replicas are represented by the non-transparent logo, the other are instances of CockroachDB without this table.
+
+We distributed 9 nodes into groups of 3. This 3 groups represents 3 continents, each having 3 different datacenters in them. They are separated by a network delay of 300 ms of RTT, and 20 ms of RTT between each datacenters (nodes).
+
+We then chose to force the replicas in different ``continents'' (groups). Rally is located in the ``first'' group. First, we distributed the replicas to the entire cluster, which means one replicas per group. Then, we force CockroachDB to keep 2 replicas (counting the leaseholder) to be in the same group (the first), so the quorum can be achieved in this group, without having to pay the cost of the latency towards another group. The third option is to get all the replicas in the first group, to not only have the quorum in this group, but also all the data and replicas in the same location.
+
 
 \subsection{Parameters variations}
 \label{subsec:param}
@@ -168,3 +231,16 @@ Juice applies theses network latencies with tc netem. Note that, as previously s
 Experiments that test the impact of the network latency are done with 9 OpenStack instances. They make the delay varies by applying traffic shaping homogeneously between the 9 OpenStack instances.
 
 \subsection{How we make the analysis}
+
+As previously said, we call Juice API in python files, one for each experiments. We use Execo Engine ParamSweeper\footnote{\url{http://execo.gforge.inria.fr/doc/latest-stable/execo_engine.html}} to shuffle the parameters we want to test. We give lists of parameters and ParamSweeper run the experiment for the combinations of parameters, e.g. giving for the RDBMS the list [MariaDB] and for the latencies [0, 50], it will run the scenarios with MariaDB as the RDBMS for 0 and 50 ms latency (once again, the given latency is the time for a signal to go from the source to destination, so we have to double it for RTT). We give all the configuration directly and make a deep copy to change whatever we need in the process.
+
+The main point of having different experiment files is to be able to run experiments in parallel when the number of nodes allow it (the cluster we are testing has 48 nodes and we always need x nodes for the OpenStack instances plus one for the monitoring, so at maximum 46 for the 45 nodes experiments). We also made a different branch for the locality experiment because it required to change more than one file.
+
+We have several ``main'' variables, with the name corresponding to the parameters: \verb+DATABASES+ taking the values ['mariadb', 'galera', 'cockroachdb'], \verb+CLUSTER_SIZES+, with the values [3, 9, 45], \verb+DELAYS+, with the values [0, 50, 150], and finally \verb+BURST+ taking [False, True] for the load mode (respectively light and heavy).
+
+\begin{description}
+\item[cluster-size-impact\footnote{\url{https://github.com/BeyondTheClouds/juice/blob/master/experiments/cluster-size-impact.py}}] This experiment is about the impact of the number of OpenStack instances, so the change is in the \verb+CLUSTER_SIZES = [3, 9, 45]+.
+  \item[latency-impact\footnote{\url{https://github.com/BeyondTheClouds/juice/blob/master/experiments/latency-impact.py}}] This experiment is about testing the impact of the delay between the cluster nodes, so the main change is in \verb+DELAYS = [0, 50, 150]+
+\item[regions\footnote{\url{https://github.com/BeyondTheClouds/juice/blob/regions/experiments.py}}] The file is different since neither the delays nor the cluster size changes. The varying parameter here is the number of replicas in the first group (see subsection \ref{subsubsec:replication-zones}) \verb+REPLICAS_QUORUM = [3, 2, 1]+. 3 means all replicas are in the first zone, 2 means 2 are in the first group and one in the second and 1 means replicas are distributed across the groups.
+  \item[read-write-ratio\footnote{\url{https://github.com/BeyondTheClouds/juice/blob/master/experiments/cluster-size-impact.py}}] This is the experiment that measured the reads and writes ratio for each scenario.
+\end{description}

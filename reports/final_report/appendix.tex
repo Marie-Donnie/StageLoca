@@ -7,7 +7,7 @@
 
 The \%reads/\%writes ratio is computed on Mariadb. The gauging code reads values of status variables \verb+Com\_xxx+ that provide statement counts over all connections (with \verb+xxx+ standing for \verb+SELECT+, \verb+DELETE+, \verb+INSERT+, \verb+UPDATE+, \verb+REPLACE+ statements). The SQL query that does this job is available in listing \ref{lst:rw} and returns the total number of reads and writes since the database started. That SQL query is called before and after the execution of one Rally scenario. After and before values are then subtracted to compute the number of reads and writes performed during the scenario and finally, compared to compute the ratio.
 
-\begin{lstlisting}[caption={Total number of reads and writes performed on MariaDB since the last reboot}\label{lst:rw},language=SQL]
+\begin{lstlisting}[caption={Total number of reads and writes performed on MariaDB since the last reboot}\label{lst:rw}, language=SQL, captionpos=b]
 SELECT
   SUM(IF(variable_name = 'Com_select', variable_value, 0))
      AS `Total reads`,
@@ -180,6 +180,28 @@ Number of runs: 100
   \caption{Impact of the Number of OpenStack Instances on the Completion Time under Light Load – Cummulative Distibution}
   \vspace{-5pt}
   \label{fig:oss-impact-light-cdf}
+\end{figure}
+
+\subsection{Number of OpenStack instances impact under heavy load}
+\begin{figure}[H]
+  \vspace{-10pt}
+  \centering
+  \centerline{\includegraphics[width=1.4\textwidth, angle=90]{no_push/oss-impact-high.png}}
+  \vspace{-5pt}
+  \caption{Impact of the Number of OpenStack Instances on the Completion Time under Heavy Load – Median Time for Each Operations.}
+  \vspace{-5pt}
+  \label{fig:oss-impact-high}
+\end{figure}
+
+
+\begin{figure}[H]
+  \vspace{-10pt}
+  \centering
+  \centerline{\includegraphics[width=1.4\textwidth, angle=90]{no_push/oss-impact-high-cdf.png}}
+  \vspace{-5pt}
+  \caption{Impact of the Number of OpenStack Instances on the Completion Time under Heavy Load – Cummulative Distibution}
+  \vspace{-5pt}
+  \label{fig:oss-impact-high-cdf}
 \end{figure}
 
 \subsection{Delay impact under light load}

@@ -238,11 +238,12 @@ Galera Cluster uses a virtual synchrony that unifies the data delivery, providin
 The multi-master replication allows only read-repeatable isolation at best for transactions. Indeed, they previously talked about Snapshot isolation before Jepsen analyzed MariaDB Galera Cluster and realized they did not provide the correct announced isolation\cite{MGC:jepsen}.
 
 
+
 \section{CockroachDB}
 CockroachDB is a NewSQL database that uses the Raft protocol (an alternative version to Lamport's Paxos consensus protocol).
 It uses the SQL API to enable SQL requests on every nodes. These requests are translated to key-value operations and -if needed- distributed across the cluster.
 
-CockroachDB implements a single, monolithic sorted map for the keys and values stored, as seen in \ref{fig:cockroachdb}. This map is divided in ranges, which are continuous chunks of this map, with every key being in a single range, so the ranges will not overlap. Each ranges are then replicated (three replicas per range) and finally distributed across the cluster nodes.\cite{CRDB:automatedoperations}
+CockroachDB implements a single, monolithic sorted map for the keys and values stored, as seen in \ref{fig:cockroachdb}. This map is divided in ranges, which are continuous chunks of this map, with every key being in a single range, so the ranges will not overlap. Each ranges are then replicated (three replicas per range) and finally distributed across the cluster nodes.\cite{CRDB:automatedoperations} On the figure, the blue dotted range is the leaseholder, and each CockroachDB instance is represented by the CockroachDB logo (the green cockroach) and identified by an instance number. Each instance stores replicas of the distributed ranges.
 
 \begin{figure}[H]
   \vspace{-10pt}
@@ -254,8 +255,8 @@ CockroachDB implements a single, monolithic sorted map for the keys and values s
   \label{fig:cockroachdb}
 \end{figure}
 
-One of the replicas acts as the leaseholder, a sort of leader that coordinates all reads and writes for the range. A read only requires the leaseholder.
-When a write is requested, the leaseholder prepares to append it to its log, forward the request to the replicas and when the quorum is achieved, commit the change by add it in the log. The quorum is an agreement from two out of the three replicas to make the change.
+Figure \ref{fig:cockroachdb-commit} represents the way an update is committed to all replicas. One of the replicas acts as the leaseholder, a sort of leader that coordinates all reads and writes for the range. A read only requires the leaseholder.
+When a write is requested, the leaseholder prepares to append it to its log, forwards the request to the replicas and when the quorum is achieved, commit the change by add it in the log. The quorum is an agreement from two out of the three replicas to make the change.
 
 \begin{figure}[H]
   \vspace{-10pt}

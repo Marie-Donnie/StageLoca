@@ -161,108 +161,137 @@ Number of runs: 100
 \label{results}
 
 \subsection{Number of OpenStack instances impact under light load}
-\begin{figure}[H]
-  \vspace{-10pt}
+
+Figures \ref{fig:oss-impact-light}, \ref{fig:oss-impact-light-cdf} and \ref{fig:oss-impact-light-lreg} result from the experiments about the number of OpenStack instances impact under a light load.
+
+
+\begin{figure}[h]
+  %\vspace{-10pt}
   \centering
   \centerline{\includegraphics[width=1.4\textwidth, angle=90]{no_push/oss-impact-light.png}}
-  \vspace{-5pt}
+  %\vspace{-5pt}
   \caption{Impact of the Number of OpenStack Instances on the Completion Time under Light Load – Median Time for Each Operations.}
-  \vspace{-5pt}
+  %\vspace{-5pt}
   \label{fig:oss-impact-light}
 \end{figure}
 
 
-\begin{figure}[H]
-  \vspace{-10pt}
+\begin{figure}[h]
+%  \vspace{-10pt}
   \centering
   \centerline{\includegraphics[width=1.4\textwidth, angle=90]{no_push/oss-impact-light-cdf.png}}
-  \vspace{-5pt}
+%  \vspace{-5pt}
   \caption{Impact of the Number of OpenStack Instances on the Completion Time under Light Load – Cummulative Distibution}
-  \vspace{-5pt}
+%  \vspace{-5pt}
   \label{fig:oss-impact-light-cdf}
 \end{figure}
 
+
+\begin{figure}[h]
+%  \vspace{-10pt}
+  \centering
+  \centerline{\includegraphics[width=1.4\textwidth, angle=90]{no_push/oss-impact-light-lreg.png}}
+%  \vspace{-5pt}
+  \caption{Impact of the Number of OpenStack Instances on the Completion Time under Light Load – Linear Regression}
+%  \vspace{-5pt}
+  \label{fig:oss-impact-light-lreg}
+\end{figure}
+
 \subsection{Number of OpenStack instances impact under heavy load}
-\begin{figure}[H]
-  \vspace{-10pt}
+
+Figures \ref{fig:oss-impact-high} and \ref{fig:oss-impact-high-cdf} result from the experiments about the number of OpenStack instances impact under a heavy load.
+
+
+\begin{figure}[h]
+%  \vspace{-10pt}
   \centering
   \centerline{\includegraphics[width=1.4\textwidth, angle=90]{no_push/oss-impact-high.png}}
-  \vspace{-5pt}
+%  \vspace{-5pt}
   \caption{Impact of the Number of OpenStack Instances on the Completion Time under Heavy Load – Median Time for Each Operations.}
-  \vspace{-5pt}
+%  \vspace{-5pt}
   \label{fig:oss-impact-high}
 \end{figure}
 
 
-\begin{figure}[H]
-  \vspace{-10pt}
+\begin{figure}[h]
+%  \vspace{-10pt}
   \centering
   \centerline{\includegraphics[width=1.4\textwidth, angle=90]{no_push/oss-impact-high-cdf.png}}
-  \vspace{-5pt}
+%  \vspace{-5pt}
   \caption{Impact of the Number of OpenStack Instances on the Completion Time under Heavy Load – Cummulative Distibution}
-  \vspace{-5pt}
+%  \vspace{-5pt}
   \label{fig:oss-impact-high-cdf}
 \end{figure}
 
 \subsection{Delay impact under light load}
-\begin{figure}[H]
-  \vspace{-10pt}
+
+Figures \ref{fig:delay-impact-light} and \ref{fig:delay-impact-light-cdf} result from the experiments about the delay impact under a light load.
+
+\begin{figure}[h]
+%  \vspace{-10pt}
   \centering
   \centerline{\includegraphics[width=1.4\textwidth, angle=90]{no_push/delay-impact-light.png}}
-  \vspace{-5pt}
+%  \vspace{-5pt}
   \caption{Impact of the Delay on the Completion Time under Light Load – Median Time for Each Operations.}
-  \vspace{-5pt}
+%  \vspace{-5pt}
   \label{fig:delay-impact-light}
 \end{figure}
 
-\begin{figure}[H]
-  \vspace{-10pt}
+\begin{figure}[h]
+%  \vspace{-10pt}
   \centering
   \centerline{\includegraphics[width=1.4\textwidth, angle=90]{no_push/delay-impact-light-cdf.png}}
-  \vspace{-5pt}
+%  \vspace{-5pt}
   \caption{Impact of the Delay on the Completion Time under Light Load – Cummulative Distibution.}
-  \vspace{-5pt}
+%  \vspace{-5pt}
   \label{fig:delay-impact-light-cdf}
 \end{figure}
 
+
 \subsection{Delay impact under heavy load}
-\begin{figure}[H]
-  \vspace{-10pt}
+Figures \ref{fig:delay-impact-high} and \ref{fig:delay-impact-high-cdf} result from the experiments about the delay impact under a heavy load.
+
+
+\begin{figure}[h]
+%  \vspace{-10pt}
   \centering
   \centerline{\includegraphics[width=1.4\textwidth, angle=90]{no_push/delay-impact-high.png}}
-  \vspace{-5pt}
+%  \vspace{-5pt}
   \caption{Impact of the Delay on the Completion Time under Heavy Load – Median Time for Each Operations.}
-  \vspace{-5pt}
+%  \vspace{-5pt}
   \label{fig:delay-impact-high}
 \end{figure}
 
-\begin{figure}[H]
-  \vspace{-10pt}
+\begin{figure}[h]
+%  \vspace{-10pt}
   \centering
   \centerline{\includegraphics[width=1.4\textwidth, angle=90]{no_push/delay-impact-high-cdf.png}}
-  \vspace{-5pt}
+%  \vspace{-5pt}
   \caption{Impact of the Delay on the Completion Time under Heavy Load – Cummulative Distibution.}
-  \vspace{-5pt}
+%  \vspace{-5pt}
   \label{fig:delay-impact-high-cdf}
 \end{figure}
 
 \subsection{Locality impact under light load}
-\begin{figure}[H]
-  \vspace{-10pt}
+
+Figures \ref{fig:zones-impact-light} and \ref{fig:zones-impact-light-cdf} result from the experiments about the locality impact under a light load.
+
+\begin{figure}[h]
+%  \vspace{-10pt}
   \centering
   \centerline{\includegraphics[width=1.4\textwidth, angle=90]{no_push/zones-impact-light.png}}
-  \vspace{-5pt}
+%  \vspace{-5pt}
   \caption{Impact of the Locality on the Completion Time under Light Load – Median Time for Each Operations.}
-  \vspace{-5pt}
+%  \vspace{-5pt}
   \label{fig:zones-impact-light}
 \end{figure}
 
-\begin{figure}[H]
-  \vspace{-10pt}
+\begin{figure}[h]
+%  \vspace{-10pt}
   \centering
   \centerline{\includegraphics[width=1.4\textwidth, angle=90]{no_push/zones-impact-light-cdf.png}}
-  \vspace{-5pt}
+%  \vspace{-5pt}
   \caption{Impact of the Locality on the Completion Time under Light Load – Cummulative Distibution.}
-  \vspace{-5pt}
+%  \vspace{-5pt}
   \label{fig:zones-impact-light-cdf}
 \end{figure}

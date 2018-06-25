@@ -1,27 +1,42 @@
+This section present the results and their analysis. To avoid lengths of graphics in this report, only a short version of the results are presented in this section. The entirety of the results, median time for each operations and Cumulative Distribution Functions (CDF) for each scenarios are in the appendix. All results are filtered above the 95th quantile. In the median completion time plot, the $\lambda$ Greek letter stands for the failure rate and $\sigma$ for the standard deviation. For the CDF, the abscissa is the time and the ordinate is the pourcentage of operations made during that time.
+
+
+
+The short results are the median time of completion for each operations. Each frame represents a scenarios played on a RDBMS, the abscissa is for the variable parameter, and the ordinate is the completion time of each operation. This completion of the operations is shown thanks to stacked bars. The scenario is Authenticate and Validate Keystone Token (\%reads: 96.46, \%writes: 3.54), except for the locality, where we used Create User and Update its Password (\%reads: 89.79, \%writes: 10.21) since it has enough writings to be interesting regarding the quorum (any reading only need any replicas).
+
+
+
+
 \section{Number of OpenStack Instances Impact}
 
 This test evaluates how the completion time of Rally Keystone’s scenarios varies, depending on the RDBMS and the number of OpenStack instances. It measures the capacity of a RDBMS to handle lots of connections and requests. In this test, the number of OpenStack instances varies between 3, 9 and 45 and a LAN link inter-connects instances. As explained before, the deployment of the database depends on the RDBMS. With MariaDB, one instance of OpenStack contains the database, and others connect to that one. For Galera and CockroachDB, each OpenStack contains an instance of the RDBMS.
 
-For these experiments, Juice deployed the RDBMS along with OpenStack instances and plays Rally scenarios listed in section \ref{rally-scenarios} page \pageref{rally-scenarios}. Juice runs Rally scenarios in both single and heavy modes. Results are presented in two next sections. The Juice implementation for these experiments is available on GitHub at \url{https://github.com/BeyondTheClouds/juice/tree/master/experiments}, except for the locality, which is available at \url{https://github.com/Marie-Donnie/juice/blob/regions/experiments.py}. This experiments defines the different groups and the delays to apply on the network, inside and between the groups.
+For these experiments, Juice deployed the RDBMS along with OpenStack instances and plays Rally scenarios listed in section \ref{rally-scenarios} page \pageref{rally-scenarios}. Juice runs Rally scenarios in both single and heavy modes. Results are presented in the two next subections. The Juice implementation for these experiments is available on GitHub, as explained in the previous section.
 
-We then filter experiments to only keep those when delay is 0 in a single Rally mode. Groups results by scenario’s name, RDBMS technology and number of OpenStack instances. Then, filters results above the 95th quantile. In the plot, the $\lambda$ Greek letter stands for the failure rate and $\sigma$ for the standard deviation.
 
 \subsection{Light load}
 
-Figure \ref{fig:oss-impact-light} presents the mean completion time (in seconds) of Keystone scenarios in a light Rally mode. In the figure, columns presents results of a specific scenario: the first column presents results for Authenticate User and Validate Token, the second for Create Add and List User Role, and so forth. Rows present results with a specific RDBMS: the first row presents results for MariaDB, second for Galera and third for CockroachDB. The figure presents results with stacked bar charts. Each bar presents the result for a specific number of OpenStack instances (i.e., 3, 9 and 45) and stacks completion times of each Keystone operations inside a scenario.
-
-Cdf\ref{fig:oss-impact-light-cdf}
+Figure \ref{fig:oss-impact-light} (page \pageref{fig:oss-impact-light}) presents the mean completion time (in seconds) of Keystone scenarios in a light Rally mode. In the figure, columns presents results of a specific scenario: the first column presents results for Authenticate User and Validate Token, the second for Create Add and List User Role, and so forth. Rows present results with a specific RDBMS: the first row presents results for MariaDB, second for Galera and third for CockroachDB. The figure presents results with stacked bar charts. Each bar presents the result for a specific number of OpenStack instances (i.e., 3, 9 and 45) and stacks completion times of each Keystone operations inside a scenario.
 
 
+Figure \ref{fig:short-oss-impact-light} is the short summary of the results. We can see that the trend is similar for the 3 RDMBS, to the advantage of the centralized MariaDB, followed by MariaDB Galera Cluster and then CockroachDB.
 \begin{figure}[H]
   \vspace{-10pt}
   \centering
   \centerline{\includegraphics[width=1\textwidth]{no_push/short-oss-impact-light.png}}
   \vspace{-5pt}
-  \caption{Impact of the Number of OpenStack Instances on the Completion Time under Light Load – Median Time for Each Operations.}
+  \caption{Impact of the Number of OpenStack Instances on the Completion Time under Light Load – Median Time for Each Operations – Authenticate and Validate Keystone Token Scenario.}
   \vspace{-5pt}
   \label{fig:short-oss-impact-light}
 \end{figure}
+
+We can see in the longer results that MariaDB Galera Cluster begins to have difficulties to handle 45 nodes, to the point were it can not handle the loads of Create User Set Enabled and Delete and Create and List Users. This kind of failure were not really explained and we have had the time to analyze this further.
+
+The corresponding Cumulative Distribution Function (CDF) can be found in figure \ref{fig:oss-impact-light-cdf}, page \pageref{fig:oss-impact-light-cdf}. We can see that for both MariaDB solutions, all the operations the three last scenarios take globally the same time, whereas for CockroachDB, a few operations take a lot of time.
+
+I have added in the appendix the linear regression for these scenarios in Figure \ref{fig:oss-impact-light-lreg} to show that the results are not always perfect (the distribution is sometimes off), and to see how does the slope looks like with such results. Globally, MariaDB Galera Cluster's slopes are stronger than the other RDBMS.
+
+
 
 \subsection{Heavy load}
 
@@ -30,15 +45,19 @@ Cdf\ref{fig:oss-impact-light-cdf}
   \centering
   \centerline{\includegraphics[width=1\textwidth]{no_push/short-oss-impact-high.png}}
   \vspace{-5pt}
-  \caption{Impact of the Number of OpenStack Instances on the Completion Time under Heavy Load – Median Time for Each Operations.}
+  \caption{Impact of the Number of OpenStack Instances on the Completion Time under Heavy Load – Median Time for Each Operations – Authenticate and Validate Keystone Token Scenario.}
   \vspace{-5pt}
   \label{fig:short-oss-impact-high}
 \end{figure}
 
+Under a heavy load, once again, we can see on figure \ref{fig:oss-impact-high}, that MariaDB Galera Cluster has some real difficulties to handle a heavy load under 45 nodes, since 3 of the scenarios crashed the RDBMS.
+
+The centralized MariaDB has really good results, but CockroachDB mostly handles well the increasing number of nodes, keeping the scaling linear, even though the slope is stronger on the 3 last scenarios.
+
 
 \section{Delay Impact}
 
-In this test, the size of the database cluster is 9 and the delay varies between LAN, 100 and 300 ms of RTT. The test evaluates how the completion time of Rally scenarios varies, depending of RTT between nodes of the swarm.
+In this test, the size of the database cluster is 9 and the delay varies between LAN, 100 and 300 ms of RTT. The test evaluates how the completion time of Rally scenarios varies, depending of the RTT between nodes of the swarm.
 
 
 
@@ -49,14 +68,17 @@ In this test, the size of the database cluster is 9 and the delay varies between
   \centering
   \centerline{\includegraphics[width=1\textwidth]{no_push/short-delay-impact-light.png}}
   \vspace{-5pt}
-  \caption{Impact of the Delay on the Completion Time under Light Load – Median Time for Each Operations.}
+  \caption{Impact of the Delay on the Completion Time under Light Load – Median Time for Each Operations – Authenticate and Validate Keystone Token Scenario.}
   \vspace{-5pt}
   \label{fig:short-delay-impact-light}
 \end{figure}
 
-Figure \ref{fig:delay-impact-light}
+Figure \ref{fig:delay-impact-light} is the median time for each operations under a light load, depending on the network delay.
 
-cdf\ref{fig:delay-impact-light-cdf}
+MariaDB handles the delay pretty well despite the fact the request have to travel through the network (as we can see on figure \ref{fig:short-delay-impact-light}). On the other hand, CockroachDB has huge difficulties to serve operations under a high latency.
+
+
+The figure \ref{fig:delay-impact-light-cdf} helps understand what happens; CockroachDB has to satisfy the quorum before making any write.
 
 \subsection{Heavy load}
 
@@ -65,7 +87,7 @@ cdf\ref{fig:delay-impact-light-cdf}
   \centering
   \centerline{\includegraphics[width=1\textwidth]{no_push/short-delay-impact-high.png}}
   \vspace{-5pt}
-  \caption{Impact of the Delay on the Completion Time under Heavy Load – Median Time for Each Operations.}
+  \caption{Impact of the Delay on the Completion Time under Heavy Load – Median Time for Each Operations – Authenticate and Validate Keystone Token Scenario.}
   \vspace{-5pt}
   \label{fig:short-delay-impact-high}
 \end{figure}
@@ -76,14 +98,14 @@ cdf \ref{fig:delay-impact-high-cdf}
 
 \section{Locality Impact}
 
-This study considers two kinds of OpenStack instances deployments. This first one, called uniform, defines a uniform distribution of the network latency between OpenStack instances. For instance, 300 ms of RTT between all the 9 OpenStack instances. The second deployment, called hierarchical, maps to a more realistic view, like in cloud computing, with groups of OpenStack instances connected through a low latency network (e.g., 3 OpenStack instances per group deployed in the same country, and accessible within 20 ms of RTT). And high latency network between groups (e.g. 150 ms of RTT between groups deployed in different countries).
+This study considers two kinds of OpenStack instances deployments. This first one, called uniform, defines a uniform distribution of the network latency between OpenStack instances. For instance, 300 ms of RTT between all the 9 OpenStack instances (this is seen in the previous section). The second deployment, called hierarchical, maps to a more realistic view, like in cloud computing, with groups of OpenStack instances connected through a low latency network (e.g., 3 OpenStack instances per group deployed in the same country, and accessible within 20 ms of RTT), and high latency network between groups (e.g. 150 ms of RTT between groups deployed in different countries). This deployment has been described in section \ref{subsubsec:replication-zones}.
 
 \begin{figure}[H]
   \vspace{-10pt}
   \centering
   \centerline{\includegraphics[width=0.6\textwidth]{no_push/short-zones-impact-light.png}}
   \vspace{-5pt}
-  \caption{Impact of the Locality on the Completion Time under Light Load – Median Time for Each Operations.}
+  \caption{Impact of the Locality on the Completion Time under Light Load – Median Time for Each Operations – Create User and Update its Password Scenario.}
   \vspace{-5pt}
   \label{fig:short-zones-impact-light}
 \end{figure}

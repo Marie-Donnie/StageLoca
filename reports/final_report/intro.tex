@@ -1,29 +1,33 @@
+A social network application (such as Facebook or Twitter) connects people. Imagine an application that everyone uses. Everyone is sending messages from all over the world, for their friends to see. This creates a huge load on the application. This kind of application would probably have to use what we call Cloud Computing. This enables companies to pay for infrastructures they don't have to buy and maintain themselves. Usually, the infrastructure is located in data centers, huge places with lots of servers to store data or compute anything. The number of servers the company gets depends of the load the application gets. As the application needs more compute, the number of servers available to the company increases.
+
+One way of managing this kind of infrastructures is the OpenStack software, a free and open-source platform composed of different components for each services it requires (computing, networking, authenticating, \ldots).
+
+Since our imaginary application is mostly about friends talking to each others, we can think that most of the communications would be more or less in the same regions of the world. In such a case, the data would need to go from one computer to the data center, which might be at the other end of the world, and then go back to a friend computer, located a few kilometers away from the first one. To better serve the people using the application, a solution is to distribute data centers closer to the users. This would mean the same communication as described before will not have to travel through the entire world before getting dispatched to another computer, only to the closest data center where the data has been kept. This kind of distribution is called Edge Computing.
+
+
+This is where the Discovery initiative\cite{discovery} steps in. This is a Inria Project Lab (IPL) that involves the Stack, Avalon, Corse, Myriads and Resist teams, along with Orange and some ponctual help from Renater or RedHat. The initiative aims at implementing an IaaS manager, by using a revised OpenStack to make it collaborative. It studies the possiblity of infrastructures for the massively distributed cloud computing in small edge datacenters. These infrastructures aim at avoiding the problems of datacenter scaling and limiting the latency by bringing the compute nodes closer to the users.
+
+The Stack team, in which I worked is part of the LS2N, a ``Unité Mixte de Recherche'' (Mixed research unit) which involves the University of Nantes, Centrale Nantes, IMT Atlantique, CNRS and Inria. I personnaly worked for five months for Inria at IMT Atlantique. Inria is the French Institute for Research in Computer Science and Automation, a national research institution for computer science and applied mathematics. The IMT Atlantique Bretagne Pays de la Loire is a engineering school where most of the Stack team works.
+
+Some work has previously been done by the Discovery initiative towards getting the compute and data closer to the users, and some was also ongoing in parallel. In order to avoid doing everything from scratch, because it is open-source and a lot of work has already been done to allow a massive scaling, OpenStack was chosen by the initiative to manage Edge infrastructures.
+
+We know that OpenStack is largely used to operate Cloud infrastructures and, in a smaller proportion, Edge infrastructures. One of the difficulty to deploy OpenStack services in a massively distributed infrastructure is to find a proper way to distribute the database underneath. Keystone, the authentication service, is using MariaDB, an open-source fork of MySQL, to store its state. But a centralized database is a single point of failure in such a context.
+Then, how OpenStack, especially Keystone behaves in an Edge context and more particularly when considering locality ?
+
+In order to see how Keystone behaves in the context of Edge Computing, we performed a thorough evaluation of its performance over different Relation DataBase Management Systems (RDBMS). To make such evaluation, we developed a performance framework, Juice. Juice deploy and evaluate OpenStack performances on different RDBMS and topologies. We tested different topologies to confirm whether considering the locality of the data is an interesting path to follow or not.
+
+This evaluation lead to a presentation at the OpenStack Summit in Vancouver\footnote{\url{https://www.openstack.org/videos/vancouver-2018/keystone-in-the-context-of-fogedge-massively-distributed-clouds}} and a blog article detailing the experiments and results\footnote{\url{https://beyondtheclouds.github.io/blog/openstack/cockroachdb/2018/06/04/evaluation-of-openstack-multi-region-keystone-deployments.html}}.
+
+To better explain the work done in this internship, I will first detail further the context, then we will see what already exists and what solutions we considered, then I will describe the experiment plans and analyze the details to finally conclude on the future work to be done.
+
+\iffalse
+
+\newpage
+
+
 Cloud computing enables a user, a business, \dots, to access data, programs or hardware over the internet. This means that there are businesses that provide the necessary services. These services are divided into three categories: Software-as-a-Service (SaaS), when they deliver an application's accesses over the internet, Platform-as-a-Service (PaaS), in which they supply a platform to allow their customers to develop and manage applications, and Infrastructure-as-a-Service, where they provide the raw hardware to be used to do anything that could be done on a computer.
 
 An ever growing number of applications requires a wide distribution over the globe of computing resourcing, such as the Internet of Things (IoT).
-
-
-
-
-
-"We" designates the Discovery initiative\cite{discovery}. This is a Inria Project Lab (IPL) that involves the Stack, Avalon, Corse, Myriads and Resist teams, along with Orange and some ponctual help from Renater or RedHat. The initiative aims at implementing an IaaS manager, by using a revised OpenStack to make it collaborative. It studies the possiblity of infrastructures for the massively distributed cloud computing in small edge datacenters. Those infrastructures aim at avoiding the problems of datacenter scaling and limiting the latency by bringing the compute nodes closer to the users.
-The Stack team, in which I worked is part of the LS2N, a ``Unité Mixte de Recherche'' (Mixed research unit) which involves the University of Nantes, Centrale Nantes, IMT Atlantique, CNRS and Inria. I personnaly worked for five months for Inria at IMT Atlantique. Inria is the French Institute for Research in Computer Science and Automation, a national research institution for computer science and applied mathematics. The IMT Atlantique Bretagne Pays de la Loire is a engineering school where most of the Stack team works.
-
-
-
-
-
-
-
-
-
-How OpenStack, especially Keystone behaves in an edge context and more particularly when considering locality ?
-
-
-
-
-
-
 
 
 
@@ -73,3 +77,4 @@ The Stack team, in which I worked is part of the LS2N, a ``Unité Mixte de Reche
 Some work has previously been done by the Discovery initiative towards getting the compute closer to the users, and some was also ongoing in parallel. My contribution was to make Juice\footnote{\url{https://github.com/BeyondTheClouds/juice}}, a framework to deploy and evaluate OpenStack performances on different databases and topologies. It lead to a presentation at the OpenStack Summit in Vancouver\footnote{\url{https://www.openstack.org/videos/vancouver-2018/keystone-in-the-context-of-fogedge-massively-distributed-clouds}} and a blog article detailing the experiments and results\footnote{\url{https://beyondtheclouds.github.io/blog/openstack/cockroachdb/2018/06/04/evaluation-of-openstack-multi-region-keystone-deployments.html}}. The main goal of my work was to compare different kind of database under different topologies to confirm that a locality-based architecture was a good way to go.
 
 To better explain the work done in this internship, I will first detail the context, then we will see what already exists and what solutions we considered, then I will describe the experiment plans and analyze the details to finally conclude on the future work to be done.
+\fi

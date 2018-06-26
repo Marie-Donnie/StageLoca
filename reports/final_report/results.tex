@@ -50,7 +50,9 @@ I have added in the appendix the linear regression for these scenarios in Figure
   \label{fig:short-oss-impact-high}
 \end{figure}
 
-Under a heavy load, once again, we can see on figure \ref{fig:oss-impact-high}, that MariaDB Galera Cluster has some real difficulties to handle a heavy load under 45 nodes, since 3 of the scenarios crashed the RDBMS.
+
+
+Under a heavy load, once again, we can see on figure \ref{fig:oss-impact-high} and even quicker on figure \ref{fig:short-oss-impact-high}, that MariaDB Galera Cluster has some real difficulties to handle a heavy load under 45 nodes, since 3 scenarios crashed the RDBMS. As explained in the previous section, we do not really know why these failures happen.
 
 The centralized MariaDB has really good results, but CockroachDB mostly handles well the increasing number of nodes, keeping the scaling linear, even though the slope is stronger on the 3 last scenarios.
 
@@ -78,7 +80,9 @@ Figure \ref{fig:delay-impact-light} is the median time for each operations under
 MariaDB handles the delay pretty well despite the fact the request have to travel through the network (as we can see on figure \ref{fig:short-delay-impact-light}). On the other hand, CockroachDB has huge difficulties to serve operations under a high latency.
 
 
-The figure \ref{fig:delay-impact-light-cdf} helps understand what happens; CockroachDB has to satisfy the quorum before making any write.
+The figure \ref{fig:delay-impact-light-cdf} helps understand what happens; CockroachDB has to satisfy the quorum before making any write. This means it has to pay the cost of latency for every write.
+
+Here, CockroachDB has another problem to cope with the increasing delay: when two concurrent transaction occur, it uses a deadlock and Keystone handles it with an exponential backoff. This means it will pick up a wait time to retry between 0 and 1, 0-2, 0-4, 0-8, etc. But because of the delay, a transaction takes at least 300ms, so any retry smaller than the RTT will only add more contention.
 
 \subsection{Heavy load}
 
@@ -92,13 +96,15 @@ The figure \ref{fig:delay-impact-light-cdf} helps understand what happens; Cockr
   \label{fig:short-delay-impact-high}
 \end{figure}
 
-Figure \ref{fig:delay-impact-high}
+Figure \ref{fig:short-delay-impact-high} shows that the tendency is getting worse under a high load, as could be expected. MariaDB Galera Cluster still manages to survive because of the way it only broadcast the changes to apply and then use a deterministic certification to commit, so the latency does not really cost to the system. The centralized MariaDB begins to have some difficulties to manage such a load with a high latency.
 
-cdf \ref{fig:delay-impact-high-cdf}
+Figure \ref{fig:delay-impact-high} shows that CockroachDB even fail to tackle 300ms of RTT for two scenarios. This is due to the fact that after 10 retries, OpenStack Oslo.db discards the transaction. We can already see on the CDF plot from \ref{fig:delay-impact-high-cdf} on the scenarios that fail, under 150 ms of RTT, there is a huge snowball effect: operations take longer and longer for most of them. But we know that CockroachDB uses replications zones so we can optimize the data location to avoid this high delays.
 
 \section{Locality Impact}
 
 This study considers two kinds of OpenStack instances deployments. This first one, called uniform, defines a uniform distribution of the network latency between OpenStack instances. For instance, 300 ms of RTT between all the 9 OpenStack instances (this is seen in the previous section). The second deployment, called hierarchical, maps to a more realistic view, like in cloud computing, with groups of OpenStack instances connected through a low latency network (e.g., 3 OpenStack instances per group deployed in the same country, and accessible within 20 ms of RTT), and high latency network between groups (e.g. 150 ms of RTT between groups deployed in different countries). This deployment has been described in section \ref{subsubsec:replication-zones}.
+
+In all the figures, the completion time is the ordinate as usual, but the bars are respectively the topology with one replicas in each group, two replicas in the first group and one in the second and finally all replicas in the first group.
 
 \begin{figure}[H]
   \vspace{-10pt}
@@ -110,7 +116,8 @@ This study considers two kinds of OpenStack instances deployments. This first on
   \label{fig:short-zones-impact-light}
 \end{figure}
 
+As expected, because the quorum can be achieved with only two replicas out of the three, we can see from one glimpse at figure \ref{fig:short-zones-impact-light} that CockroachDB handles perfectly well under high latency when pulling the data closer to the client since it does not have to pay the cost of the latency.
 
-Figure \ref{fig:zones-impact-light}
+Figure \ref{fig:zones-impact-light} confirms that, except for the first scenario, CockroachDB is really efficient when considering locality by satisfying the quorum on closer servers. But it was expected, since we ``cheated'' by bypassing the network delay since the leaseholder does not need to wait for the answer from the replicas across the high delay. We can see on the CDF (figure \ref{fig:zones-impact-light-cdf}), that we still have the ``snowball effect'' for the first version (blue line), since there is the 300ms of RTT to contact the other replicas.
 
-cdf \ref{fig:zones-impact-light-cdf}
+We can also see that apart from two scenarios, MariaDB Galera Cluster results are not so good. There is also a strange result on the first scenarios, but we could not really explain this. We can see on the corresponding CDF that at some point, one operation takes a lot of time, then it grows more or less normally, then another one take a lot of time. There was clearly a problem for these operations, but I could not find what.

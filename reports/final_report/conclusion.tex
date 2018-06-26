@@ -1,1 +1,13 @@
-conclusion
+An ever growing number of applications requires a wide distribution over the globe of computing resourcing, such as the Internet of Things (IoT). To manage this kind of ``Edge Computing'', the Discovery initiative chose to modify the OpenStack platform in order to avoid reinventing the wheel.
+
+Some OpenStack components do not fulfill edge infrastructure needs. We wanted to see the Relational DataBase Management System cope with lots of connections and an intermittent network access. Furthermore, in order to operate OpenStack in the context of a massively distributed edge infrastucture, we think it is crucial to consider the locality of the client.
+
+To test the performances of different backends for Keystone, OpenStack authentication service, and to better have an idea of the behavior of OpenStack in the context of the edge using locality, we made an evaluation of the performances of different RDBMS, using different topologies.
+
+In order to get this evaluation, I developed Juice, a framework to deploy OpenStack using different backends on a varying number of servers, varying network delays, and a simulation of an edge infrastructure, with heterogenous network delays.
+
+The results of this evaluation show that, though it is a single point of failure, a centralized MariaDB works pretty well under an increasing number of nodes and latency. MariaDB Galera Cluster handles pretty well high latencies despite what we first thought, but has serious difficulties to cope with a high number of nodes. Finally, CockroachdB manages pretty well numerous nodes, but can't handle high delays.
+
+What was even more interesting were the results from the usage of the replication zones from CockroachDB. This showed that we can bypass the difficulties of a distributed database by considering the locality of the client. There are still disadvantages about CockroachDB; e.g. the fact that the replication zones can only be defined for the entire table, and not only on a row level, which would be what we want to only to this for some pieces of data, and not the entire database.
+
+This means that, though CockroachDB is not entirely what we need, it has proved that considering the locality of the client is a good way to continue the work for the Discovery initiative.

@@ -1,8 +1,12 @@
-Two databases were considered: one distributed, CockroachDB, and the other replicated, MariaDB Galera Cluster. We also used MariaDB as a control for the other databases, keeping in mind that it is a single point of failure, so we can not really use it in our context of edge computing.
+Two databases were considered: one distributed, CockroachDB, and the other replicated, MariaDB Galera Cluster. We also used MariaDB as a control for the other databases, keeping in mind that it is a single point of failure, so we can not really use it in our context of edge computing. MariaDB is our baseline for the analysis because it is the default OpenStack RDBMS.
+
+This chapter details the difficulties regarding the database distribution and the way the considered RDBMS implement the different solutions. First, in section \ref{sec:databases}, it explains the properties of a relational database and shows through some examples that it is difficult to implement a distributed version for these kind of databases. Then in sections \ref{sec:galera-cluster} and \ref{sec:cockroachdb}, it describes how MariaDB Galera Cluster and CockroachDB implements the properties of a relational database in a distributed context.
+
+This chapter thus gives the necessary information to understand the results in chapter \ref{chap:results}.
 
 
 \section{Databases and ACID properties}
-
+\label{sec:databases}
 \subsection{ACID properties}
 The concept of a transaction is defined by all the actions in between any variation of \emph{BEGIN} and \emph{COMMIT} and requires that all of its actions are executed indivisibly. That is to say, every actions in the transaction are either properly reflected in the database or nothing has been done\cite{DBLP:journals/csur/HarderR83}. In order to make a database reliable, four properties, designated by the ACID acronym, have been described to guarantee the transaction paradigm. To have this indivisibility, a transaction must then enforce these ACID properties (for Atomicity, Consistency, Isolation and Durability).
 
@@ -18,7 +22,7 @@ id & balance\\
 \end{tabular}
 \end{center}
 
-There are three accounts, each one with an id and a balance. For the examples, we will use the following semantic: T$_{\text{n}}$ is the n$^{\text{th}}$ transaction presented, R$_{\text{n}}$(id,balance) means transaction \emph{n} reads the \emph{balance} of the account \emph{id}, W$_{\text{n}}$(id,balance) is a write from transaction \emph{n} on the account \emph{id} with the corresponding \emph{balance}. Finally, there is a C$_{\text{n}}$ commit for the transaction. The transaction execute every action in the reading order (so R$_{\text{1}}$ W$_{\text{1}}$ executes R$_{\text{1}}$ then W$_{\text{1}}$).
+There are three accounts, each one with an id and a balance. For the examples, we will use the following semantic: T$_{\text{n}}$ is the n$^{\text{th}}$ transaction presented, R$_{\text{n}}$(id,balance) means transaction \emph{n} reads the value of \emph{balance} for the account number \emph{id}, W$_{\text{n}}$(id,balance) is a write from transaction \emph{n} on the account number \emph{id} with the corresponding value of \emph{balance}. Finally, there is a C$_{\text{n}}$ commit for the transaction. The transaction execute every action in the reading order (so R$_{\text{1}}$ W$_{\text{1}}$ executes R$_{\text{1}}$ then W$_{\text{1}}$).
 
 Consider for the examples the following transaction:
 
@@ -56,9 +60,9 @@ In this execution, there is a race condition on the reads of account 1: the read
 
 
 
-\subsection{Isolation and anomalies}
+\subsection{Database efficiency: balance isolation between performance and correctness}
 \label{sec:isolation}
-To ensure the soundness of the database, several levels of isolation exists, trying to balance between performance and correctness. The higher levels usually implement locks on data, which means a piece of data becomes unavailable to other concurrency. This leads to a loss of concurrency, and therefore a loss in performance, and a longer latency in requests. Each level of isolation forbid all actions that were previously forbidden in the lower levels.
+To ensure the effiency of the database, several levels of isolation exists, trying to balance between performance and correctness. The higher levels usually implement locks on data, which means a piece of data becomes unavailable to other transactions. This leads to a loss of concurrency, and therefore a loss in performance, and a longer latency in requests. Each level of isolation forbid all actions that were previously forbidden in the lower levels.
 From the most relaxed to the highest isolation, we can separate:
 \begin{description}
 \item[Read uncommitted] This level of isolation allows dirty reads, which means that a transaction can see a uncommitted change.
@@ -68,11 +72,16 @@ From the most relaxed to the highest isolation, we can separate:
 \item[Serializable] This is the highest isolation level. None of the above anomalies can happen in this level.
 \end{description}
 
+\subsection{Anomalies in relaxed isolations}
 
-\subsubsection{Write skews}
+\subsubsection{Write skews anomaly}
 \label{sec:ws}
 
-The write skew, as well as the other transaction anomaly phenomena, have been detailed in \cite{DBLP:journals/corr/abs-cs-0701157} and it has been explained in a blog article from Cockroach Labs\cite{CRDB:write-skew}, to justify why the serializable level is important.
+The write skew, as well as the other transaction anomaly phenomena, have been detailed in \cite{DBLP:journals/corr/abs-cs-0701157} and it has also been explained in a blog article from Cockroach Labs\cite{CRDB:write-skew}, to justify why the serializable level is important.
+
+
+
+\iffalse
 
 
 Consider the following transactions:
@@ -86,17 +95,7 @@ Consider the following transactions:
 
 
 There are two possible serial executions: $P$ then $Q$ OR $Q$ then $P$
-\begin{table}[H]
-  \centering
-  \begin{tabular}{ r | l }
-    $P$ then $Q$ & $Q$ then $P$ \\
-    \hline
-    (P) $W_P(y, x)$ & $W_Q(x, y)$ (Q) \\
-    (Q) $W_Q(x, y)$ & $W_P(y, x)$ (P) \\
-    $x = y$ & $x = y$ \\
-  \end{tabular}
-\end{table}
-Which, more developped, can be read as:
+
 \begin{table}[H]
   \centering
   \begin{tabular}{ r | l }
@@ -127,31 +126,43 @@ Snapshot isolation allows another execution:
 
 Indeed, each transaction kept a consistent view of the database and the writes were not on the same value, so no overlaping of the transaction write set occured, then no retries were triggered.
 
-Another example, related to the application and the semantic of it. Consider the following table:
+
+\fi
+
+An example\cite{write-skew}, related to the application and the semantic of it. Consider the following table, which is the two accounts of one person:
 
 \begin{table}[H]
   \centering
   \begin{tabular}{ c | c }
-    id & counter \\
+    type & balance \\
         \hline
-    0 & 1 \\
-    1 & 1 \\
+    checkings (C) & 1 \\
+    savings (S) & 1 \\
   \end{tabular}
 \end{table}
 
-The application using this table has a rule where at least one counter must be non-zero. Now, we can think rapidly of two non-concurrent transactions that will be problematic in a non serializable isolation:
+The bank application using this table has a rule where at least one balance must be non-zero to be sure there will be money on at least one account. Now, we can think rapidly of two non-concurrent transactions that will be problematic in a non serializable isolation:
 
 \begin{table}[H]
   \centering
   \begin{tabular}{ c }
-    P:   $R_P(0, 1)$ $W_P(0, 0)$ $C_P$ \\
-    Q:   $R_P(1, 1)$ $W_P(1, 0)$ $C_Q$ \\
+    P:   $R_P(C, 1)$ $W_P(C, 0)$ $C_P$ \\
+    Q:   $R_P(S, 1)$ $W_P(S, 0)$ $C_Q$ \\
   \end{tabular}
 \end{table}
 
 When executed simultaneously (which is correct in term of concurrency, they are writing on different rows), these transactions will violate the application's requirement.
 
-
+\begin{table}[H]
+  \centering
+  \begin{tabular}{ r l }
+    $R_P(C, 1)$ & $R_P(S, 1)$ \\
+    $W_P(C, 0)$ & $W_P(S, 0)$ \\
+    $C_P$ & $C_Q$ \\
+  \end{tabular}
+  \\
+  Both checkings and savings account are at 0, the constraint is not respected.
+\end{table}
 
 \subsubsection{Read-Only transaction anomaly}
 \label{sec:ro-anomaly}
@@ -198,30 +209,36 @@ We can have this execution, since the writes are not concurrent:
   \end{tabular}
 \end{table}
 
+
+
+
+
+
 \section{MariaDB Galera Cluster}
 \label{sec:galera-cluster}
 MariaDB, an open-source fork of MySQL, uses Galera Cluster as a synchronous multi-master cluster. It means that all nodes in the cluster are masters, with an active-active synchronous replication, so it is possible to read or write on every node at any time.
 
-\begin{figure}[H]
+
+MariaDB Galera Cluster allows to have the exact same database on every nodes thanks to a synchronous replication. Figure \ref{fig:MGC} attempts to represent the way MariaDB Galera Cluster works; the clients connect to MariaDB databases, which are synchronized by Galera.
+
+\begin{figure}[h]
   \vspace{-10pt}
   \centering
-  \centerline{\includegraphics[width=1\textwidth]{no_push/galera-2.pdf}}
+  \centerline{\includegraphics[width=0.9\textwidth]{no_push/galera-2.pdf}}
   \vspace{-5pt}
   \caption{MariaDB Galera Cluster}
   \vspace{-5pt}
   \label{fig:MGC}
 \end{figure}
 
-To say it in a more understandable way, MariaDB Galera Cluster allows to have the exact same database on every nodes thanks to a synchronous replication.
-
-To dive more into details, each time a transaction is requested by a client on a node, it is processed as usual until the client issues a commit. The process is stopped and all changes made to the database in the transaction are collected in a ``write-set'', along with the primary keys of the changed rows. The write-set is then broadcasted to every nodes. It then undergoes a deterministic certification test which uses the given primary keys. It actually checks all transactions between the current transaction and the last successful one to determine whether the primary keys involved conflicts between each others.
+Figure \ref{fig:certificationcommit} helps to understand the certification-based replication. To dive more into details, each time a transaction is requested by a client on a node, it is processed as usual until the client issues a commit. The process is stopped and all changes made to the database in the transaction are collected in a ``write-set'', along with the primary keys of the changed rows. The write-set is then broadcasted to every nodes. It then undergoes a deterministic certification test which uses the given primary keys. It actually checks all transactions between the current transaction and the last successful one to determine whether the primary keys involved conflicts between each others. Since this is deterministic, if a node certifies a change, every nodes will do it too.
 
 If the check fails, the whole transaction is rollbacked, and if it succeeds it is applied on all nodes then committed.
 
-\begin{figure}[H]
+\begin{figure}[h]
   \vspace{-10pt}
   \centering
-  \centerline{\includegraphics[width=0.85\textwidth]{no_push/commit-galera.png}}
+  \centerline{\includegraphics[width=0.8\textwidth]{no_push/commit-galera.png}}
   \vspace{-5pt}
   \caption{Certification Based Replication (figure adapted from \url{http://galeracluster.com}) }
   \vspace{-5pt}
@@ -233,19 +250,22 @@ This is pretty efficient since it only needs a broadcast to make the replication
 
 It also have advantages like granting there will be no data loss when nodes crash, providing a high availability across the cluster.
 
-Galera Cluster uses a virtual synchrony that unifies the data delivery, providing a formalism for its semantics. Since this does not guarantee temporal synchrony, it also implements a flow control to keep nodes synchronized.
+Galera Cluster implements a flow control in which the nodes goes from states to another from the moment they start until they are synced. When they establish a connection to the cluster, they receive a State Snapshot Transfer (SST). This SST comes in two forms: logical (mysqldump), which requires an already initialized server and block the donor of the transfer, and physical (e.g. rsync, xtrabackup, \dots) which is quicker but can only be done before initialization of the receiving server. Aside from the transaction synchronization and the SSTs, there are also Incremental State Transfers (IST) that are used to bring a node up-to-date.
+
+About the way Galera Cluster manages to be synchronized, the documentation is not totally clear and the reading of wsrep code (\url{https://github.com/codership/galera/tree/3.x/galera/src}), which is not so much commented did not really helped. The documentation states that Galera Cluster is built on a proprietary group communication system layer\footnote{\url{http://galeracluster.com/documentation-webpages/architecture.html}}, but there are no information about how it is done, especially about the consistency of the synchronization, and especially since there are not talking about anything special in the write-sets (like a vector clock) and the ``deterministic certification'' is not detailled either.
 
 The multi-master replication allows only read-repeatable isolation at best for transactions. Indeed, they previously talked about Snapshot isolation before Jepsen analyzed MariaDB Galera Cluster and realized they did not provide the correct announced isolation\cite{MGC:jepsen}.
 
 
 
 \section{CockroachDB}
+\label{sec:cockroachdb}
 CockroachDB is a NewSQL database that uses the Raft protocol (an alternative version to Lamport's Paxos consensus protocol).
 It uses the SQL API to enable SQL requests on every nodes. These requests are translated to key-value operations and -if needed- distributed across the cluster.
 
-CockroachDB implements a single, monolithic sorted map for the keys and values stored, as seen in \ref{fig:cockroachdb}. This map is divided in ranges, which are continuous chunks of this map, with every key being in a single range, so the ranges will not overlap. Each ranges are then replicated (three replicas per range) and finally distributed across the cluster nodes.\cite{CRDB:automatedoperations} On the figure, the blue dotted range is the leaseholder, and each CockroachDB instance is represented by the CockroachDB logo (the green cockroach) and identified by an instance number. Each instance stores replicas of the distributed ranges.
+CockroachDB implements a single, monolithic sorted map for the keys and values stored, as seen in figure \ref{fig:cockroachdb}. This map is divided in ranges, which are continuous chunks of this map, with every key being in a single range, so the ranges will not overlap. Each ranges are then replicated (three replicas per range) and finally distributed across the cluster nodes.\cite{CRDB:automatedoperations} On the figure, the blue dotted range is the leaseholder, and each CockroachDB instance is represented by the CockroachDB logo (the green cockroach) and identified by an instance number. Each instance stores replicas of the distributed ranges.
 
-\begin{figure}[H]
+\begin{figure}[h]
   \vspace{-10pt}
   \centering
   \centerline{\includegraphics[width=1\textwidth]{no_push/cockroachdb.png}}
@@ -255,10 +275,10 @@ CockroachDB implements a single, monolithic sorted map for the keys and values s
   \label{fig:cockroachdb}
 \end{figure}
 
-Figure \ref{fig:cockroachdb-commit} represents the way an update is committed to all replicas. One of the replicas acts as the leaseholder, a sort of leader that coordinates all reads and writes for the range. A read only requires the leaseholder.
+Figure \ref{fig:cockroachdb-commit} represents the way an update is committed to all replicas. One of the replicas acts as the leaseholder, a sort of leader that coordinates all reads and writes for the range. A read only requires any range.
 When a write is requested, the leaseholder prepares to append it to its log, forwards the request to the replicas and when the quorum is achieved, commit the change by add it in the log. The quorum is an agreement from two out of the three replicas to make the change.
 
-\begin{figure}[H]
+\begin{figure}[h]
   \vspace{-10pt}
   \centering
   \centerline{\includegraphics[width=0.85\textwidth]{no_push/commit-cockroach.png}}
@@ -296,10 +316,13 @@ Here, \verb~/test/~ is a placeholder for the table ID and the \verb~/*Val~ are p
 
 \subsection{Raft}
 
+
+
 Raft was implemented to be a more understandable and easier to learn version of Paxos\cite{DBLP:conf/usenix/OngaroO14}. Though it is safe, available and efficient for common operations, when a choice had to be made, it was always favoring understandability.
 
 
-It uses a consensus algorithm in the context of Replicated State Machines. In this context, state machines on a set of nodes compute copies of the same state and continue their work even if some nodes are down. In the context of CockroachDB, the state machines are the ranges and so there is one consensus group per range. This means each nodes participates in thousands of consensus group. So they introduced a new layer they called Multiraft to handle this: it manages the communication by treating a node with all its ranges as a group. That is, each pair of nodes only needs to exchange heartbeat messages once per tick to know if the ranges on these nodes are available\cite{CRDB:multiraft}.
+It uses a consensus algorithm in the context of Replicated State Machines. In this context, state machines on a set of nodes compute copies of the same state and continue their work even if some nodes are down. Figure \ref{fig:raft-log} is a good entrypoint to know how Raft works: the state machines are composed of the logs of different entries applied to the state machine.
+In the context of CockroachDB, the state machines are the ranges and so there is one consensus group per range. This means each nodes participates in thousands of consensus group. So they introduced a new layer they called Multiraft to handle this: it manages the communication by treating a node with all its ranges as a group. That is, each pair of nodes only needs to exchange heartbeat messages once per tick to know if the ranges on these nodes are available\cite{CRDB:multiraft}.
 
 Raft safety properties under non-Byzantines conditions (such as network delays, partitions, packet loss, etc.) have been formally specified and proven. It also guarantees availability if a majority $(\frac{n}{2} + 1)$ of servers are operational and communicate with each other and consistency in the logs independently of the timing (delays and faulty clocks only cause availability problems). Finally, the time to complete a command is only as long as it is necessary to receive responses from the majority of the cluster.
 

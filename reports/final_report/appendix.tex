@@ -3,7 +3,7 @@
 \section{Detailed Rally scenarios}
 \label{sec:detail-rally}
 
-(Extract from the blog article, from the work of Ronan Cherrueau)
+(Extract from the blog article, from the work of Ronan-Alexandre Cherrueau)
 
 The \%reads/\%writes ratio is computed on Mariadb. The gauging code reads values of status variables \verb+Com\_xxx+ that provide statement counts over all connections (with \verb+xxx+ standing for \verb+SELECT+, \verb+DELETE+, \verb+INSERT+, \verb+UPDATE+, \verb+REPLACE+ statements). The SQL query that does this job is available in listing \ref{lst:rw} and returns the total number of reads and writes since the database started. That SQL query is called before and after the execution of one Rally scenario. After and before values are then subtracted to compute the number of reads and writes performed during the scenario and finally, compared to compute the ratio.
 

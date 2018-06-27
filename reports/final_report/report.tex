@@ -45,17 +45,6 @@
 \usepackage{amsmath}
 \usepackage{amsthm}
 
-%% Hyperlinks for references, in color-O-vision and nice for long urls
-\PassOptionsToPackage{hyphens}{url}\usepackage[pdftex,%
-  pdfauthor={Marie Delavergne},%
-  pdftitle={Report for  Master 2 ALMA},%
-  pdfsubject={A middleware for a NewSQL database that reflects the client application locality},%
-  colorlinks,%
-  linkcolor=blues,%
-  urlcolor=blues,%
-  plainpages=false]{hyperref}
-%% --
-
 %% Power to the tikz!
 \usepackage{tikz}
 %\usepackage{graphicx}
@@ -107,6 +96,19 @@
 \usepackage[style=numeric]{biblatex}
 
 \addbibresource{biblio.bib}
+
+%% Hyperlinks for references, in color-O-vision and nice for long urls
+\PassOptionsToPackage{hyphens}{url}
+\usepackage[pdftex,%
+  pdfauthor={Marie Delavergne},%
+  pdftitle={Report for  Master 2 ALMA},%
+  pdfsubject={A middleware for a NewSQL database that reflects the client application locality},%
+  colorlinks,%
+  linkcolor=blues,%
+  urlcolor=blues,%
+  plainpages=false]{hyperref}
+%% --
+
 
 \begin{document}
 %
@@ -164,23 +166,23 @@
 
 
 \chapter{Openstack at the Edge}
-
+\label{chap:os-edge}
 
 \input{bg_motivations}
 
 
 \chapter{Relational database management systems considered}
-
+\label{chap:rdmbs-considered}
 \input{state_of_the_art}
 
 
-\chapter{How to compare these management systems}
-
+\chapter{How to compare relational database management systems}
+\label{chap:experiments}
 \input{experiments}
 
 
 \chapter{How do they actually compare}
-
+\label{chap:results}
 \input{results}
 
 \addcontentsline{toc}{section}{\textbf{Conclusion}}

@@ -1,9 +1,13 @@
-This section present the results and their analysis. To avoid lengths of graphics in this report, only a short version of the results are presented in this section. The entirety of the results, median time for each operations and Cumulative Distribution Functions (CDF) for each scenarios are in the appendix. All results are filtered above the 95th quantile. In the median completion time plot, the $\lambda$ Greek letter stands for the failure rate and $\sigma$ for the standard deviation. For the CDF, the abscissa is the time and the ordinate is the pourcentage of operations made during that time.
+This section present the results and their analysis. To avoid lengths of graphics in this report, only a short version of the results are presented in this section. The entirety of the results, median time for each operations and Cumulative Distribution Functions (CDF) for each scenarios are located in the appendix. All results are filtered above the 95th quantile. In the median completion time plot, the $\lambda$ Greek letter stands for the failure rate and $\sigma$ for the standard deviation. For the CDF, the abscissa is the time and the ordinate is the pourcentage of operations made during that time.
 
 
 
-The short results are the median time of completion for each operations. Each frame represents a scenarios played on a RDBMS, the abscissa is for the variable parameter, and the ordinate is the completion time of each operation. This completion of the operations is shown thanks to stacked bars. The scenario is Authenticate and Validate Keystone Token (\%reads: 96.46, \%writes: 3.54), except for the locality, where we used Create User and Update its Password (\%reads: 89.79, \%writes: 10.21) since it has enough writings to be interesting regarding the quorum (any reading only need any replicas).
+The short results are the median time of completion for each operations. Each frame represents a scenario played on a RDBMS, the abscissa is for the variable parameter, and the ordinate is the completion time of each operation. This completion of the operations is shown thanks to stacked bars. The RDBMS, topology and Rally entrypoints (represented by the white ermine) is represented above the frame to be easier to read.
 
+The scenario is Authenticate and Validate Keystone Token (\%reads: 96.46, \%writes: 3.54), except for the locality, where we used Create User and Update its Password (\%reads: 89.79, \%writes: 10.21) since it has enough writings to be interesting regarding the quorum (any reading only need any replicas). Authenticate and Validate Keystone Token represents 95\% of what is actually done in a running Keystone service. This number comes from informal discussions with different cloud providers, and thus maybe not be totally accurate, but still teaches us that it is the most used. The other scenarios were picked to have a good representation of every Keystone functionalities.
+
+
+We made an experiment to get the percentage of reads and writes because it is important to know how the databases handles reads or writes. Indeed, Keystone may not be too stressful on the database (since it is mainly authenticate and validate, as previously said), but we need to get an idea of how the RDBMS may behave with services that will make more writes.
 
 
 
@@ -16,10 +20,10 @@ For these experiments, Juice deployed the RDBMS along with OpenStack instances a
 
 \subsection{Light load}
 
-Figure \ref{fig:oss-impact-light} (page \pageref{fig:oss-impact-light}) presents the mean completion time (in seconds) of Keystone scenarios in a light Rally mode. In the figure, columns presents results of a specific scenario: the first column presents results for Authenticate User and Validate Token, the second for Create Add and List User Role, and so forth. Rows present results with a specific RDBMS: the first row presents results for MariaDB, second for Galera and third for CockroachDB. The figure presents results with stacked bar charts. Each bar presents the result for a specific number of OpenStack instances (i.e., 3, 9 and 45) and stacks completion times of each Keystone operations inside a scenario.
+Figure \ref{fig:oss-impact-light} (page \pageref{fig:oss-impact-light} in the appendix) presents the mean completion time (in seconds) of Keystone scenarios in a light Rally mode. In the figure, columns presents results of a specific scenario: the first column presents results for Authenticate User and Validate Token, the second for Create Add and List User Role, and so forth. Rows present results with a specific RDBMS: the first row presents results for MariaDB, second for Galera and third for CockroachDB. The figure presents results with stacked bar charts. Each bar presents the result for a specific number of OpenStack instances (i.e., 3, 9 and 45) and stacks completion times of each Keystone operations inside a scenario.
 
 
-Figure \ref{fig:short-oss-impact-light} is the short summary of the results. We can see that the trend is similar for the 3 RDMBS, to the advantage of the centralized MariaDB, followed by MariaDB Galera Cluster and then CockroachDB.
+Figure \ref{fig:short-oss-impact-light} focuses on the token validation of these results. We can see that the trend is similar for the 3 RDMBS, to the advantage of the centralized MariaDB, followed by MariaDB Galera Cluster and then CockroachDB.
 \begin{figure}[H]
   \vspace{-10pt}
   \centering
@@ -30,11 +34,11 @@ Figure \ref{fig:short-oss-impact-light} is the short summary of the results. We 
   \label{fig:short-oss-impact-light}
 \end{figure}
 
-We can see in the longer results that MariaDB Galera Cluster begins to have difficulties to handle 45 nodes, to the point were it can not handle the loads of Create User Set Enabled and Delete and Create and List Users. This kind of failure were not really explained and we have had the time to analyze this further.
+We can see in the longer results that MariaDB Galera Cluster begins to have difficulties to handle 45 nodes, to the point were it can not handle the loads of Create User Set Enabled and Delete and Create and List Users scenario. This kind of failure were not really explained and we have not had the time to analyze this further. We feel that the Create User and Update Password scenario put so much pressure on the RDBMS that MariaDB Galera Cluster simply fails. Indeed, the scenarios are all ran consecutively for every number of nodes, so if the database fails during a run, it will probably be down for the rest of the scenarios to be ran. This can be explained by the fact that the Create User and Update Password scenario has the highest percentage of writes.
 
-The corresponding Cumulative Distribution Function (CDF) can be found in figure \ref{fig:oss-impact-light-cdf}, page \pageref{fig:oss-impact-light-cdf}. We can see that for both MariaDB solutions, all the operations the three last scenarios take globally the same time, whereas for CockroachDB, a few operations take a lot of time.
+The corresponding Cumulative Distribution Function (CDF) can be found in figure \ref{fig:oss-impact-light-cdf}, page \pageref{fig:oss-impact-light-cdf} in the appendix. We can see that for both MariaDB solutions, all the operations the three last scenarios take globally the same time, whereas for CockroachDB, a few operations take a lot of time.
 
-I have added in the appendix the linear regression for these scenarios in Figure \ref{fig:oss-impact-light-lreg} to show that the results are not always perfect (the distribution is sometimes off), and to see how does the slope looks like with such results. Globally, MariaDB Galera Cluster's slopes are stronger than the other RDBMS.
+I have added in the appendix the linear regression for these scenarios in Figure \ref{fig:oss-impact-light-lreg} (page \pageref{fig:oss-impact-light-lreg} in the appendix) to show that the results are not always perfect (the distribution is sometimes off), and to see how does the slope looks like with such results. Globally, MariaDB Galera Cluster's slopes are stronger than the other RDBMS.
 
 
 
@@ -52,10 +56,9 @@ I have added in the appendix the linear regression for these scenarios in Figure
 
 
 
-Under a heavy load, once again, we can see on figure \ref{fig:oss-impact-high} and even quicker on figure \ref{fig:short-oss-impact-high}, that MariaDB Galera Cluster has some real difficulties to handle a heavy load under 45 nodes, since 3 scenarios crashed the RDBMS. As explained in the previous section, we do not really know why these failures happen.
+Under a heavy load, once again, we can see on figure \ref{fig:oss-impact-high} (page \pageref{fig:oss-impact-high} in the appendix) and even quicker on figure \ref{fig:short-oss-impact-high}, that MariaDB Galera Cluster has some real difficulties to handle a heavy load under 45 nodes, since 3 scenarios crashed the RDBMS. As explained in the previous section, we do not really know why these failures happen.
 
-The centralized MariaDB has really good results, but CockroachDB mostly handles well the increasing number of nodes, keeping the scaling linear, even though the slope is stronger on the 3 last scenarios.
-
+The centralized MariaDB has really good results, but CockroachDB mostly handles well the increasing number of nodes, keeping the scaling linear, even though the slope is stronger on the 3 last scenarios. Indeed, on CockroachDB, the writes go through the quorum so the number of nodes does not really matter except for the queries implying multiple ranges and so need to be distributed.
 
 \section{Delay Impact}
 
@@ -75,14 +78,14 @@ In this test, the size of the database cluster is 9 and the delay varies between
   \label{fig:short-delay-impact-light}
 \end{figure}
 
-Figure \ref{fig:delay-impact-light} is the median time for each operations under a light load, depending on the network delay.
+Figure \ref{fig:delay-impact-light} (page \pageref{fig:delay-impact-light} in the appendix) is the median time for each operations under a light load, depending on the network delay.% and figure \ref{fig:short-delay-impact-light} focuses on token validation.
 
 MariaDB handles the delay pretty well despite the fact the request have to travel through the network (as we can see on figure \ref{fig:short-delay-impact-light}). On the other hand, CockroachDB has huge difficulties to serve operations under a high latency.
 
 
-The figure \ref{fig:delay-impact-light-cdf} helps understand what happens; CockroachDB has to satisfy the quorum before making any write. This means it has to pay the cost of latency for every write.
+The figure \ref{fig:delay-impact-light-cdf} (page \pageref{fig:delay-impact-light-cdf} in the appendix) helps understand what happens; CockroachDB has to satisfy the quorum before making any write. This means it has to pay the cost of latency for every write.
 
-Here, CockroachDB has another problem to cope with the increasing delay: when two concurrent transaction occur, it uses a deadlock and Keystone handles it with an exponential backoff. This means it will pick up a wait time to retry between 0 and 1, 0-2, 0-4, 0-8, etc. But because of the delay, a transaction takes at least 300ms, so any retry smaller than the RTT will only add more contention.
+Here, CockroachDB has another problem to cope with the increasing delay: when two concurrent transaction occur, it uses a deadlock and Keystone handles it with an exponential backoff. This means it will pick up a wait time to retry between 0 and 1 ms, 0-2 ms 0-4 ms, 0-8 ms, etc. But because of the delay, a transaction takes at least 300ms, so any retry smaller than the RTT will only add more contention.
 
 \subsection{Heavy load}
 
@@ -96,9 +99,9 @@ Here, CockroachDB has another problem to cope with the increasing delay: when tw
   \label{fig:short-delay-impact-high}
 \end{figure}
 
-Figure \ref{fig:short-delay-impact-high} shows that the tendency is getting worse under a high load, as could be expected. MariaDB Galera Cluster still manages to survive because of the way it only broadcast the changes to apply and then use a deterministic certification to commit, so the latency does not really cost to the system. The centralized MariaDB begins to have some difficulties to manage such a load with a high latency.
+Figure \ref{fig:short-delay-impact-high} shows that the tendency is getting worse under a high load, as could be expected. MariaDB Galera Cluster still manages to survive because of the way the reads and writes are done : for the writes, it only broadcast the changes to apply and then use a deterministic certification to commit, so the latency does not really cost to the system. For the reads, it does not have to pay the cost of the latency because the client has a direct access to local data. The centralized MariaDB begins to have some difficulties to manage such a load with a high latency, since in this case, the clients do need to pay the cost of latencies on any write or read.
 
-Figure \ref{fig:delay-impact-high} shows that CockroachDB even fail to tackle 300ms of RTT for two scenarios. This is due to the fact that after 10 retries, OpenStack Oslo.db discards the transaction. We can already see on the CDF plot from \ref{fig:delay-impact-high-cdf} on the scenarios that fail, under 150 ms of RTT, there is a huge snowball effect: operations take longer and longer for most of them. But we know that CockroachDB uses replications zones so we can optimize the data location to avoid this high delays.
+Figure \ref{fig:delay-impact-high} (page \pageref{fig:delay-impact-high} in the appendix) shows that CockroachDB even fail to tackle 300ms of RTT for two scenarios. This is due to the fact that after 10 retries, OpenStack Oslo.db discards the transaction. We can already see on the CDF plot from \ref{fig:delay-impact-high-cdf} (page \pageref{fig:delay-impact-high-cdf} in the appendix) on the scenarios that fail, under 150 ms of RTT, there is a huge snowball effect: operations take longer and longer for most of them. But we know that CockroachDB uses replications zones so we can optimize the data location to avoid this high delays.
 
 \section{Locality Impact}
 
@@ -118,6 +121,6 @@ In all the figures, the completion time is the ordinate as usual, but the bars a
 
 As expected, because the quorum can be achieved with only two replicas out of the three, we can see from one glimpse at figure \ref{fig:short-zones-impact-light} that CockroachDB handles perfectly well under high latency when pulling the data closer to the client since it does not have to pay the cost of the latency.
 
-Figure \ref{fig:zones-impact-light} confirms that, except for the first scenario, CockroachDB is really efficient when considering locality by satisfying the quorum on closer servers. But it was expected, since we ``cheated'' by bypassing the network delay since the leaseholder does not need to wait for the answer from the replicas across the high delay. We can see on the CDF (figure \ref{fig:zones-impact-light-cdf}), that we still have the ``snowball effect'' for the first version (blue line), since there is the 300ms of RTT to contact the other replicas.
+Figure \ref{fig:zones-impact-light} (page \pageref{fig:zones-impact-light} in the appendix) confirms that, except for the first scenario, CockroachDB is really efficient when considering locality by satisfying the quorum on closer servers. But it was expected, since we ``cheated'' by bypassing the network delay since the leaseholder does not need to wait for the answer from the replicas across the high delay. We can see on the CDF (figure \ref{fig:zones-impact-light-cdf} page \pageref{fig:zones-impact-light-cdf} in the appendix), that we still have the ``snowball effect'' for the first version (blue line), since there is the 300ms of RTT to contact the other replicas.
 
 We can also see that apart from two scenarios, MariaDB Galera Cluster results are not so good. There is also a strange result on the first scenarios, but we could not really explain this. We can see on the corresponding CDF that at some point, one operation takes a lot of time, then it grows more or less normally, then another one take a lot of time. There was clearly a problem for these operations, but I could not find what.

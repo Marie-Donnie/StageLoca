@@ -83,6 +83,12 @@
 %% Comments
 \newcommand{\comment}[1]{}
 
+
+%% Removes the ``chapter'' heading without the chapter number
+%% \usepackage{titlesec}
+%% \titleformat{\chapter}[display]
+%%   {\normalfont\bfseries}{}{0pt}{\Huge \thechapter\ - }
+
 %% Image in title
 \usepackage{graphicx}
 
@@ -98,6 +104,7 @@
 \addbibresource{biblio.bib}
 
 %% Hyperlinks for references, in color-O-vision and nice for long urls
+%% MUST BE THE LAST PACKAGE
 \PassOptionsToPackage{hyphens}{url}
 \usepackage[pdftex,%
   pdfauthor={Marie Delavergne},%
@@ -155,11 +162,31 @@
 
 \section*{Aknowledgement}
 
+I would like to thank first Ronan-Alexandre for his supervision, knowledge, work, help, support and patience. The Discovery and Stack team for welcoming me and helping me. Thanks to Adrien and Inria for trusting me and sending me to Vancouver. To Achour for his teachings about the consensuses and logical time. To Olivier Grasset and the ESA for the inspiration for the name of my framework. And of course Florent for his help and support.
+
+\newpage
+
 \section*{Abstract}
+
+An ever growing number of applications requires a wide distribution over the globe of computing resources, such as the Internet of Things (IoT). To answer this need, we require Edge infrastructures fully automated, using a resource management system able to provide everything needed to handle the difficulties. These are managing hundreds of datacenters with dozen of servers, heterogeneous wide networks with possible disconnections and partitions. Building this kind of systems from scratch is too much of a challenge, thus we think it is better to change an existing, widely used IaaS manager in order to satisfy the requirements.
+OpenStack is made to be scalable, except for some components such as the centralized database, which represents a single point of failure. NewSQL databases, such as CockroachDB, are made to scale under OLTP while complying the relational model which OpenStack uses. While an Edge infrastructure manages high latency connections, we think that is really important to consider the locality of the client to reduce network latency.
+However, we do not know how would OpenStack behave in an Edge context, or the concrete impact of considering the locality.
+We present here an evaluation of the performances of Keystone, an OpenStack service, over three RDBMS, namely MariaDB, MariaDB Galera Cluster and CockroachDB. Galera is the clustering solution used by MariaDB.
+We found that MariaDB Galera Cluster handles pretty well the high delays but not the number of nodes, and conversely for CockroachDB. But more important, we confirmed that CockroachDB has excellent performances when we consider locality.
+We think that there is still more work to do regarding the parametrization of the locality to refine it up to the query.
+
 
 \section*{Résumé}
 
-\addcontentsline{toc}{section}{\textbf{Introduction}}
+De plus en plus d'applications utilisent une distribution globale de ressources de calcul, telles que l'Internet des Objets. Pour répondre à ce besoin, il est nécessaire que les infrastructures d'\emph{informatique en périphérie} soient entièrement automatisées en utilisant un système de gestion de ressources capable de remplir tous les besoins de ces infrastructures. Elles nécessitent de faire face à plusieurs difficultés comme gérer des centaines de centres de données comportant eux-mêmes des dizaines de serveurs, gérer le fait d'avoir des réseaux hétérogènes avec de possibles déconnexions et des partitions. Construire un tel système de zéro est bien trop difficile et nous pensons alors qu'il est plus intelligent de modifier un gestionaire d'Infrastructure-en-tant-que-Service pour satisfaire ces besoins.
+OpenStack a été fait pour pouvoir passer à l'échelle, sauf certains composants tels que la base de données centralisée, qui représente un point unique de défaillance. Les bases de données NewSQL telles que CockroachDB ont été faites pour gérer du traitement transactionnel en ligne tout en fournissant une interface satisfaisant le modèle relationnel qu'utilise OpenStack. Bien qu'une infrastructure en périphérie doivent gérer des connections à forte latences, nous pensons qu'il est nécessaire de prendre en compte la localité du client pour réduire les latences lors des requêtes.
+Cependant, nous ignorons comment OpenStack se comporterait réellement dans un contexte d'informatique en périphérie, ou l'impact concret de cette prise en compte de la localité.
+Nous présentons ici une évaluation des performances de Keystone, un service d'OpenStack, sur trois systèmes de gestion de base de données relationnelles : MariaDB, MariaDB Galera Cluster et CockroachDB. Galera est la solution de grappe de serveurs utilisée par MariaDB.
+Nos résultats montrent que MariaDB Galera Cluster gère correctement des fortes latences réseaux, mais pas le nombre de serveurs, et inversement pour CockroachDB. Mais plus important, nous avons confirmé que CockroachDB obtient d'excellentes performances lorsque nous prenons en compte la localité.
+Nous pensons qu'il y a toujours du travail à effectuer concernant la paramétrisation de la localité pour qu'elle soit aussi fine qu'au niveau d'une requête.
+
+
+\addcontentsline{toc}{chapter}{\textbf{Introduction}}
 \chapter*{Introduction}
 
 \input{intro}
@@ -185,21 +212,22 @@
 \label{chap:results}
 \input{results}
 
-\addcontentsline{toc}{section}{\textbf{Conclusion}}
+\addcontentsline{toc}{chapter}{\textbf{Conclusion}}
 \chapter*{Conclusion}
 
 \input{conclusion}
 
 \clearpage
-\addcontentsline{toc}{section}{\textbf{Appendix}}
-\chapter*{Appendix}
+\appendix
+%\addcontentsline{toc}{section}{\textbf{Appendix}}
+\chapter{Appendix}
 \label{sec:appendix}
 
 \input{appendix}
 
 \clearpage
 \phantomsection
-\addcontentsline{toc}{section}{\textbf{Bibliography}}
+\addcontentsline{toc}{chapter}{\textbf{Bibliography}}
 
 
 \printbibliography
